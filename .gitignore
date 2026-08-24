@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS / editor
+.DS_Store
+.ipynb_checkpoints/
+.obsidian/
+
+# Environments
+.env
+.venv/
+venv/
+env/
+
+# Data and checkpoints
+data/
+models/
+checkpoints/
+!deployment/binary_seg_mvp/checkpoints/
+*.nii
+*.nii.gz
+*.tar
+*.tar.gz
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+
+# Runtime outputs
+run_outputs/
+job_outputs/
+kaggle_outputs/
+exports/
+
+# Keep lightweight committed summaries under outputs/
+!outputs/
+!outputs/**/*.csv
+!outputs/**/*.json
+!outputs/**/*.png
+!deployment/binary_seg_mvp/checkpoints/.gitkeep

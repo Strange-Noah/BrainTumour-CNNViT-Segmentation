@@ -1,0 +1,15 @@
+{
+  "num_patients": 484,
+  "patient_tumour_stats_csv": "/Users/strangenoah/Desktop/AI+X/Novo_Nordisk_OCE/PBL_BrainTumour/outputs/data_audit/patient_tumour_stats.csv",
+  "volume_distribution_csv": "/Users/strangenoah/Desktop/AI+X/Novo_Nordisk_OCE/PBL_BrainTumour/outputs/data_audit/tumour_volume_distribution.csv",
+  "tumour_volume_mm3_min": 7285.0,
+  "tumour_volume_mm3_q1": 57435.75,
+  "tumour_volume_mm3_median": 94221.5,
+  "tumour_volume_mm3_mean": 103299.61776859504,
+  "tumour_volume_mm3_q3": 147549.25,
+  "tumour_volume_mm3_max": 318345.0,
+  "tumour_volume_ml_min": 7.285,
+  "tumour_volume_ml_median": 94.2215,
+  "tumour_volume_ml_mean": 103.29961776859504,
+  "tumour_volume_ml_max": 318.345
+}

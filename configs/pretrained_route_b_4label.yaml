@@ -1,0 +1,38 @@
+data:
+  root: data/processed/Task01_BrainTumour
+  manifest: outputs/data_audit/train_manifest.csv
+  split_manifest: outputs/splits/frozen_patient_split_seed42.csv
+  split_seed: 42
+  image_size: [240, 240]
+  num_modalities: 4
+  num_classes: 4
+  target: four_label_multiclass
+  slice_sampling: all_train_slices
+
+pretrained:
+  repo_id: timm/vit_base_r50_s16_224.orig_in21k
+  local_dir: models/pretrained/timm/vit_base_r50_s16_224.orig_in21k
+  weights: models/pretrained/timm/vit_base_r50_s16_224.orig_in21k/model.safetensors
+  revision: f8a432f48978c1a676f62d61c1f5a4f9eef52d08
+
+model:
+  name: pretrained_hybrid_vit_route_b_4label
+  timm_name: vit_base_r50_s16_224.orig_in21k
+  input_channels: 4
+  input_size: [240, 240]
+  encoder_grid_size: [15, 15]
+  embed_dim: 768
+  output_channels: 4
+  decoder_channels: [384, 192, 96, 48]
+  trainable_vit_blocks: 4
+  trainable_resnet_stages: [2]
+  train_stem: true
+  train_pos_embed: true
+
+train:
+  batch_size: 4
+  epochs: 50
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  seed: 731
+  loss: ce_foreground_dice

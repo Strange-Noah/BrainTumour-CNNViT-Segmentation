@@ -1,0 +1,126 @@
+{
+  "device": "cuda:0",
+  "parallelism": {
+    "mode": "DataParallel",
+    "gpu_ids": [
+      0,
+      1
+    ],
+    "gpu_count_used": 2
+  },
+  "cuda_available": true,
+  "cuda_device_count": 2,
+  "cuda_device_name": "Tesla T4",
+  "effective_batch": {
+    "batch_size": 16,
+    "per_gpu_batch_size": 8.0
+  },
+  "amp": {
+    "enabled": true,
+    "dtype": "float16",
+    "init_scale": 1024
+  },
+  "logging": {
+    "train_log_every": 500,
+    "val_log_every": 200
+  },
+  "data_loading": {
+    "train_sampling_mode": "patient_local",
+    "balanced_train_sampler": false,
+    "effective_train_sampler": "patient_local",
+    "nifti_proxy_cache": true,
+    "persistent_workers": true
+  },
+  "torch_version": "2.10.0+cu128",
+  "numpy_version": "2.0.2",
+  "split_patient_counts": {
+    "train": 339,
+    "val": 72,
+    "test": 73
+  },
+  "split_manifest_sha256": "6e531e7de58dc45dc808a76843417c32ece58df1421fa00a14f342f15d716869",
+  "weights_sha256": "a03ec9cf78476304ef12edb58ef42c72f159c16d35a3cfd2277fae7a061af813",
+  "train_summary": {
+    "samples": 52545,
+    "unique_patients": 339,
+    "positive_slices": 23597,
+    "negative_slices": 28948,
+    "positive_fraction": 0.44908173946141405
+  },
+  "val_summary": {
+    "samples": 11160,
+    "unique_patients": 72,
+    "positive_slices": 4945,
+    "negative_slices": 6215,
+    "positive_fraction": 0.44310035842293904
+  },
+  "parameter_counts": {
+    "total": 101442129,
+    "trainable": 42515793,
+    "frozen": 58926336
+  },
+  "optimizer_groups": [
+    {
+      "name": "decoder",
+      "lr": 0.0003,
+      "params": 14
+    },
+    {
+      "name": "stem",
+      "lr": 0.0003,
+      "params": 3
+    },
+    {
+      "name": "pos_embed",
+      "lr": 3e-05,
+      "params": 1
+    },
+    {
+      "name": "resnet_stage2",
+      "lr": 3e-05,
+      "params": 84
+    },
+    {
+      "name": "vit_blocks",
+      "lr": 3e-05,
+      "params": 48
+    },
+    {
+      "name": "encoder_norm",
+      "lr": 3e-05,
+      "params": 2
+    }
+  ],
+  "args": {
+    "split_manifest": "/kaggle/working/PBL_BrainTumour/outputs/splits/frozen_patient_split_seed42.csv",
+    "data_root": "/kaggle/working/PBL_BrainTumour/data/processed/Task01_BrainTumour",
+    "weights": "/kaggle/working/PBL_BrainTumour/models/pretrained/timm/vit_base_r50_s16_224.orig_in21k/model.safetensors",
+    "output_dir": "run_outputs/full_train",
+    "epochs": 15,
+    "batch_size": 16,
+    "num_workers": 2,
+    "max_train_steps_per_epoch": null,
+    "max_val_steps_per_epoch": null,
+    "max_train_patients": null,
+    "max_val_patients": null,
+    "max_slices_per_val_patient": null,
+    "require_full_val": true,
+    "seed": 731,
+    "balanced_train_sampler": false,
+    "train_sampling_mode": "patient_local",
+    "trainable_vit_blocks": 4,
+    "trainable_resnet_stages": "2",
+    "train_stem": true,
+    "train_pos_embed": true,
+    "lr_new": 0.0003,
+    "lr_pretrained": 3e-05,
+    "lr_pos_embed": 3e-05,
+    "weight_decay": 0.0001,
+    "data_parallel": true,
+    "gpu_ids": "0,1",
+    "amp": true,
+    "train_log_every": 500,
+    "val_log_every": 200,
+    "build_only": false
+  }
+}
