@@ -229,6 +229,7 @@ See:
 
 - `docs/cnn_vit_report.md`
 - `docs/4label_report.md`
+- `docs/deployment_report.md`
 - `docs/4ch_240_to_224_input_stem_feasibility.md`
 - `docs/route_b_4label_segmentation_plan.md`
 
