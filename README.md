@@ -4,6 +4,12 @@ This repository contains a reproducible research pipeline and a Gradio deploymen
 
 The primary model is a CNN-ViT transfer-learning segmenter based on the pretrained hybrid model [`timm/vit_base_r50_s16_224.orig_in21k`](https://huggingface.co/timm/vit_base_r50_s16_224.orig_in21k). The final binary model is evaluated on a frozen held-out test split of 73 patients.
 
+Live deployment:
+
+```text
+https://huggingface.co/spaces/TLOMMP/brain-tumour-segmentation
+```
+
 ## Highlights
 
 - Patient-level tumour-volume-stratified 70/15/15 split:
@@ -186,6 +192,12 @@ python scripts/07_infer_route_b_4label.py \
 ```
 
 ## Deployment
+
+The deployed web app is available at:
+
+```text
+https://huggingface.co/spaces/TLOMMP/brain-tumour-segmentation
+```
 
 The Gradio app lives in:
 
