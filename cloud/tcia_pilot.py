@@ -49,10 +49,14 @@ def official_link():
 
 
 def aspera(cli, link, *args):
+    child_env = {
+        name: value for name, value in os.environ.items()
+        if not name.startswith(("R2_", "AWS_")) and name != "TCIA_FASPEX_URL"
+    }
     try:
         result = subprocess.run(
             [cli, "faspex5", "packages", *args, f"--url={link}", "--format=json"],
-            capture_output=True, timeout=1200,
+            capture_output=True, timeout=1200, env=child_env,
         )
     except subprocess.TimeoutExpired:
         raise RuntimeError(f"Aspera {args[0]} timed out.") from None

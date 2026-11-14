@@ -48,6 +48,14 @@ Private Kaggle CPU run 5 transferred all 43 files for one four-visit patient to 
 
 The pilot published aggregate evidence. Patient imaging was held in temporary Kaggle staging and still needs a persistent R2 upload. Use a separate cloud ingestion runtime with an authorized dataset writer so the Kaggle dataset credentials remain read-only. Start by repeating the 43-file pilot into persistent staging and verifying R2 readback. Obtain sufficient staging capacity and review the inventory and write path before ingesting the full collection. [Private pilot, version 5](https://www.kaggle.com/code/mathewzhou/novo-tcia-package-inventory)
 
+## Full dataset staging and costs
+
+Use the official per-exam file inventory to plan patient batches. Compare every exam against the MRI TSV and require one segmentation and all four core sequences in each exam. Report any extra or missing files and reconcile the file count and byte total with the published release. Faspex presents the package entries as symbolic links. The receive command in the pilot materialized regular NIfTI files. Use the delivered byte counts and hashes when verifying R2.
+
+Use bounded batches on private Linux staging with sufficient space for one complete batch, Aspera partial files and the SDK. Plan to keep the same staging path across retries where possible. On ephemeral runners, retry the patient or batch from TCIA. Raw objects already in R2 are accepted only when the freshly staged bytes have the same SHA-256. Publish per-patient completion receipts after readback and skip completed batches only after checking their receipts and stored objects. Aspera interruption recovery has not been exercised.
+
+At the 163 GB release estimate, R2 Standard storage is about US$2.45 per month before any available free tier. At 11,405 objects, one PUT and one GET per object cost about US$0.06 total before free allowances and billing rounding. A separate verification GET pass adds about US$0.004 before allowances and rounding. Actual totals depend on the final inventory and account usage. Standard GitHub-hosted runners are free for public repositories, but the pilot uses bounded staging and keeps patient files out of artifacts and logs. [R2 pricing](https://developers.cloudflare.com/r2/pricing/) · [GitHub-hosted runner billing](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions)
+
 ## Acquisition procedure to validate
 
 1. Rebuild the pending manifest with the verified MRI and clinical originals.
