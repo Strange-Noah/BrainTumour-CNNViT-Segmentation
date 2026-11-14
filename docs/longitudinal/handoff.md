@@ -8,7 +8,7 @@ The owner selected `novo-nordisk-pbl`. Use the cloud runtime or credential manag
 
 Use Python 3.12 and `python -m pip install -r cloud/requirements.txt`. Run `python cloud/smoke.py write UNIQUE_RUN_ID` and save its JSON receipt. In a fresh cloud runtime with read-only access, run `python cloud/smoke.py read UNIQUE_RUN_ID --sha256 RECEIPT_SHA`. Publish the digest, byte size and both outcomes. Do not store credentials in the repo.
 
-To finish the independent cloud readback, attach read-only R2 credentials to a private cloud runtime and run the receipt check below. A CPU session is sufficient. Open [the private notebook](https://www.kaggle.com/code/mathewzhou/novo-tcia-and-r2-verification), enable the two R2 key attachments in Add-ons → Secrets, and run the readback cell interactively. The CLI-saved run returned a Kaggle Secrets ConnectionError. The endpoint URL and bucket name are configuration values.
+Gate B passed in an interactive Kaggle CPU session according to the project owner. To reproduce it, open the private notebook, enable the two read-only R2 key attachments in Add-ons → Secrets, and run the readback cell interactively. The CLI-saved run returned a Kaggle Secrets ConnectionError. The endpoint URL and bucket name are configuration values. [Private verification notebook](https://www.kaggle.com/code/mathewzhou/novo-tcia-and-r2-verification)
 
 ```sh
 python cloud/smoke.py read r2-gate-b-20261114-124417-c454f3dc \
