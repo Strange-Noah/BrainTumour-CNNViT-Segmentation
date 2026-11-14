@@ -50,7 +50,7 @@ The pilot published aggregate evidence. Patient imaging was held in temporary Ka
 
 ## Full dataset staging and costs
 
-Use the official per-exam file inventory to plan patient batches. Compare every exam against the MRI TSV and require one segmentation and all four core sequences in each exam. Report any extra or missing files and reconcile the file count and byte total with the published release. Faspex presents the package entries as symbolic links. The receive command in the pilot materialized regular NIfTI files. Use the delivered byte counts and hashes when verifying R2.
+The exam-level listing matches all 1,065 MRI records. The subsequent per-file enumeration run ended in Kaggle cancellation without a complete summary. Enumerate and checkpoint the per-file inventory in bounded groups before planning patient batches. Compare every exam against the MRI TSV and require one segmentation and all four core sequences in each exam. Report any extra or missing files and reconcile the file count and byte total with the published release. Faspex presents the package entries as symbolic links. The receive command in the pilot materialized regular NIfTI files. Use the delivered byte counts and hashes when verifying R2.
 
 Use bounded batches on private Linux staging with sufficient space for one complete batch, Aspera partial files and the SDK. Plan to keep the same staging path across retries where possible. On ephemeral runners, retry the patient or batch from TCIA. Raw objects already in R2 are accepted only when the freshly staged bytes have the same SHA-256. Publish per-patient completion receipts after readback and skip completed batches only after checking their receipts and stored objects. Aspera interruption recovery has not been exercised.
 

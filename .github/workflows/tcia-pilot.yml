@@ -1,10 +1,5 @@
 name: TCIA patient pilot
 on:
-  push:
-    branches: [infra/longitudinal-cloud-migration]
-    paths:
-      - .github/workflows/tcia-pilot.yml
-      - cloud/tcia_pilot.py
   workflow_dispatch:
 
 permissions:
@@ -14,7 +9,7 @@ concurrency: tcia-patient-pilot
 
 jobs:
   ingest:
-    if: github.ref_name == 'infra/longitudinal-cloud-migration' && vars.TCIA_PILOT_ENABLED == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/infra/longitudinal-cloud-migration' && vars.TCIA_PILOT_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     environment: tcia-ingestion
