@@ -11,15 +11,19 @@ EXAM = re.compile(r"(?P<patient>BMETS[0-9]{4})_(?P<order>[0-9]{2})")
 CORE = ("t1n", "t1c", "t2", "t2f")
 
 
-def read_tsv(path):
-    with path.open(encoding="utf-8-sig", newline="") as stream:
+def read_tsv(path, encoding="utf-8-sig"):
+    with path.open(encoding=encoding, newline="") as stream:
         reader = csv.DictReader(stream, delimiter="\t")
+        if reader.fieldnames:
+            reader.fieldnames = [name.strip() for name in reader.fieldnames]
         if not reader.fieldnames or len(set(reader.fieldnames)) != len(reader.fieldnames):
             raise ValueError(f"Missing or ambiguous TSV headers in {path}")
         for row in reader:
             if None in row or None in row.values():
                 raise ValueError(f"Malformed TSV row {reader.line_num} in {path}")
-            yield {key: value.strip() for key, value in row.items()}
+            cleaned = {key: value.strip() for key, value in row.items()}
+            if any(cleaned.values()):
+                yield cleaned
 
 
 def sha256(path):
@@ -27,9 +31,12 @@ def sha256(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def build(mri, clinical, exam_column, patient_column, relative_days_column, treatment_columns):
+def build(
+    mri, clinical, exam_column, patient_column, relative_days_column, treatment_columns,
+    clinical_encoding="utf-8-sig",
+):
     clinical_by_patient = {}
-    for row in read_tsv(clinical):
+    for row in read_tsv(clinical, clinical_encoding):
         patient = row[patient_column]
         if not re.fullmatch(r"BMETS[0-9]{4}", patient) or patient in clinical_by_patient:
             raise ValueError(f"Invalid or duplicate clinical ID: {patient}")
@@ -73,12 +80,13 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--exam-column", required=True)
     parser.add_argument("--patient-column", required=True)
+    parser.add_argument("--clinical-encoding", default="utf-8-sig")
     parser.add_argument("--relative-days-column")
     parser.add_argument("--treatment-column", action="append", default=[])
     args = parser.parse_args()
     visits = build(
         args.mri_tsv, args.clinical_tsv, args.exam_column, args.patient_column,
-        args.relative_days_column, args.treatment_column,
+        args.relative_days_column, args.treatment_column, args.clinical_encoding,
     )
     with args.output.open("x") as output:
         for row in visits:

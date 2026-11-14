@@ -8,7 +8,7 @@ The owner selected `novo-nordisk-pbl`. Use the cloud runtime or credential manag
 
 Use Python 3.12 and `python -m pip install -r cloud/requirements.txt`. Run `python cloud/smoke.py write UNIQUE_RUN_ID` and save its JSON receipt. In a fresh cloud runtime with read-only access, run `python cloud/smoke.py read UNIQUE_RUN_ID --sha256 RECEIPT_SHA`. Publish the digest, byte size and both outcomes. Do not store credentials in the repo.
 
-To finish the independent cloud readback, attach read-only R2 credentials to a private cloud runtime and run the receipt check below. A CPU session is sufficient.
+To finish the independent cloud readback, attach read-only R2 credentials to a private cloud runtime and run the receipt check below. A CPU session is sufficient. Open [the private notebook](https://www.kaggle.com/code/mathewzhou/novo-tcia-and-r2-verification), enable the two R2 key attachments in Add-ons → Secrets, and run the readback cell interactively. The CLI-saved run returned a Kaggle Secrets ConnectionError. The endpoint URL and bucket name are configuration values.
 
 ```sh
 python cloud/smoke.py read r2-gate-b-20261114-124417-c454f3dc \
@@ -21,7 +21,7 @@ Follow [TCIA acquisition](tcia.md). Record source links and checksums, official 
 
 ## Gate D
 
-Use your own private Kaggle notebook. Enable Internet and select an available free GPU. Store the four R2 values in Kaggle Secrets. In a Python cell, import the secrets and launch the version-pinned smoke. Substitute the validated GitHub SHA, a new run ID, a verified MRI object key and its SHA-256.
+Use your own private Kaggle notebook. Enable Internet and use CPU for the initial smoke. The existing CUDA path is available for a later free GPU check. For the synthetic fixture pass `--device cpu`. Use a separately scoped output writer, and verify the result in a fresh session using read-only access and the recorded digest. Store the four R2 values in Kaggle Secrets. In a Python cell, import the secrets and launch the version-pinned smoke. Substitute the validated GitHub SHA, a new run ID, a verified MRI object key and its SHA-256.
 
 ```python
 import os
@@ -36,7 +36,7 @@ checkout = "/kaggle/working/novo-source"
 subprocess.run(["git", "clone", "https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation.git", checkout], check=True)
 subprocess.run(["git", "-C", checkout, "checkout", "--detach", "<commit>"], check=True)
 subprocess.run(["python", "-m", "pip", "install", "-r", "cloud/requirements.txt"], cwd=checkout, check=True)
-subprocess.run(["python", "cloud/kaggle_smoke.py", "<run-id>", "<object-key>", "<sha256>"], cwd=checkout, check=True)
+subprocess.run(["python", "cloud/kaggle_smoke.py", "<run-id>", "<object-key>", "<sha256>", "--device", "cpu"], cwd=checkout, check=True)
 ```
 
 Kaggle's CLI can submit staged notebook code with `kaggle kernels push -p PATH`, then inspect with `kaggle kernels status USER/SLUG`. Use a private kernel and confirm secret attachments in the UI before submitting. In a fresh session, verify the output and report keys with `cloud/storage.py` and recorded hashes. Publish the redacted report through a GitHub PR, with timing, hardware, free disk, runtime limits and storage readback. [Kaggle kernel metadata](https://github.com/Kaggle/kaggle-cli/blob/main/docs/kernels_metadata.md)

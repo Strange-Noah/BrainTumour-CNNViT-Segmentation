@@ -10,7 +10,6 @@ from tempfile import TemporaryDirectory
 
 import nibabel as nib
 import numpy as np
-import torch
 
 from storage import DATASET, PREFIX, connect, put_once, verify
 
@@ -20,6 +19,7 @@ def main():
     parser.add_argument("run_id")
     parser.add_argument("input_key")
     parser.add_argument("sha256")
+    parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]{5,63}", args.run_id):
         parser.error("invalid run ID")
@@ -31,8 +31,6 @@ def main():
     sha = subprocess.check_output(["git", "-C", repo, "rev-parse", "HEAD"], text=True).strip()
     if subprocess.check_output(["git", "-C", repo, "status", "--porcelain"]):
         raise RuntimeError("Use a clean checkout for reproducible results.")
-    if not torch.cuda.is_available():
-        raise RuntimeError("Kaggle GPU accelerator is unavailable.")
     client, bucket = connect()
 
     with TemporaryDirectory() as folder:
@@ -46,15 +44,27 @@ def main():
         data = image.get_fdata(dtype=np.float32, caching="unchanged")
         if not np.isfinite(data).all():
             raise ValueError("Expected finite voxel values.")
-        signal = torch.from_numpy(data).to("cuda")
-        # This kernel checks the preprocessing path without training a model.
-        normal = (signal - signal.mean()) / signal.std(unbiased=False).clamp_min(1e-6)
-        if not torch.isfinite(normal).all().item():
+        runtime = {"device": args.device, "numpy": np.__version__}
+        if args.device == "cuda":
+            import torch
+
+            if not torch.cuda.is_available():
+                raise RuntimeError("Kaggle GPU accelerator is unavailable.")
+            signal = torch.from_numpy(data).to("cuda")
+            normal = ((signal - signal.mean()) / signal.std(unbiased=False).clamp_min(1e-6)).cpu().numpy()
+            runtime.update(
+                gpu=torch.cuda.get_device_name(),
+                gpu_bytes=torch.cuda.get_device_properties(0).total_memory,
+                torch=torch.__version__,
+            )
+        else:
+            normal = (data - data.mean()) / max(data.std(), 1e-6)
+        if not np.isfinite(normal).all():
             raise RuntimeError("Preprocessing returned non-finite values.")
         output = temporary / "normalized.nii.gz"
         header = image.header.copy()
         header.set_data_dtype(np.float32)
-        nib.save(nib.Nifti1Image(normal.cpu().numpy(), image.affine, header), output)
+        nib.save(nib.Nifti1Image(normal, image.affine, header), output)
 
         prefix = f"{PREFIX}/experiments/smoke/{args.run_id}"
         result = put_once(client, bucket, f"{prefix}/{output.name}", output)
@@ -62,8 +72,7 @@ def main():
             "run_id": args.run_id, "git_sha": sha, "input_sha256": args.sha256,
             "dataset": "ucsd-bmets/v1" if args.input_key.startswith(DATASET) else "synthetic",
             "output": result, "shape": list(image.shape),
-            "gpu": torch.cuda.get_device_name(), "gpu_bytes": torch.cuda.get_device_properties(0).total_memory,
-            "free_disk_bytes": shutil.disk_usage(folder).free, "torch": torch.__version__,
+            "free_disk_bytes": shutil.disk_usage(folder).free, **runtime,
         }
         report_file = temporary / "report.json"
         report_file.write_text(json.dumps(report, indent=2) + "\n")
