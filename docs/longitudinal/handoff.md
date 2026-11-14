@@ -17,7 +17,13 @@ python cloud/smoke.py read r2-gate-b-20261114-124417-c454f3dc \
 
 ## Gate C
 
-Follow [TCIA acquisition](tcia.md). The four official TSVs and minimized manifest are stored in R2. A four-visit patient transfer and label audit passed in private Kaggle scratch. Repeat the selective pilot in a separate authorized cloud ingestion runtime with an R2 dataset writer, record size and digest readbacks, then proceed to the full inventory once staging and persistence are verified.
+Follow [TCIA acquisition](tcia.md). The four official TSVs and minimized manifest are stored in R2. The 43-file patient transfer passed in private Kaggle scratch.
+
+For persistence, run `python cloud/tcia_pilot.py ingest --stage /path/to/private-staging` on existing cloud Linux with IBM Aspera CLI v4.28.0 and its Transfer SDK. Provide the project dataset writer through the runtime's secret store. The script validates the inventory and known pilot digest before publishing each raw object with conditional PUT and a byte-for-byte SHA-256 readback. It writes a completion receipt only after all 43 readbacks pass. Running again with the same staged files reuses matching existing R2 objects and rejects conflicts.
+
+The branch has a [GitHub Actions pilot](../../.github/workflows/tcia-pilot.yml) for a standard Linux runner. Configure the `tcia-ingestion` GitHub environment for the migration branch with `R2_ENDPOINT_URL` as a variable and the bucket-scoped `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` as secrets. An optional `TCIA_FASPEX_URL` environment secret can supply the official link if the collection page is unavailable to the runner. Set repository variable `TCIA_PILOT_ENABLED=true` to enable the pilot on a push that changes the workflow or pilot script. GitHub manual dispatch requires the workflow on the default branch. For a draft-branch retry, use GitHub's rerun action on the existing workflow run.
+
+After the receipt is present, use a fresh Kaggle CPU session with the existing read-only dataset credentials and run `python cloud/tcia_pilot.py readback` from the pinned migration checkout. It independently hashes the 43 stored objects and checks the receipt against the digest from the original Aspera run. Report the sanitized result. Full ingestion follows after persistent pilot verification and inventory reconciliation.
 
 ## Gate D
 

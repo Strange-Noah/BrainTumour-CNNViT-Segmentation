@@ -4,7 +4,19 @@
 
 TCIA Version 1 dates to 2026-10-05. The collection describes 300 patients with two to four scans each and 1,065 MRI timepoints. Its download table reports 1,066 studies and 11,405 images, approximately 163 GB. Reconcile the counts from source inventories before declaring completion. The page lists four TSVs (clinical, MRI and their dictionaries). [TCIA collection](https://www.cancerimagingarchive.net/collection/ucsd-bmets-longitudinal/)
 
-Examination IDs use `BMETSXXXX_YY`. TCIA describes precontrast T1, contrast-enhanced T1, T2 and FLAIR as core modalities with sequence tokens `t1n`, `t1c`, `t2` and `t2f`. Additional modalities vary. TCIA describes native-space images registered to first-visit contrast-enhanced T1 and calls its `-seg.nii.gz` masks binary. The first downloaded mask contained labels 0, 2 and 3, so the release cannot be treated as strictly binary. Class meanings need confirmation from TCIA. Preserve raw labels and define any research conversion as a versioned derivative.
+Examination IDs use `BMETSXXXX_YY`. TCIA describes precontrast T1, contrast-enhanced T1, T2 and FLAIR as core modalities with sequence tokens `t1n`, `t1c`, `t2` and `t2f`. Additional modalities vary. TCIA describes native-space images registered to first-visit contrast-enhanced T1 and calls its `-seg.nii.gz` masks binary. The first downloaded mask contained labels 0, 2 and 3, so the release cannot be treated as strictly binary. The same TCIA collection page lists the compartment codes below. Preserve raw labels and define any research conversion as a versioned derivative.
+
+## Mask label semantics
+
+| Value | Interpretation |
+|---|---|
+| 0 | Background outside labeled compartments. This follows the four nonzero codes in the published protocol and the pilot voxel distribution. |
+| 1 | Non-enhancing tumor core. Listed in the protocol. |
+| 2 | Surrounding non-enhancing FLAIR hyperintensity. Observed in all four pilot masks. |
+| 3 | Enhancing tissue. Observed in all four pilot masks. |
+| 4 | Resection cavity. Listed in the protocol. |
+
+TCIA calls the files binary in its data-format description and specifies four tissue compartments in its segmentation protocol. The pilot confirms multiple nonzero compartment codes. A code can occur in more than one lesion, and a lesion may contain multiple compartments. Individual lesion identities and longitudinal matches require a separate definition and validation. A binary endpoint would need a documented policy for each compartment, including resection cavities. [Official TCIA collection and segmentation protocol](https://www.cancerimagingarchive.net/collection/ucsd-bmets-longitudinal/)
 
 ## Official metadata audit
 

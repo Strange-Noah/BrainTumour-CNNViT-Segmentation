@@ -1,0 +1,49 @@
+name: TCIA patient pilot
+on:
+  push:
+    branches: [infra/longitudinal-cloud-migration]
+    paths:
+      - .github/workflows/tcia-pilot.yml
+      - cloud/tcia_pilot.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency: tcia-patient-pilot
+
+jobs:
+  ingest:
+    if: github.ref_name == 'infra/longitudinal-cloud-migration' && vars.TCIA_PILOT_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    environment: tcia-ingestion
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -q -r cloud/requirements.txt
+      - name: Install IBM Aspera CLI and transfer SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          dir=$(mktemp -d)
+          curl -fLsS --retry 2 --max-time 90 \
+            https://github.com/IBM/aspera-cli/releases/download/v4.28.0/aspera-cli-4.28.0-linux-x86_64-glibc2.28-ocran.tgz \
+            -o "$dir/ascli.tgz"
+          tar -xzf "$dir/ascli.tgz" -C "$dir"
+          cli=$(find "$dir" -type f -name ascli -print -quit)
+          test -x "$cli"
+          "$cli" config ascp install
+          printf 'ASCLI=%s\n' "$cli" >> "$GITHUB_ENV"
+      - name: Transfer and persist the pilot
+        env:
+          TCIA_FASPEX_URL: ${{ secrets.TCIA_FASPEX_URL }}
+          R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}
+          R2_BUCKET: novo-nordisk-pbl
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: python cloud/tcia_pilot.py ingest --ascli "$ASCLI" --stage "$RUNNER_TEMP/tcia-pilot"
