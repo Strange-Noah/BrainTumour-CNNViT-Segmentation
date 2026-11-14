@@ -4,7 +4,7 @@ Clone [GitHub](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation) 
 
 ## Gate B
 
-A Cloudflare administrator provides the dedicated private bucket and bucket-scoped credentials in the runtime secret store. Use Python 3.12 and `python -m pip install -r cloud/requirements.txt`. Run `python cloud/smoke.py write UNIQUE_RUN_ID` and save its JSON receipt. In a fresh cloud runtime with read-only access, run `python cloud/smoke.py read UNIQUE_RUN_ID --sha256 RECEIPT_SHA`. Publish the digest, byte size and both outcomes. Do not store credentials in the repo.
+The owner selected `novo-nordisk-pbl`. Use the cloud runtime or credential manager where the owner configured its S3 endpoint and bucket-scoped credentials. Set `R2_BUCKET=novo-nordisk-pbl` and load the other three values from that runtime’s secret store. Use Python 3.12 and `python -m pip install -r cloud/requirements.txt`. Run `python cloud/smoke.py write UNIQUE_RUN_ID` and save its JSON receipt. In a fresh cloud runtime with read-only access, run `python cloud/smoke.py read UNIQUE_RUN_ID --sha256 RECEIPT_SHA`. Publish the digest, byte size and both outcomes. Do not store credentials in the repo.
 
 ## Gate C
 
@@ -34,7 +34,7 @@ Kaggle's CLI can submit staged notebook code with `kaggle kernels push -p PATH`,
 
 ## Gate E
 
-Authenticate Hugging Face as the project owner and confirm `hf auth whoami`. Create a dedicated Gradio Space on free CPU. Scope the write token to that Space. Configure the GitHub variable and environment secret named in [architecture](architecture.md). For the pilot, set repository variable `HF_ENABLE_MIGRATION_PILOT=true` and select the migration branch plus main in the environment deployment branch policies. Require environment approval where available. After a reviewed viewer or workflow commit triggers Deploy MRI viewer, approve that run. Once rollout is complete, clear the pilot variable and narrow environment deployments to main. Verify the run, the Space's source commit message with GitHub SHA, startup, and the synthetic three-plane preview and volumetry. Only deploy paths under `deployment/longitudinal_viewer`. [Hugging Face GitHub Actions guide](https://huggingface.co/docs/hub/spaces-github-actions)
+Confirm `hf auth whoami` reports `Mathew-ZHZ`. Creation of the private Gradio Space `Mathew-ZHZ/longitudinal-mri-viewer` returned HTTP 402. CPU Basic has no hourly compute cost, and Hugging Face requires PRO to create this Gradio Space. Resume creation if the owner enables the required plan. A free Static Space would require a browser-only port of the viewer and a new hosted smoke test. Scope the write token to that Space. Configure the GitHub variable and environment secret named in [architecture](architecture.md). For the pilot, set repository variable `HF_ENABLE_MIGRATION_PILOT=true` and select the migration branch plus main in the environment deployment branch policies. Require environment approval where available. After a reviewed viewer or workflow commit triggers Deploy MRI viewer, approve that run. Once rollout is complete, clear the pilot variable and narrow environment deployments to main. Verify the run, the Space's source commit message with GitHub SHA, startup, and the synthetic three-plane preview and volumetry. Only deploy paths under `deployment/longitudinal_viewer`. [Hugging Face GitHub Actions guide](https://huggingface.co/docs/hub/spaces-github-actions)
 
 ## Gate F
 
