@@ -1,0 +1,35 @@
+name: Deploy MRI viewer
+on:
+  push:
+    branches: [main, infra/longitudinal-cloud-migration]
+    paths:
+      - deployment/longitudinal_viewer/**
+      - .github/workflows/space.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: vars.HF_SPACE_ID != '' && (github.ref_name == 'main' || vars.HF_ENABLE_MIGRATION_PILOT == 'true')
+    runs-on: ubuntu-latest
+    environment: hugging-face
+    concurrency:
+      group: longitudinal-hf-space
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install huggingface_hub==1.28.0
+      - name: Publish reviewed viewer source
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_ID: ${{ vars.HF_SPACE_ID }}
+        run: |
+          test -n "$HF_TOKEN"
+          case "${HF_SPACE_ID,,}" in
+            tlommp/*|brain-tumour-team/*) exit 1 ;;
+          esac
+          hf upload "$HF_SPACE_ID" deployment/longitudinal_viewer . --repo-type space --commit-message "GitHub $GITHUB_SHA"
