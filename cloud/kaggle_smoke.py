@@ -20,6 +20,7 @@ def main():
     parser.add_argument("input_key")
     parser.add_argument("sha256")
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
+    parser.add_argument("--separate-output", action="store_true")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]{5,63}", args.run_id):
         parser.error("invalid run ID")
@@ -32,6 +33,9 @@ def main():
     if subprocess.check_output(["git", "-C", repo, "status", "--porcelain"]):
         raise RuntimeError("Use a clean checkout for reproducible results.")
     client, bucket = connect()
+    output_client, output_bucket = connect(output=True) if args.separate_output else (client, bucket)
+    if args.separate_output and output_bucket == bucket:
+        parser.error("the output bucket must differ from the dataset bucket")
 
     with TemporaryDirectory() as folder:
         temporary = Path(folder)
@@ -67,7 +71,7 @@ def main():
         nib.save(nib.Nifti1Image(normal, image.affine, header), output)
 
         prefix = f"{PREFIX}/experiments/smoke/{args.run_id}"
-        result = put_once(client, bucket, f"{prefix}/{output.name}", output)
+        result = put_once(output_client, output_bucket, f"{prefix}/{output.name}", output)
         report = {
             "run_id": args.run_id, "git_sha": sha, "input_sha256": args.sha256,
             "dataset": "ucsd-bmets/v1" if args.input_key.startswith(DATASET) else "synthetic",
@@ -76,7 +80,7 @@ def main():
         }
         report_file = temporary / "report.json"
         report_file.write_text(json.dumps(report, indent=2) + "\n")
-        receipt = put_once(client, bucket, f"{prefix}/report.json", report_file)
+        receipt = put_once(output_client, output_bucket, f"{prefix}/report.json", report_file)
         print(json.dumps(receipt))
         print(report_file.read_text(), end="")
 

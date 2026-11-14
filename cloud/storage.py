@@ -13,10 +13,11 @@ PREFIX = "novo-nordisk"
 DATASET = f"{PREFIX}/datasets/ucsd-bmets/v1"
 
 
-def connect():
-    bucket = os.environ["R2_BUCKET"]
-    endpoint = os.environ.get("R2_ENDPOINT_URL")
-    profile = os.environ.get("R2_AWS_PROFILE")
+def connect(*, output=False):
+    prefix = "R2_OUTPUT_" if output else "R2_"
+    bucket = os.environ[f"{prefix}BUCKET"]
+    endpoint = os.environ.get(f"{prefix}ENDPOINT_URL") or os.environ.get("R2_ENDPOINT_URL")
+    profile = os.environ.get(f"{prefix}AWS_PROFILE")
     if profile:
         session = boto3.Session(profile_name=profile)
         client = session.client("s3", endpoint_url=endpoint, region_name="auto")
@@ -28,8 +29,8 @@ def connect():
     validate_endpoint(endpoint)
     client = boto3.client(
         "s3", endpoint_url=endpoint, region_name="auto",
-        aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
-        aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
+        aws_access_key_id=os.environ[f"{prefix}ACCESS_KEY_ID"],
+        aws_secret_access_key=os.environ[f"{prefix}SECRET_ACCESS_KEY"],
     )
     return client, bucket
 

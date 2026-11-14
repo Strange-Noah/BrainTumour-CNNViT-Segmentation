@@ -5,11 +5,11 @@ TCIA → approved Linux staging → private Cloudflare R2 → private Kaggle ses
 | System | Access and responsibility |
 |---|---|
 | GitHub | Source, review, manifests' format and hashes, environment pins and aggregate reports. Each contributor branches from the reviewed baseline. |
-| Cloudflare R2 | Set `R2_ENDPOINT_URL`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` in the runtime secret store. Use the private project bucket `novo-nordisk-pbl`. Give dataset readers read-only access. Use separate restricted output storage if contributors need write access and the credential scope cannot prevent writes to raw data. |
+| Cloudflare R2 | Set `R2_ENDPOINT_URL`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` in the runtime secret store. Keep canonical data and manifests in private `novo-nordisk-pbl`, with read-only access from Kaggle. Write all experiment outputs to private `novo-nordisk-pbl-outputs` using separate bucket-scoped credentials. The owner will provision the output bucket and credentials. |
 | Kaggle | Each contributor uses their own private notebook, Internet enabled and a free GPU when Gate D is reached. Attach the R2 secrets to that notebook via Kaggle Secrets. |
 | Hugging Face | A dedicated Space on the project owner's login, using CPU Basic and the Gradio SDK once the owner account has the required plan. Set repository variable `HF_SPACE_ID` and the `hugging-face` GitHub environment secret `HF_TOKEN` with access scoped to that Space. |
 
-Use these prefixes under `novo-nordisk/`.
+Use these prefixes under `novo-nordisk/`. The datasets prefix belongs in `novo-nordisk-pbl`. Experiments, checkpoints, predictions, reports, and new output verification artifacts belong in `novo-nordisk-pbl-outputs`.
 
 - `datasets/ucsd-bmets/v1/{raw,metadata,processed,manifests}/`. Raw and metadata preserve source bytes. Processed data lives under a recipe digest. Reviewed manifests are immutable and addressed by digest.
 - `experiments/<method>/<run-id>/`. Use UTC timestamp, owner handle and a random suffix as the unique run ID. Keep config, code SHA, input manifest SHA, partition SHA, runtime versions and metrics together.

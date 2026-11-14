@@ -9,6 +9,7 @@ import re
 
 EXAM = re.compile(r"(?P<patient>BMETS[0-9]{4})_(?P<order>[0-9]{2})")
 CORE = ("t1n", "t1c", "t2", "t2f")
+FILE_TOKENS = {"t2": "t2w"}
 
 
 def read_tsv(path, encoding="utf-8-sig"):
@@ -60,7 +61,10 @@ def build(
             "visit_order": order,
             "relative_days": int(days) if days else None,
             "timing_precision": "day" if days else "ordinal",
-            "modalities": {modality: f"{exam}/{exam}-{modality}.nii.gz" for modality in CORE},
+            "modalities": {
+                modality: f"{exam}/{exam}-{FILE_TOKENS.get(modality, modality)}.nii.gz"
+                for modality in CORE
+            },
             "segmentation": f"{exam}/{exam}-seg.nii.gz",
             "treatment": clinical_by_patient[patient],
             "spatial_reference": {"dataset_reference": f"{patient}_01-t1c.nii.gz", "header_verified": False},

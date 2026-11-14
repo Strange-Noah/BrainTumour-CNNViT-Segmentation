@@ -17,29 +17,34 @@ python cloud/smoke.py read r2-gate-b-20261114-124417-c454f3dc \
 
 ## Gate C
 
-Follow [TCIA acquisition](tcia.md). Record source links and checksums, official count reconciliation, one complete patient transfer with verified visits and observed labels, then stage the full dataset.
+Follow [TCIA acquisition](tcia.md). The four official TSVs and minimized manifest are stored in R2. A four-visit patient transfer and label audit passed in private Kaggle scratch. Repeat the selective pilot in a separate authorized cloud ingestion runtime with an R2 dataset writer, record size and digest readbacks, then proceed to the full inventory once staging and persistence are verified.
 
 ## Gate D
 
-Use your own private Kaggle notebook. Enable Internet and use CPU for the initial smoke. The existing CUDA path is available for a later free GPU check. For the synthetic fixture pass `--device cpu`. Use a separately scoped output writer, and verify the result in a fresh session using read-only access and the recorded digest. Store the four R2 values in Kaggle Secrets. In a Python cell, import the secrets and launch the version-pinned smoke. Substitute the validated GitHub SHA, a new run ID, a verified MRI object key and its SHA-256.
-
+Use the private notebook in an interactive CPU session with Internet enabled. Keep the current dataset credentials read-only. Once the owner provisions `novo-nordisk-pbl-outputs`, attach bucket-scoped write credentials as `R2_OUTPUT_ACCESS_KEY_ID` and `R2_OUTPUT_SECRET_ACCESS_KEY`. Set `R2_OUTPUT_BUCKET=novo-nordisk-pbl-outputs` and use a unique run ID. The same R2 endpoint serves both buckets. For the first run use the Gate B synthetic key and SHA-256 from [the verification receipt](verification.md#live-r2-receipt).
 ```python
 import os
 import subprocess
 from kaggle_secrets import UserSecretsClient
 
 secrets = UserSecretsClient()
-for name in ("R2_ENDPOINT_URL", "R2_BUCKET", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"):
+os.environ["R2_ENDPOINT_URL"] = "<project R2 account endpoint>"
+os.environ["R2_BUCKET"] = "novo-nordisk-pbl"
+os.environ["R2_OUTPUT_BUCKET"] = "novo-nordisk-pbl-outputs"
+for name in ("R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY",
+             "R2_OUTPUT_ACCESS_KEY_ID", "R2_OUTPUT_SECRET_ACCESS_KEY"):
     os.environ[name] = secrets.get_secret(name)
 
 checkout = "/kaggle/working/novo-source"
 subprocess.run(["git", "clone", "https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation.git", checkout], check=True)
 subprocess.run(["git", "-C", checkout, "checkout", "--detach", "<commit>"], check=True)
 subprocess.run(["python", "-m", "pip", "install", "-r", "cloud/requirements.txt"], cwd=checkout, check=True)
-subprocess.run(["python", "cloud/kaggle_smoke.py", "<run-id>", "<object-key>", "<sha256>", "--device", "cpu"], cwd=checkout, check=True)
+subprocess.run(["python", "cloud/kaggle_smoke.py", "<run-id>", "<object-key>", "<sha256>", "--device", "cpu", "--separate-output"], cwd=checkout, check=True)
 ```
 
-Kaggle's CLI can submit staged notebook code with `kaggle kernels push -p PATH`, then inspect with `kaggle kernels status USER/SLUG`. Use a private kernel and confirm secret attachments in the UI before submitting. In a fresh session, verify the output and report keys with `cloud/storage.py` and recorded hashes. Publish the redacted report through a GitHub PR, with timing, hardware, free disk, runtime limits and storage readback. [Kaggle kernel metadata](https://github.com/Kaggle/kaggle-cli/blob/main/docs/kernels_metadata.md)
+Save the reported keys and SHA-256 digests for both the normalized NIfTI and the report. In a fresh CPU session, configure `R2_OUTPUT_*` with output-bucket read-only credentials. From the checked-out repository, put `cloud` on `sys.path`, then call `client, bucket = storage.connect(output=True)` and `storage.verify(client, bucket, key, sha256)` for each receipt. Record both digests and the pinned Git SHA in the verification report.
+
+The interim recovery fixture was generated and written by the local R2 writer. It uses the existing dataset bucket's `verification/` prefix, so it can be checked interactively using the existing read-only secrets and `storage.connect()`. The owner confirmed the fixture checksum in an interactive Kaggle CPU session. The automated write uses the separate output bucket. [Recovery fixture receipt](verification.md#local-output-recovery-fixture)
 
 ## Gate E
 
