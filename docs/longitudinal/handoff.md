@@ -8,6 +8,13 @@ The owner selected `novo-nordisk-pbl`. Use the cloud runtime or credential manag
 
 Use Python 3.12 and `python -m pip install -r cloud/requirements.txt`. Run `python cloud/smoke.py write UNIQUE_RUN_ID` and save its JSON receipt. In a fresh cloud runtime with read-only access, run `python cloud/smoke.py read UNIQUE_RUN_ID --sha256 RECEIPT_SHA`. Publish the digest, byte size and both outcomes. Do not store credentials in the repo.
 
+To finish the independent cloud readback, attach read-only R2 credentials to a private cloud runtime and run the receipt check below. A CPU session is sufficient.
+
+```sh
+python cloud/smoke.py read r2-gate-b-20261114-124417-c454f3dc \
+  --sha256 7a9b9082712814448816bacb582c7faabd0dc3a8037910413e0d7c841d571562
+```
+
 ## Gate C
 
 Follow [TCIA acquisition](tcia.md). Record source links and checksums, official count reconciliation, one complete patient transfer with verified visits and observed labels, then stage the full dataset.
