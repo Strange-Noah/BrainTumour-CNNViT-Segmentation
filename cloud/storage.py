@@ -14,20 +14,34 @@ DATASET = f"{PREFIX}/datasets/ucsd-bmets/v1"
 
 
 def connect():
-    endpoint = os.environ["R2_ENDPOINT_URL"]
+    bucket = os.environ["R2_BUCKET"]
+    endpoint = os.environ.get("R2_ENDPOINT_URL")
+    profile = os.environ.get("R2_AWS_PROFILE")
+    if profile:
+        session = boto3.Session(profile_name=profile)
+        client = session.client("s3", endpoint_url=endpoint, region_name="auto")
+        validate_endpoint(client.meta.endpoint_url)
+        return client, bucket
+
+    if not endpoint:
+        raise ValueError("Set R2_ENDPOINT_URL to the Cloudflare R2 S3 endpoint.")
+    validate_endpoint(endpoint)
+    client = boto3.client(
+        "s3", endpoint_url=endpoint, region_name="auto",
+        aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
+        aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
+    )
+    return client, bucket
+
+
+def validate_endpoint(endpoint):
     url = urlsplit(endpoint)
     if (
         url.scheme != "https" or not url.hostname or url.username or url.password
         or not url.hostname.endswith(".r2.cloudflarestorage.com")
         or url.path not in ("", "/") or url.query or url.fragment
     ):
-        raise ValueError("Use the direct HTTPS R2 S3 endpoint.")
-    client = boto3.client(
-        "s3", endpoint_url=endpoint, region_name="auto",
-        aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
-        aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
-    )
-    return client, os.environ["R2_BUCKET"]
+        raise ValueError("Configure the direct HTTPS R2 S3 endpoint in the profile or R2_ENDPOINT_URL.")
 
 
 def key_under(prefix, name):
