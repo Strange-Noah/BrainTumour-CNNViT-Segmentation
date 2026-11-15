@@ -16,3 +16,7 @@ python -m research.run_visit --manifest /private/manifest.jsonl \
 ```
 
 For loader/evaluator smoke only, use `experiments.reference_smoke:predict` and model-version `reference-mask-smoke`. This echoes the provided target to check the data and export path. It is not a learned segmentation experiment. The first actual architecture runs await the respective owners' checkpoints and coordination. Full training is not launched automatically.
+
+Runnable inference examples are provided as `experiments.cnn_vit:predict`, `experiments.swin_unetr:predict` and `experiments.nnunet:predict`. Each requires an explicitly supplied checkpoint trained for the selected binary task. These entry points have not been validated with owner checkpoints yet.
+
+CNN–ViT uses `CNN_VIT_SCRIPT`, a TorchScript export whose preprocessing is embedded. Swin uses `SWIN_CHECKPOINT`, a strict MONAI 4-input/2-output feature-size-48 state dict. The owner must select and record the compatible MONAI version and normalization recipe. nnU-Net uses `NNUNET_DATASET_ID`, `NNUNET_CONFIG`, `NNUNET_FOLD` and the normal nnU-Net environment paths. Its native preprocessing and inverse restoration run through nnUNetv2_predict. Install the selected framework in the owner's GPU environment and use the same research.run_visit command with the corresponding predictor.

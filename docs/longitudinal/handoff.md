@@ -21,9 +21,9 @@ Follow [TCIA acquisition](tcia.md). The four official TSVs and minimized manifes
 
 For persistence, run `python cloud/tcia_pilot.py ingest --stage /path/to/private-staging` on existing cloud Linux with IBM Aspera CLI v4.28.0 and its Transfer SDK. Provide the project dataset writer through the runtime's secret store. The script validates the inventory and known pilot digest before publishing each raw object with conditional PUT and a byte-for-byte SHA-256 readback. It writes a completion receipt only after all 43 readbacks pass. Running again with the same staged files reuses matching existing R2 objects and rejects conflicts.
 
-The [GitHub Actions pilot](../../.github/workflows/tcia-pilot.yml) accepts manual dispatch from reviewed `main` after promotion. Both environment allowlists have been cut over to `main`. Their credential approval controls remain active. A trusted collaborator dispatches the run. The designated owner reviews the run SHA before approving each job. Retries on ephemeral runners may download the same patient again.
+The manual main workflow has passed the 43-file pilot and independent readback. TCIA environments keep their existing credentials and main-only policies, with human approvals removed by owner instruction. For subsequent batches use mode=batch, start (zero-based sorted patient index), count (1–10). Completion receipts make reruns recoverable. The first batch was started with start=0 and count=10.
 
-The readback job runs separately using the read-only environment. It hashes the 43 stored objects and checks the receipt against the original Aspera pilot digest. The existing read-only Kaggle session can also run `python cloud/tcia_pilot.py readback`. Full ingestion follows after persistent pilot verification and inventory reconciliation.
+Use [active experiment records](active-experiments.md) and the frozen [protocol v1](../../protocol/v1/README.md). The shared loader and reference-mask evaluator/export passed on a real R2 visit. Keep raw labels unchanged and use the exact shared split. Feature owners can run their adapters independently while ingestion progresses.
 
 ## Gate D
 

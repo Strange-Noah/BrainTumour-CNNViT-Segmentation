@@ -8,6 +8,16 @@ The shared metric checks passed for perfect overlap, empty-mask conventions and 
 
 Governance was simplified per owner instruction. Main has no merge-blocking rules, and CI remains diagnostic. Both TCIA environments retain their secrets and main-only policies with no required human approvals. Summer archive remains frozen. Documentation PRs #3 and #4 were merged.
 
-The resumed pilot failed because the GitHub runner timed out on the collection page. A private Kaggle CPU job retrieved the official Faspex public link for the existing environment secret, avoiding dependence on that page during transfer. Persistent raw imaging and full ingestion remain unverified until the retry passes. cloud/tcia_batch.py supports bounded 1–10-patient jobs and completion-receipt recovery, to be run after the pilot. A completed patient is readback-verified before skipping. Partial jobs may re-download the current patient but conditional R2 writes never overwrite different bytes.
+The resumed pilot failed because the GitHub runner timed out on the collection page. A private Kaggle CPU job retrieved the official Faspex public link for the existing environment secret, avoiding dependence on that page during transfer. The retry passed. All 43 pilot files are stored and independently readback-verified in R2. A ten-patient progressive batch is running. cloud/tcia_batch.py supports bounded 1–10-patient jobs and completion-receipt recovery, to be run after the pilot. A completed patient is readback-verified before skipping. Partial jobs may re-download the current patient but conditional R2 writes never overwrite different bytes.
 
 Full training for the model owners awaits coordination. Hosted deployment remains deferred.
+
+## Confirmed real-data evidence
+
+The real loader returned a 4×512×512×184 first visit from R2, with raw mask values 0,2,3. Both task mappings passed reference-mask evaluation and prediction/lesion candidate export on the real geometry. These identity smoke metrics (Dice 1, HD95 0, lesion sensitivity 1, zero false positives and zero volume error) validate wiring only. Learned model inference has not run.
+
+- [43-file upload and independent verification](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43713004163)
+- [Real loader, evaluator and export run](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43713470661)
+- [First progressive patient batch](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43713512344)
+
+Use `python -m research.evaluate_files CASES.csv OUTPUT.json --task enhancing` to evaluate actual model predictions. The input CSV joins patient and exam IDs to original-grid prediction and raw truth filenames. It produces visit metrics, patient means, macro patient means and defined-metric counts.
