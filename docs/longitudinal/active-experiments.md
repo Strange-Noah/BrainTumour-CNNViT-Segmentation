@@ -8,7 +8,7 @@ The shared metric checks passed for perfect overlap, empty-mask conventions and 
 
 Governance was simplified per owner instruction. Main has no merge-blocking rules, and CI remains diagnostic. Both TCIA environments retain their secrets and main-only policies with no required human approvals. Summer archive remains frozen. Documentation PRs #3 and #4 were merged.
 
-The resumed pilot failed because the GitHub runner timed out on the collection page. A private Kaggle CPU job retrieved the official Faspex public link for the existing environment secret, avoiding dependence on that page during transfer. The retry passed. All 43 pilot files are stored and independently readback-verified in R2. A ten-patient progressive batch is running. cloud/tcia_batch.py supports bounded 1–10-patient jobs and completion-receipt recovery, to be run after the pilot. A completed patient is readback-verified before skipping. Partial jobs may re-download the current patient but conditional R2 writes never overwrite different bytes.
+The resumed pilot failed because the GitHub runner timed out on the collection page. A private Kaggle CPU job retrieved the official Faspex public link for the existing environment secret, avoiding dependence on that page during transfer. The retry passed. All 43 pilot files are stored and independently readback-verified in R2. As of 2026-11-16, 40 patients have completion receipts. R2 contains 1,417 raw objects, 23,086,652,241 bytes across 133 examination prefixes. cloud/tcia_batch.py supports bounded 1–10-patient jobs and completion-receipt recovery, to be run after the pilot. A completed patient is readback-verified before skipping. Partial jobs may re-download the current patient but conditional R2 writes never overwrite different bytes.
 
 Full training for the model owners awaits coordination. Hosted deployment remains deferred.
 
@@ -21,3 +21,9 @@ The real loader returned a 4×512×512×184 first visit from R2, with raw mask v
 - [First progressive patient batch](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43713512344)
 
 Use `python -m research.evaluate_files CASES.csv OUTPUT.json --task enhancing` to evaluate actual model predictions. The input CSV joins patient and exam IDs to original-grid prediction and raw truth filenames. It produces visit metrics, patient means, macro patient means and defined-metric counts.
+
+## Ingestion recovery on 2026-11-16
+
+Patient ranges 0–9, 10–19, 20–29 and 40–49 completed. The start=30 and start=50 jobs failed at root-level Aspera browse, before their patient transfers. The recovery implementation derives its 1,065 exam folders from the checksum-verified canonical manifest, avoiding repeated whole-release source listing. Recognized transient Aspera errors receive at most three attempts with backoff. Failed commands report sanitized indicators only.
+
+The interrupted ranges are retrying on the existing free runners, with already-completed patient receipts reused. Subsequent patient ranges continue in bounded batches. [Retry 30–39](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43735419540) · [Retry 50–59](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43735423231) · [Machine-readable availability snapshot](../../protocol/v1/ingestion-status.json)
