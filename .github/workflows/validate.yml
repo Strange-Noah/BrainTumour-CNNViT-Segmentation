@@ -21,12 +21,12 @@ jobs:
           python-version: '3.12'
       - name: Install cloud and viewer dependencies
         run: |
-          python -m pip install -r cloud/requirements.txt
+          python -m pip install -r research/requirements.txt
           python -m pip install gradio==6.1.0 -r deployment/longitudinal_viewer/requirements.txt
           python -m pip check
       - name: Check cloud entry points and synthetic viewer
         run: |
-          python -m compileall -q cloud deployment/longitudinal_viewer
+          python -m compileall -q cloud research experiments deployment/longitudinal_viewer
           for script in cloud/{smoke,read_smoke,manifest,audit_visit,ingest,tcia_pilot,kaggle_smoke}.py; do
             python "$script" --help > /dev/null
           done

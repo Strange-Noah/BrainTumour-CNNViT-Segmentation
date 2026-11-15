@@ -45,7 +45,8 @@ def evaluate(prediction, truth, affine):
     t, lesions = components(truth, affine)
     overlap = np.zeros((len(lesions), len(candidates)), dtype=np.int64)
     # A maximum-cardinality one-to-one match uses any positive voxel overlap.
-    pairs = np.stack([t.ravel(), p.ravel()], axis=1)
+    intersection = truth & prediction
+    pairs = np.stack([t[intersection], p[intersection]], axis=1)
     pairs, counts = np.unique(pairs, axis=0, return_counts=True)
     for (a, b), count in zip(pairs, counts):
         if a and b:

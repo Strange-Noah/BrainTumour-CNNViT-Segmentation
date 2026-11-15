@@ -2,7 +2,7 @@
 
 Verified by live S3 listing and SHA-256 readback on 2026-11-15, Asia/Shanghai.
 
-Private bucket `novo-nordisk-pbl` has four original official metadata TSVs (136,665 bytes combined), two immutable manifest revisions (1,619,865 bytes combined), and two synthetic verification objects (777 bytes combined). The raw imaging prefix contains zero objects. The 43-file real patient was acquired and audited in Kaggle scratch, and still needs persistent ingestion. The remaining release is pending transfer.
+Private bucket `novo-nordisk-pbl` has four original official metadata TSVs (136,665 bytes combined), two immutable manifest revisions (1,619,865 bytes combined), and two synthetic verification objects (777 bytes combined). The 43-file pilot is now stored in raw and verified by an independent read-only runner. The same pilot patient is usable through the real loader. The remaining release is pending transfer.
 
 The canonical pending-availability manifest is the revision beginning `040ec6c5`. The earlier `4f3c7caa` manifest uses the unverified T2 filename convention and is superseded. Both are immutable. The canonical manifest records expected paths and pending integrity for images. Its presence does not imply those image objects are available.
 
