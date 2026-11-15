@@ -28,11 +28,17 @@ def main():
     import os
     link = os.environ.get("TCIA_FASPEX_URL") or official_link()
     client, bucket = connect()
-    rows = aspera(args.ascli, link, "browse", COLLECTION)
-    folders = sorted(row["path"] for row in rows if row["type"] == "directory")
+    manifest_sha = "040ec6c523d5beae43a30b64fede2bee226e1a08e8c14b2cca8043b01b9c39f4"
+    response = client.get_object(Bucket=bucket, Key=f"{DATASET}/manifests/{manifest_sha}/visits.jsonl")
+    with closing(response["Body"]) as body:
+        content = body.read()
+    if hashlib.sha256(content).hexdigest() != manifest_sha:
+        raise ValueError("Canonical manifest checksum mismatch")
+    rows = [json.loads(line) for line in content.decode().splitlines()]
+    folders = sorted(f"{COLLECTION}/{row['exam_id']}" for row in rows)
     if len(folders) != 1065 or len(set(folders)) != 1065:
         raise ValueError("Unexpected release exam inventory")
-    patients = sorted({PurePosixPath(path).name.split("_")[0] for path in folders})
+    patients = sorted({row["patient_id"] for row in rows})
     if len(patients) != 300:
         raise ValueError("Unexpected patient cohort")
     args.stage.mkdir(parents=True, exist_ok=True)

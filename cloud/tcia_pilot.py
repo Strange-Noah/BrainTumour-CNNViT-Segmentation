@@ -9,6 +9,7 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
+import time
 from urllib.parse import urljoin, urlsplit
 from urllib.request import urlopen
 
@@ -53,15 +54,30 @@ def aspera(cli, link, *args):
         name: value for name, value in os.environ.items()
         if not name.startswith(("R2_", "AWS_")) and name != "TCIA_FASPEX_URL"
     }
-    try:
-        result = subprocess.run(
-            [cli, "faspex5", "packages", *args, f"--url={link}", "--format=json"],
-            capture_output=True, timeout=1200, env=child_env,
-        )
-    except subprocess.TimeoutExpired:
-        raise RuntimeError(f"Aspera {args[0]} timed out.") from None
-    if result.returncode:
-        raise RuntimeError(f"Aspera {args[0]} failed (exit {result.returncode}). Inspect private diagnostics.")
+    for attempt in range(3):
+        try:
+            result = subprocess.run(
+                [cli, "faspex5", "packages", *args, f"--url={link}", "--format=json"],
+                capture_output=True, timeout=1200, env=child_env,
+            )
+        except subprocess.TimeoutExpired:
+            raise RuntimeError(f"Aspera {args[0]} timed out.") from None
+        if result.returncode == 0:
+            break
+        diagnostic = (result.stdout + result.stderr).decode(errors="replace").lower()
+        indicators = [word for word in (
+            "timeout", "timed out", "connection reset", "connection refused", "ssl",
+            "certificate", "unauthorized", "forbidden", "rate limit", "503", "502", "504",
+            "not found", "expired", "401", "403", "429", "unable to resolve", "error"
+        ) if word in diagnostic]
+        transient = any(word in indicators for word in (
+            "timeout", "timed out", "connection reset", "503", "502", "504", "429", "rate limit"
+        ))
+        if not transient or attempt == 2:
+            raise RuntimeError(
+                f"Aspera {args[0]} failed (exit {result.returncode}, indicators={indicators})."
+            )
+        time.sleep(5 * (attempt + 1))
     if args[0] == "browse":
         return json.loads(result.stdout)
 
