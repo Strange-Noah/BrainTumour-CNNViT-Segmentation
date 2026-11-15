@@ -1,4 +1,5 @@
 """Protocol v1 binary metrics, components, matching and prediction export."""
+import hashlib
 import json
 from pathlib import Path
 
@@ -101,5 +102,8 @@ def export(mask, reference, destination, metadata):
     _, candidates = components(mask, reference.affine)
     record = {**metadata, "raw_positive_labels": TASKS[metadata["task"]],
               "prediction_labels": {"0": "background", "1": metadata["task"]},
-              "candidates": candidates, "candidate_identity_scope": "visit"}
+              "candidates": candidates, "candidate_identity_scope": "visit",
+              "prediction_sha256": hashlib.sha256((destination / "seg.nii.gz").read_bytes()).hexdigest(),
+              "reference_shape": list(reference.shape), "reference_affine": reference.affine.tolist(),
+              "spatial_units": "mm"}
     (destination / "prediction.json").write_text(json.dumps(record, indent=2) + "\n")
