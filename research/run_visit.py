@@ -21,9 +21,15 @@ def main():
     parser.add_argument("--task", choices=["enhancing", "core"], default="enhancing")
     parser.add_argument("--predictor", required=True, help="module:function accepting the loaded sample")
     parser.add_argument("--model-version", required=True)
+    parser.add_argument("--metadata", help="JSON with checkpoint_ref, framework_version and model_config")
     parser.add_argument("--git-sha", required=True)
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
+    provenance = json.loads(Path(args.metadata).read_text()) if args.metadata else {}
+    if args.predictor != "experiments.reference_smoke:predict":
+        required = {"checkpoint_ref", "framework_version", "model_config"}
+        if not required <= provenance.keys():
+            parser.error("actual model runs must record checkpoint_ref, framework_version and model_config via --metadata")
     dataset = Dataset(args.manifest, args.split, args.cache, args.partition)
     sample = dataset.load(args.index, args.task)
     module, function = args.predictor.split(":")
@@ -34,7 +40,7 @@ def main():
     if prediction.shape != sample["target"].shape or not np.isin(prediction,[0,1]).all():
         raise ValueError("Predictor must return original T1c-grid binary labels")
     visit = sample["visit"]
-    metadata = {"patient_id":visit["patient_id"],"exam_id":visit["exam_id"],
+    metadata = {**provenance, "patient_id":visit["patient_id"],"exam_id":visit["exam_id"],
                 "model_version":args.model_version,"git_sha":args.git_sha,"task":args.task,
                 "split_sha256":hashlib.sha256(Path(args.split).read_bytes()).hexdigest()}
     metrics = evaluate(prediction, sample["target"], sample["reference"].affine)

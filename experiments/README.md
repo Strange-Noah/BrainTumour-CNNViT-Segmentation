@@ -11,7 +11,7 @@ Create a Python module in your feature branch with `predict(sample)`. Its sample
 ```sh
 python -m research.run_visit --manifest /private/manifest.jsonl \
   --cache /private/cache --predictor my_model.predict:predict \
-  --model-version MODEL-CHECKPOINT-SHA --git-sha CODE-SHA \
+  --model-version MODEL-CHECKPOINT-SHA --git-sha CODE-SHA --metadata /private/run-metadata.json \
   --partition train --output /private/outputs/unique-run
 ```
 
@@ -20,3 +20,6 @@ For loader/evaluator smoke only, use `experiments.reference_smoke:predict` and m
 Runnable inference examples are provided as `experiments.cnn_vit:predict`, `experiments.swin_unetr:predict` and `experiments.nnunet:predict`. Each requires an explicitly supplied checkpoint trained for the selected binary task. These entry points have not been validated with owner checkpoints yet.
 
 CNN–ViT uses `CNN_VIT_SCRIPT`, a TorchScript export whose preprocessing is embedded. Swin uses `SWIN_CHECKPOINT`, a strict MONAI 4-input/2-output feature-size-48 state dict. The owner must select and record the compatible MONAI version and normalization recipe. nnU-Net uses `NNUNET_DATASET_ID`, `NNUNET_CONFIG`, `NNUNET_FOLD` and the normal nnU-Net environment paths. Its native preprocessing and inverse restoration run through nnUNetv2_predict. Install the selected framework in the owner's GPU environment and use the same research.run_visit command with the corresponding predictor.
+
+
+The owners confirmed independent integration. Use enhancing tissue (raw label 3) for the first run; core (1+3) is optional secondary work. Owners choose checkpoint, framework and GPU environment when ready. Supply a private JSON file to --metadata containing checkpoint_ref (a Kaggle path, R2 key or local path), framework_version and model_config. Record native preprocessing in model_config. The run sidecar retains these fields with the exact code commit and frozen split. Keep credentials out of this file and publish aggregate metrics only in GitHub.
