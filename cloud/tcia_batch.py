@@ -1,5 +1,6 @@
 """Receive bounded patient batches, publish raw objects, and resume by receipt."""
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing
 import hashlib
 import json
@@ -64,7 +65,7 @@ def main():
             stage = Path(temp)
             aspera(args.ascli, link, "receive", "--sources=@json:" + json.dumps(sorted(index)),
                    "--to-folder=" + str(stage))
-            receipt = []
+            validated = []
             for remote, size in sorted(index.items()):
                 name = PurePosixPath(remote).name
                 paths = list(stage.rglob(name))
@@ -78,7 +79,9 @@ def main():
                 if not np.isfinite(data).all():
                     raise ValueError("Nonfinite source voxels")
                 key = f"{DATASET}/raw/{name.split('-',1)[0]}/{name}"
-                receipt.append(put_once(client, bucket, key, paths[0]))
+                validated.append((key, paths[0]))
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                receipt = list(pool.map(lambda item: put_once(client, bucket, *item), validated))
             path = stage / "receipt.json"
             path.write_text(json.dumps(receipt, sort_keys=True, separators=(",", ":")))
             put_once(client, bucket, receipt_key, path)

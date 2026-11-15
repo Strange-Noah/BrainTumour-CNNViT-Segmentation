@@ -16,7 +16,7 @@ on:
 permissions:
   contents: read
 
-concurrency: tcia-patient-pilot
+concurrency: tcia-patient-${{ inputs.mode }}-${{ inputs.start }}
 
 jobs:
   ingest:
