@@ -27,7 +27,7 @@ jobs:
       - name: Check cloud entry points and synthetic viewer
         run: |
           python -m compileall -q cloud deployment/longitudinal_viewer
-          for script in cloud/{smoke,manifest,audit_visit,ingest,tcia_pilot,kaggle_smoke}.py; do
+          for script in cloud/{smoke,read_smoke,manifest,audit_visit,ingest,tcia_pilot,kaggle_smoke}.py; do
             python "$script" --help > /dev/null
           done
           cd deployment/longitudinal_viewer

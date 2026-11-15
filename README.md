@@ -2,6 +2,7 @@
 
 Infrastructure for patient-level, multi-visit brain metastases research using UCSD-BMETS-Longitudinal v1. The viewer accepts a 3D MRI and an optional aligned mask from any segmentation pipeline. A synthetic visit is available in the UI.
 
+- [Team onboarding](TEAM_ONBOARDING.md)
 - [Promotion plan and acceptance review](docs/longitudinal/promotion.md)
 - [Architecture and access](docs/longitudinal/architecture.md)
 - [TCIA metadata audit and acquisition](docs/longitudinal/tcia.md)

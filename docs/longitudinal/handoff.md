@@ -1,6 +1,6 @@
 # Team and cross-account recovery
 
-Clone [GitHub](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation) and check out the migration PR head in detached mode for validation. For edits, create your own branch and open a PR. The archived branch is the exact summer code and report tree. Data access is separate from GitHub membership. Read [verification](verification.md) and resume at the first open gate.
+Clone [GitHub](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation) and create a feature branch from reviewed main. Pin an immutable commit for experiments and open PRs against main. Start with [team onboarding](../../TEAM_ONBOARDING.md). The archived branch is the exact summer code and report tree. Data access is separate from GitHub membership. Read [verification](verification.md) and resume at the first open gate.
 
 ## Gate B
 
@@ -21,7 +21,7 @@ Follow [TCIA acquisition](tcia.md). The four official TSVs and minimized manifes
 
 For persistence, run `python cloud/tcia_pilot.py ingest --stage /path/to/private-staging` on existing cloud Linux with IBM Aspera CLI v4.28.0 and its Transfer SDK. Provide the project dataset writer through the runtime's secret store. The script validates the inventory and known pilot digest before publishing each raw object with conditional PUT and a byte-for-byte SHA-256 readback. It writes a completion receipt only after all 43 readbacks pass. Running again with the same staged files reuses matching existing R2 objects and rejects conflicts.
 
-The [GitHub Actions pilot](../../.github/workflows/tcia-pilot.yml) accepts manual dispatch from reviewed `main` after promotion. Follow the [promotion plan](promotion.md#cutover) to move both environment rules to `main` and verify their reviewer controls, then set `TCIA_PILOT_ENABLED=true`. A trusted collaborator dispatches the run. The designated owner reviews the run SHA before approving each job. Retries on ephemeral runners may download the same patient again.
+The [GitHub Actions pilot](../../.github/workflows/tcia-pilot.yml) accepts manual dispatch from reviewed `main` after promotion. Both environment allowlists have been cut over to `main`. Their credential approval controls remain active. A trusted collaborator dispatches the run. The designated owner reviews the run SHA before approving each job. Retries on ephemeral runners may download the same patient again.
 
 The readback job runs separately using the read-only environment. It hashes the 43 stored objects and checks the receipt against the original Aspera pilot digest. The existing read-only Kaggle session can also run `python cloud/tcia_pilot.py readback`. Full ingestion follows after persistent pilot verification and inventory reconciliation.
 
