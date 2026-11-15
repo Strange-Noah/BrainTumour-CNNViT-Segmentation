@@ -21,7 +21,6 @@ env/
 data/
 models/
 checkpoints/
-!deployment/binary_seg_mvp/checkpoints/
 *.nii
 *.nii.gz
 *.tar
@@ -43,4 +42,3 @@ exports/
 !outputs/**/*.csv
 !outputs/**/*.json
 !outputs/**/*.png
-!deployment/binary_seg_mvp/checkpoints/.gitkeep
