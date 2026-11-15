@@ -4,7 +4,7 @@ Start from reviewed `main`. GitHub access and dataset access are provisioned sep
 
 ## GitHub
 
-Ask the owner for repository access or fork the public repository. Clone your repository, fetch upstream main and create `feat/<name>-<topic>` from it. Open a PR against upstream main with the code SHA, validation and any aggregate results. Main requires CI and an owner merge. Summer history is on frozen `summer-archive`.
+Ask the owner for repository access or fork the public repository. Clone your repository, fetch upstream main and create `feat/<name>-<topic>` from it. Open a PR against upstream main with the code SHA, validation and any aggregate results. Team writers can push and merge normally. CI is diagnostic. Coordinate shared protocol changes in PRs. Summer history is on frozen `summer-archive`.
 
 ```sh
 git clone https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation.git
