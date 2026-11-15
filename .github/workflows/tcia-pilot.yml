@@ -1,6 +1,17 @@
 name: TCIA patient pilot
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [pilot, batch]
+        default: pilot
+      start:
+        type: number
+        default: 0
+      count:
+        type: number
+        default: 5
 
 permissions:
   contents: read
@@ -36,12 +47,21 @@ jobs:
           printf 'ASCLI=%s\n' "$cli" >> "$GITHUB_ENV"
       - name: Transfer and persist the pilot
         env:
+          INGEST_MODE: ${{ inputs.mode }}
+          BATCH_START: ${{ inputs.start }}
+          BATCH_COUNT: ${{ inputs.count }}
           TCIA_FASPEX_URL: ${{ secrets.TCIA_FASPEX_URL }}
           R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}
           R2_BUCKET: novo-nordisk-pbl
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: python cloud/tcia_pilot.py ingest --ascli "$ASCLI" --stage "$RUNNER_TEMP/tcia-pilot"
+        run: |
+          if [ "$INGEST_MODE" = batch ]; then
+            python cloud/tcia_pilot.py readback
+            python cloud/tcia_batch.py --ascli "$ASCLI" --stage "$RUNNER_TEMP/tcia-batch" --start "$BATCH_START" --count "$BATCH_COUNT"
+          else
+            python cloud/tcia_pilot.py ingest --ascli "$ASCLI" --stage "$RUNNER_TEMP/tcia-pilot"
+          fi
 
   verify:
     needs: ingest
