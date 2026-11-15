@@ -6,6 +6,7 @@ from pathlib import Path
 import nibabel as nib
 import numpy as np
 from research.evaluate import evaluate, patient_aggregates, target
+from research.geometry import mask_geometry, require_mm, same_grid
 
 
 def main():
@@ -23,16 +24,18 @@ def main():
                 raise ValueError("Duplicate visit in evaluation")
             keys.add(key)
             prediction, truth = nib.load(case["prediction"]), nib.load(case["truth"])
-            if prediction.shape != truth.shape or not np.allclose(prediction.affine, truth.affine, atol=1e-4):
+            reference = nib.load(case["reference"]) if case.get("reference") else truth
+            require_mm(reference, "evaluation T1c reference")
+            require_mm(prediction, "prediction")
+            warnings = mask_geometry(truth, reference, case["exam_id"])
+            if not same_grid(prediction, reference):
                 raise ValueError("Restore predictions to the source reference grid")
-            if truth.header.get_xyzt_units()[0] != "mm":
-                raise ValueError("Reference grid must use millimetres")
             raw_prediction = prediction.get_fdata(caching="unchanged")
             raw_truth = truth.get_fdata(caching="unchanged")
             if not np.isin(raw_prediction,[0,1]).all() or not np.isin(raw_truth,[0,1,2,3,4]).all():
                 raise ValueError("Unexpected prediction or source label map")
             rows.append({"patient_id":key[0],"exam_id":key[1],
-                         **evaluate(raw_prediction > 0,target(raw_truth,args.task),truth.affine)})
+                         "geometry_warnings":warnings, **evaluate(raw_prediction > 0,target(raw_truth,args.task),reference.affine)})
     if not rows:
         raise ValueError("No evaluation visits supplied")
     patients = patient_aggregates(rows)

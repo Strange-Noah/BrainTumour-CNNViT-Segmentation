@@ -11,6 +11,7 @@ import numpy as np
 
 from cloud.storage import DATASET, connect
 from research.evaluate import target
+from research.geometry import mask_geometry, require_mm
 
 
 class Dataset:
@@ -61,19 +62,21 @@ class Dataset:
         row = self.visits[index]
         paths = {name: self.fetch(path) for name, path in row["modalities"].items()}
         reference = nib.load(paths["t1c"])
+        require_mm(reference, "T1c reference")
+        warnings = []
         arrays = []
         # Explicit resampling to T1c accommodates differing native modality grids.
         from nibabel.processing import resample_from_to
         for name in ("t1n", "t1c", "t2", "t2f"):
             image = nib.load(paths[name])
+            require_mm(image, name)
             if image.shape != reference.shape or not np.allclose(image.affine, reference.affine, atol=1e-4):
                 image = resample_from_to(image, reference, order=1)
             arrays.append(image.get_fdata(dtype=np.float32))
         label = nib.load(self.fetch(row["segmentation"]))
-        if label.shape != reference.shape or not np.allclose(label.affine, reference.affine, atol=1e-4):
-            raise ValueError("Raw mask is not aligned to T1c")
+        warnings.extend(mask_geometry(label, reference, row["exam_id"]))
         raw = label.get_fdata()
         if not np.isfinite(raw).all() or not np.isin(raw, [0, 1, 2, 3, 4]).all():
             raise ValueError("Unexpected source labels")
         return {"images": np.stack(arrays), "raw_labels": raw.astype(np.uint8),
-                "target": target(raw, task), "reference": reference, "visit": row}
+                "target": target(raw, task), "reference": reference, "visit": row, "geometry_warnings": warnings}
