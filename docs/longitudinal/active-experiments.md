@@ -27,3 +27,11 @@ Use `python -m research.evaluate_files CASES.csv OUTPUT.json --task enhancing` t
 Patient ranges 0–9, 10–19, 20–29 and 40–49 completed. The start=30 and start=50 jobs failed at root-level Aspera browse, before their patient transfers. The recovery implementation derives its 1,065 exam folders from the checksum-verified canonical manifest, avoiding repeated whole-release source listing. Recognized transient Aspera errors receive at most three attempts with backoff. Failed commands report sanitized indicators only.
 
 The interrupted ranges are retrying on the existing free runners, with already-completed patient receipts reused. Subsequent patient ranges continue in bounded batches. [Retry 30–39](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43735419540) · [Retry 50–59](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43735423231) · [Machine-readable availability snapshot](../../protocol/v1/ingestion-status.json)
+
+## Owner integration confirmation and progressive availability
+
+The owner confirmed Zihan/Kaile (CNN–ViT), Yilong (Swin UNETR) and Qiu (nnU-Net v2) integrate independently. The first run uses enhancing tissue (raw 3). Owners select checkpoint, framework and compute when ready and record those with model configuration and Git SHA through the run metadata file. Core (1+3) remains optional secondary work. No checkpoint collection is required before owners start integration.
+
+Latest live availability snapshot has 70 complete patient receipts, 2,601 raw objects and 38,716,196,788 bytes. Object totals may include partially uploaded subsequent patients. Four disjoint ten-patient jobs are active; the coordinator replenishes completed ranges and halts new scheduling on an unexpected failure. Canonical R2 completion receipts and GitHub run history support recovery without a local imaging copy. [Current snapshot](../../protocol/v1/ingestion-status.json)
+
+The full 300-patient collection is still in progress. Learned architecture results are pending each owner's first checkpoint run. The reference-mask identity metrics remain data/evaluation/export verification.

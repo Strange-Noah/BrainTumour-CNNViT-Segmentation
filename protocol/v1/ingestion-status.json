@@ -1,32 +1,16 @@
 {
   "verified_at": "2026-11-16",
-  "completed_patient_receipts": 40,
-  "raw_objects": 1417,
-  "raw_bytes": 23086652241,
-  "raw_exam_prefixes": 133,
-  "completed_ranges": [
-    [
-      0,
-      9
-    ],
-    [
-      10,
-      19
-    ],
-    [
-      20,
-      29
-    ],
-    [
-      40,
-      49
-    ]
-  ],
-  "retry_runs": [
-    "https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43735419540",
-    "https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43735423231"
-  ],
+  "completed_patient_receipts": 70,
+  "raw_objects": 2601,
+  "raw_bytes": 38716196788,
   "split_sha256": "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0",
   "real_loader_smoke": "https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43713470661",
-  "learned_model_experiments": "pending owner checkpoints and coordination"
+  "learned_model_experiments": "pending owner checkpoints and coordination",
+  "ingested_counts_note": "Live listing includes objects from in-progress patients; only patient completion receipts imply a complete sequence.",
+  "active_runs": [
+    "https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43736588261",
+    "https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43736640709",
+    "https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43736732410",
+    "https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43736736795"
+  ]
 }
