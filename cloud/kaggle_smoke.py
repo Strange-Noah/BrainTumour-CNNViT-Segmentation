@@ -20,7 +20,6 @@ def main():
     parser.add_argument("input_key")
     parser.add_argument("sha256")
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cuda")
-    parser.add_argument("--separate-output", action="store_true")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]{5,63}", args.run_id):
         parser.error("invalid run ID")
@@ -33,8 +32,8 @@ def main():
     if subprocess.check_output(["git", "-C", repo, "status", "--porcelain"]):
         raise RuntimeError("Use a clean checkout for reproducible results.")
     client, bucket = connect()
-    output_client, output_bucket = connect(output=True) if args.separate_output else (client, bucket)
-    if args.separate_output and output_bucket == bucket:
+    output_client, output_bucket = connect(output=True)
+    if output_bucket == bucket:
         parser.error("the output bucket must differ from the dataset bucket")
 
     with TemporaryDirectory() as folder:
