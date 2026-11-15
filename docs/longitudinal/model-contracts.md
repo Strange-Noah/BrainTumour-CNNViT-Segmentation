@@ -2,7 +2,7 @@
 
 ## Patient split
 
-All model families consume the same owner-reviewed, immutable split artifact. No canonical train/validation/test assignment has been approved yet. Synthetic development and loader work may proceed. A model must not publish held-out comparison metrics against a self-selected split.
+All model families consume the same owner-reviewed, immutable split artifact. Protocol v1 freezes the canonical 210/45/45 patient mapping in protocol/v1/patients.csv. Use its split.json digest and stratified allocation for every architecture. A model must not publish held-out comparison metrics against a self-selected split.
 
 Use UTF-8 CSV with columns `patient_id,partition`. Each canonical patient appears exactly once. Partition is exactly `train`, `validation` or `test`. Join visits through the canonical manifest's patient ID, and keep every visit of a patient in that partition. Check unique IDs, complete coverage of the selected cohort, no partition overlap and nonempty required partitions.
 
