@@ -15,7 +15,15 @@ from research.evaluate import target
 
 class Dataset:
     def __init__(self, manifest, split, cache, partition="train"):
-        mapping = list(csv.DictReader(Path(split).open()))
+        split_bytes = Path(split).read_bytes()
+        if hashlib.sha256(split_bytes).hexdigest() != "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0":
+            raise ValueError("Use the frozen Protocol v1 patient split")
+        manifest_bytes = Path(manifest).read_bytes()
+        if hashlib.sha256(manifest_bytes).hexdigest() != "040ec6c523d5beae43a30b64fede2bee226e1a08e8c14b2cca8043b01b9c39f4":
+            raise ValueError("Use the canonical Protocol v1 manifest")
+        if partition not in ("train", "validation", "test"):
+            raise ValueError("Unknown split partition")
+        mapping = list(csv.DictReader(split_bytes.decode().splitlines()))
         patients = [row["patient_id"] for row in mapping]
         if len(patients) != len(set(patients)):
             raise ValueError("Duplicate split patients")
