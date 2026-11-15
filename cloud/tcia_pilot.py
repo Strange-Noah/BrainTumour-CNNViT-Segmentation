@@ -142,7 +142,7 @@ def ingest(cli, link, stage):
                       "receipt_sha256": result["sha256"]}))
 
 
-def readback():
+def readback(receipt_only=False):
     client, bucket = connect()
     response = client.get_object(Bucket=bucket, Key=RECEIPT_KEY)
     with response["Body"] as stream:
@@ -152,6 +152,9 @@ def readback():
     pairs = sorted((PurePosixPath(row["key"]).name, row["sha256"]) for row in receipts)
     if hashlib.sha256(json.dumps(pairs).encode()).hexdigest() != PILOT_SHA:
         raise ValueError("Receipt does not match the independently observed pilot digest.")
+    if receipt_only:
+        print(json.dumps({"receipt_verified": True, "files": len(receipts), "pilot_sha256": PILOT_SHA}))
+        return
     for row in receipts:
         name = PurePosixPath(row["key"]).name
         if row["key"] != f"{DATASET}/raw/{name.split('-', 1)[0]}/{name}":
@@ -164,10 +167,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=["ingest", "readback"])
     parser.add_argument("--ascli", default="ascli")
+    parser.add_argument("--receipt-only", action="store_true")
     parser.add_argument("--stage", type=Path)
     args = parser.parse_args()
     if args.mode == "readback":
-        readback()
+        readback(args.receipt_only)
         return
     link = os.environ.get("TCIA_FASPEX_URL") or official_link()
     url = urlsplit(link)

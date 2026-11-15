@@ -57,13 +57,14 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: |
           if [ "$INGEST_MODE" = batch ]; then
-            python cloud/tcia_pilot.py readback
+            python cloud/tcia_pilot.py readback --receipt-only
             python cloud/tcia_batch.py --ascli "$ASCLI" --stage "$RUNNER_TEMP/tcia-batch" --start "$BATCH_START" --count "$BATCH_COUNT"
           else
             python cloud/tcia_pilot.py ingest --ascli "$ASCLI" --stage "$RUNNER_TEMP/tcia-pilot"
           fi
 
   verify:
+    if: inputs.mode != 'batch'
     needs: ingest
     runs-on: ubuntu-24.04
     timeout-minutes: 20
