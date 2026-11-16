@@ -1,0 +1,16 @@
+{
+  "manifest_sha256": "040ec6c523d5beae43a30b64fede2bee226e1a08e8c14b2cca8043b01b9c39f4",
+  "patients": 300,
+  "examinations": 1065,
+  "completed_patients": 300,
+  "objects": 11405,
+  "bytes": 175705024365,
+  "receipt_objects": 11405,
+  "missing_patients": [],
+  "missing_required": [],
+  "missing_objects": [],
+  "unexpected_objects": [],
+  "wrong_sizes": [],
+  "invalid_receipts": [],
+  "complete": true
+}
