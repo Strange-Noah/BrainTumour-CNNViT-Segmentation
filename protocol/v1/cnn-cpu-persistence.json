@@ -37,6 +37,15 @@
     "signed_volume_error_mm3": 1955474.2500000005,
     "absolute_volume_error_mm3": 1955474.2500000005
   },
-  "fresh_session_recovery": "pending PR16 approval and manual main dispatch",
+  "fresh_session_recovery": {
+    "workflow_run": 43811539630,
+    "verified": true,
+    "run_id": "43810710239",
+    "artifacts": 3,
+    "checkpoint_bytes": 405913387,
+    "checkpoint_sha256": "626d6f9810ed88d70ed1272c6f8473fc2d175f3a73a228c0d5f579abdfe5e678",
+    "report_sha256": "cd912c7b1e84c9edb6946a20e64061126cfa9de9ff1b7b405ab15d51fafafad0",
+    "git_sha": "ef1933f0c5c1744209c02c0b9e15deb57ec6b361"
+  },
   "test_evaluated": false
 }
