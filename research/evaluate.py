@@ -3,6 +3,7 @@ import hashlib
 import json
 from pathlib import Path
 
+from research.geometry import require_mm
 import nibabel as nib
 import numpy as np
 from scipy import ndimage
@@ -93,8 +94,7 @@ def export(mask, reference, destination, metadata):
     mask = np.asarray(mask)
     if mask.shape != reference.shape or not np.isin(mask, [0, 1]).all():
         raise ValueError("Restore a binary task prediction to original T1c geometry before export")
-    if reference.header.get_xyzt_units()[0] != "mm":
-        raise ValueError("T1c must declare millimetres")
+    require_mm(reference, "prediction export reference")
     destination = Path(destination)
     destination.mkdir(parents=True, exist_ok=False)
     header = reference.header.copy()
