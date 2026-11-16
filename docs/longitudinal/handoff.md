@@ -2,6 +2,12 @@
 
 Clone [GitHub](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation) and create a feature branch from reviewed main. Pin an immutable commit for experiments and open PRs against main. Start with [team onboarding](../../TEAM_ONBOARDING.md). The archived branch is the exact summer code and report tree. Data access is separate from GitHub membership. Read [verification](verification.md) and resume at the first open gate.
 
+## Current execution status — 2026-11-16
+
+Full ingestion is complete: 300 patients, 1,065 visits and 11,405 original objects. [Final reconciliation](../../protocol/v1/final-ingestion.json) supersedes earlier progressive availability snapshots. All bounded full-audit runs and consolidated audit reconciliation completed: zero failures, 70 empty-mask warnings and two documented unknown-unit mask warnings. [Full audit](full-dataset-audit.md). The frozen split and primary enhancing-tissue label 3 contract are unchanged.
+
+The owner configured separate output-bucket secrets in `tcia-verification`. The manual CNN CPU workflow already wires these names to `novo-nordisk-pbl-outputs`; dataset credentials remain read-only. Run 43808895351 preceded secret availability and retained only ephemeral outputs. Replacement run 43810710239 passed persistent checkpoint, prediction and report upload with SHA-256 GET checks. [Output verification](cnn-output-verification.md). An independent recovery verifier is prepared in PR #16 and requires its approved merge before dispatch from main. This GitHub output cycle does not by itself close the Kaggle-originated Gate D test.
+
 ## Gate B
 
 The owner selected `novo-nordisk-pbl`. Use the cloud runtime or credential manager where the owner configured its S3 endpoint and bucket-scoped credentials. Set `R2_BUCKET=novo-nordisk-pbl` and load the other three values from that runtime’s secret store. For local verification with an AWS CLI profile, set `R2_AWS_PROFILE=novo-nordisk-r2`. Supply `R2_ENDPOINT_URL` unless the profile resolves the Cloudflare R2 S3 endpoint. The script checks that the destination is an account-level Cloudflare R2 URL. [Cloudflare S3 endpoint setup](https://developers.cloudflare.com/r2/get-started/s3/)

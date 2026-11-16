@@ -1,0 +1,13 @@
+# CNN CPU output persistence verification
+
+[Run 43810710239](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43810710239) passed on 2026-11-16 at source commit `ef1933f0c5c1744209c02c0b9e15deb57ec6b361`. It used existing free CPU resources and `tcia-verification`. Both output secret names are present and wired to `R2_OUTPUT_*`; dataset reader secrets were unchanged. No credential values were retrieved or published.
+
+The actual run reported `persistence_status: persisted`. Code reaches this result after create-once writes and SHA-256 GET verification for the full checkpoint, full validation prediction NIfTI, prediction metadata and report in private `novo-nordisk-pbl-outputs`. Prefix: `novo-nordisk/experiments/cnn-vit/ucsd-head-pilot-43810710239/`. Artifact keys, byte counts and digests are in private `report.json`; checkpoint filename is `ucsd-enhancing-head-pilot.pt`. This confirms persistent upload and same-process integrity readback.
+
+Fresh-session recovery remains **open**. [PR #16](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/pull/16), revision `ead75707f8f546206f1d7f6c8ea9b7af103bba95`, adds a manual CPU verifier that downloads stored receipts and artifacts into a new runner, checking SHA-256, byte counts, binary values and T1c geometry. CI passed. Automatic approval review rejected its merge because earlier approvals named PR #14/#15 only. After approval, merge this exact revision and dispatch `verify-cnn-output.yml` from main with `experiment_run=43810710239`. Environment restrictions were not relaxed.
+
+This run did **not** recover summer trained weights: safe `weights_only` loading returned `UnpicklingError`. It used official pretrained backbone revision `f8a432f48978c1a676f62d61c1f5a4f9eef52d08` with a fresh decoder/head. Four head-only training steps and complete held-out-visit inference demonstrate execution, not an accepted segmentation model. The test partition was not evaluated. Summer trained-model recovery remains open; unsafe pickle loading was not enabled.
+
+CPU training took 1.085 seconds for four selected slices; one-slice forward took 0.266 seconds. Peak RSS was 6,347,852 KiB (about 6.05 GiB). Validation Dice was 0.00001444, HD95 136.13 mm, lesion sensitivity 0.4 and 1,183 false-positive components. These poor pilot results must not be presented as model acceptance. [Machine-readable aggregate](../../protocol/v1/cnn-cpu-persistence.json).
+
+GitHub output persistence does not establish a Kaggle-originated Gate D write/recovery cycle. That gate and hosted deployment remain open. No paid compute or full training was started.

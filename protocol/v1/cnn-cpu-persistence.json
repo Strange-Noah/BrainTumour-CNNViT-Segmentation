@@ -1,0 +1,42 @@
+{
+  "run_id": 43810710239,
+  "source_commit": "ef1933f0c5c1744209c02c0b9e15deb57ec6b361",
+  "initialization": {
+    "initialization": "pretrained_backbone",
+    "summer_strict_load": null,
+    "summer_native_forward_shape": null,
+    "summer_revision": "5c22493ab8cda8b9b0d65c45728dbef3ca71dda6",
+    "backbone_revision": "f8a432f48978c1a676f62d61c1f5a4f9eef52d08",
+    "recovery_error_type": "UnpicklingError",
+    "persistence_status": "persisted"
+  },
+  "runtime": {
+    "task": "enhancing",
+    "device": "cpu",
+    "training_seconds": 1.084862544999993,
+    "forward_seconds": 0.2655119419999892,
+    "training_losses": [
+      0.596984326839447,
+      0.5887717008590698,
+      0.5789598822593689,
+      0.5743124485015869
+    ],
+    "validation_slice_loss": 0.5882284641265869,
+    "peak_rss_kib": 6347852,
+    "parameters": 101442129,
+    "trainable_parameters": 49
+  },
+  "validation_metrics": {
+    "dice": 1.4442339725495855e-05,
+    "hd95_mm": 136.13320682331698,
+    "hd95_defined": true,
+    "lesion_sensitivity": 0.4,
+    "false_positives": 1183,
+    "truth_lesions": 5,
+    "matched_lesions": 2,
+    "signed_volume_error_mm3": 1955474.2500000005,
+    "absolute_volume_error_mm3": 1955474.2500000005
+  },
+  "fresh_session_recovery": "pending PR16 approval and manual main dispatch",
+  "test_evaluated": false
+}

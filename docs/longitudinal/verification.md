@@ -1,3 +1,9 @@
+# Current verification update — 2026-11-16
+
+The dated ledger below includes historical blockers. Current ingestion and complete audit supersede its older Gate C status: all 300 patients / 1,065 exams / 11,405 files are present, with zero audit failures. [Full acceptance record](full-dataset-audit.md) · [Machine-readable audit](../../protocol/v1/full-audit-summary.json).
+
+Dataset credentials remain read-only in the CNN verification environment. Separate output secrets are now configured; checkpoint persistence passed in run 43810710239; fresh-session recovery awaits PR #16 approval. [Output evidence](cnn-output-verification.md) · [Runtime handoff](handoff.md). A GitHub output test does not establish a Kaggle-originated write. Hosted deployment and full model training remain unverified and unauthorized respectively.
+
 # Migration and acceptance report
 
 Updated 2026-11-15 · Asia/Shanghai

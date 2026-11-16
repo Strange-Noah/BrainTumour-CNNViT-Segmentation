@@ -1,10 +1,8 @@
 # Team data availability and verification
 
-Verified by live S3 listing and SHA-256 readback on 2026-11-15, Asia/Shanghai.
+Latest ingestion reconciliation: 2026-11-16. All 300 patients and 1,065 examinations are stored in private R2: 11,405 original NIfTI objects, 175,705,024,365 bytes. No missing required modalities, masks, unexpected objects, size conflicts or invalid patient receipts were found. [Final reconciliation](../../protocol/v1/final-ingestion.json).
 
-Private bucket `novo-nordisk-pbl` has four original official metadata TSVs (136,665 bytes combined), two immutable manifest revisions (1,619,865 bytes combined), and two synthetic verification objects (777 bytes combined). The 43-file pilot is now stored in raw and verified by an independent read-only runner. The same pilot patient is usable through the real loader. The remaining release is pending transfer.
-
-The canonical pending-availability manifest is the revision beginning `040ec6c5`. The earlier `4f3c7caa` manifest uses the unverified T2 filename convention and is superseded. Both are immutable. The canonical manifest records expected paths and pending integrity for images. Its presence does not imply those image objects are available.
+The four official metadata TSVs and minimized canonical manifest remain private. Use manifest revision `040ec6c5`; the older `4f3c7caa` manifest is superseded. Acquisition receipts provide original-object SHA-256 values. Raw labels and source headers remain unchanged. Team accounts retain dataset read-only access.
 
 | Object under `novo-nordisk/datasets/ucsd-bmets/v1/` | SHA-256 |
 |---|---|
@@ -17,6 +15,4 @@ The canonical pending-availability manifest is the revision beginning `040ec6c5`
 
 The portable CPU smoke passed with `verified=true`, 480 bytes and shape `[4,4,4]` for the Gate B synthetic NIfTI. It uses the standard AWS credential chain and a configurable S3 endpoint. It performs no write operations. Live validation used R2; other S3 implementations still need their own endpoint and reader credential check.
 
-The TCIA pilot was manually dispatched on promoted main and is waiting at the existing credential approval gate. The account used by this agent is the required environment reviewer and the dispatch actor, so the current self-review prevention blocks this account from approving that run. A trusted collaborator can dispatch a new main run for owner approval under the existing policy. No environment policy was changed for onboarding. [Pilot run](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43710790508)
-
-The complete per-file inventory enumeration previously ended in cancellation. Full ingestion remains gated on persistent pilot verification, inventory completeness and staging validation. [Acquisition audit](tcia.md) · [Runtime handoff](handoff.md)
+The 43-file pilot passed independent read-only verification. The complete header/geometry/label audit reconciles all files: zero failures, 70 empty-mask warnings and two aligned unknown-unit masks. [Full audit and evidence](full-dataset-audit.md). See [active experiments](active-experiments.md), [acquisition records](tcia.md) and [runtime handoff](handoff.md). No hosted deployment or complete model training is required to use the data.
