@@ -35,3 +35,9 @@ The owner confirmed Zihan/Kaile (CNN–ViT), Yilong (Swin UNETR) and Qiu (nnU-Ne
 Latest live availability snapshot has 70 complete patient receipts, 2,601 raw objects and 38,716,196,788 bytes. Object totals may include partially uploaded subsequent patients. Four disjoint ten-patient jobs are active; the coordinator replenishes completed ranges and halts new scheduling on an unexpected failure. Canonical R2 completion receipts and GitHub run history support recovery without a local imaging copy. [Current snapshot](../../protocol/v1/ingestion-status.json)
 
 The full 300-patient collection is still in progress. Learned architecture results are pending each owner's first checkpoint run. The reference-mask identity metrics remain data/evaluation/export verification.
+
+## Full ingestion reconciliation
+
+All 300 patient receipts and 1,065 canonical examinations now reconcile to 11,405 R2 raw objects totaling 175,705,024,365 bytes (about 163.64 GiB). No required modality or segmentation is missing. The stored object keys and sizes agree with the completion receipts; no unexpected objects or invalid receipts were found. Original scans and masks were preserved.
+
+[Machine-readable final ingestion reconciliation](../../protocol/v1/final-ingestion.json). The complete MRI/header/label audit runs separately; ingestion completion does not imply that every audit is finished.
