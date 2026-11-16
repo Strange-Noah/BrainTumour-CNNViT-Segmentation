@@ -31,7 +31,7 @@ def load_model(checkpoint, backbone=None, diagnostic_input=None):
         if diagnostic_input is not None:
             model.eval()
             with torch.inference_mode():
-                report["summer_native_forward_shape"] = list(model(diagnostic_input).shape)
+                report["summer_native_forward_shape"] = list(model(diagnostic_input[:, [3, 0, 1, 2]]).shape)
         model.decoder.head = binary_head
         expected = model.state_dict()
         matched = {}
@@ -43,6 +43,12 @@ def load_model(checkpoint, backbone=None, diagnostic_input=None):
         if not matched or not any(key.startswith("encoder.") for key in matched):
             raise ValueError("Summer checkpoint has no compatible encoder weights")
         model.load_state_dict(matched, strict=False)
+        # MSD input is FLAIR,T1,T1c,T2. Protocol v1 is T1,T1c,T2,FLAIR.
+        # Permuting stem input kernels preserves the learned modality semantics.
+        conv = model.encoder.patch_embed.backbone.stem.conv
+        with torch.no_grad():
+            conv.weight.copy_(conv.weight[:, [1, 2, 3, 0]].clone())
+        report["stem_input_permutation"] = [1, 2, 3, 0]
         report["initialization"] = "summer_encoder_and_compatible_decoder"
         report["loaded_parameters"] = sorted(matched)
     # Small first run trains the decoder head only. Owners may unfreeze native stages.
@@ -80,3 +86,16 @@ def infer(model, images, device):
                                      mode="bilinear", align_corners=False)
             mask[:, :, z] = (torch.sigmoid(restored)[0, 0].cpu().numpy() >= 0.5)
     return mask
+
+
+def predict(sample):
+    """Shared research.run_visit adapter for a UCSD-fine-tuned checkpoint."""
+    import os
+    checkpoint = torch.load(os.environ["CNN_VIT_UCSD_CHECKPOINT"], map_location="cpu", weights_only=True)
+    if checkpoint.get("task") != "enhancing" or checkpoint.get("input_modalities") != ["t1n", "t1c", "t2", "t2f"]:
+        raise ValueError("Use a UCSD enhancing-tissue checkpoint with declared Protocol v1 channels")
+    model = PretrainedHybridViTSegmenter(num_classes=1)
+    model.load_state_dict(checkpoint["model_state_dict"], strict=True)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    return infer(model, sample["images"], device)
