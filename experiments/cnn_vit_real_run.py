@@ -95,7 +95,7 @@ def main():
     report["forward_seconds"] = time.perf_counter()-start
     checkpoint = args.work/"ucsd-enhancing-head-pilot.pt"
     torch.save({"model_state_dict": model.state_dict(), "task": "enhancing",
-                "raw_positive_labels": [3], "git_sha": sha}, checkpoint)
+                "raw_positive_labels": [3], "input_modalities": ["t1n", "t1c", "t2", "t2f"], "git_sha": sha}, checkpoint)
     if args.inference:
         start = time.perf_counter()
         prediction = infer(model, heldout["images"], device)
