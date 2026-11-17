@@ -1,0 +1,19 @@
+{
+  "accepted": true,
+  "source_sha": "0873e421bd8131452740be68e22a7582cc3aa733",
+  "workflow_sha": "c55546eac8b663dd02dda76f3c381c32f9980144",
+  "run_id": "44145453007",
+  "input_sha256": "040ec6c523d5beae43a30b64fede2bee226e1a08e8c14b2cca8043b01b9c39f4",
+  "input_bytes": 810465,
+  "patients": 300,
+  "visits": 1065,
+  "computation": "parse verified canonical manifest and count unique patients/visits",
+  "environment": "GitHub Actions ubuntu-24.04 standard CPU",
+  "gpu_allocated": false,
+  "manual_notebook_execution": false,
+  "output_receipt": {
+    "key": "novo-nordisk/execution/acceptance/44145453007/result.json",
+    "sha256": "e9b94972bd24b6fa9723afd66f24aaadfca7dd1172a5d3791030b8d958a2ecd9",
+    "bytes": 488
+  }
+}
