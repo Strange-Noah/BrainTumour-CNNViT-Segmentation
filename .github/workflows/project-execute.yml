@@ -1,0 +1,74 @@
+name: Authorized project CPU execution
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact authorized project source commit (40 lowercase hex characters)
+        required: true
+        type: string
+      entrypoint:
+        description: Project Python module
+        default: cloud.execution_demo
+        required: true
+        type: string
+      arguments:
+        description: JSON list of string arguments (no credentials)
+        default: '[]'
+        type: string
+      requirements:
+        description: Project-relative dependency file
+        default: cloud/requirements.txt
+        type: string
+permissions:
+  contents: read
+jobs:
+  execute:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: tcia-verification
+    steps:
+      - name: Validate immutable source identifier
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          python - <<'PY'
+          import os,re
+          assert re.fullmatch('[0-9a-f]{40}',os.environ['SOURCE_SHA'])
+          PY
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install authorized dependencies
+        env:
+          REQUIREMENTS: ${{ inputs.requirements }}
+        run: |
+          python - <<'PY'
+          import os,pathlib,subprocess,sys
+          root=pathlib.Path.cwd().resolve();p=(root/os.environ['REQUIREMENTS']).resolve()
+          assert p.is_relative_to(root) and p.is_file()
+          subprocess.run([sys.executable,'-m','pip','install','-q','-r',str(p)],check=True)
+          PY
+      - name: Run project entrypoint
+        env:
+          NOVO_SOURCE_SHA: ${{ inputs.source_sha }}
+          ENTRYPOINT: ${{ inputs.entrypoint }}
+          ARGUMENTS: ${{ inputs.arguments }}
+          R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}
+          R2_BUCKET: novo-nordisk-pbl
+          R2_OUTPUT_BUCKET: novo-nordisk-pbl-outputs
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_OUTPUT_ACCESS_KEY_ID: ${{ secrets.R2_OUTPUT_ACCESS_KEY_ID }}
+          R2_OUTPUT_SECRET_ACCESS_KEY: ${{ secrets.R2_OUTPUT_SECRET_ACCESS_KEY }}
+        run: |
+          python - <<'PY'
+          import json,os,re,subprocess,sys
+          module=os.environ['ENTRYPOINT'];args=json.loads(os.environ['ARGUMENTS'])
+          assert re.fullmatch('(cloud|research|experiments)(\.[A-Za-z_][A-Za-z0-9_]*)+',module)
+          assert isinstance(args,list) and all(isinstance(a,str) for a in args)
+          subprocess.run([sys.executable,'-m',module,*args],check=True,timeout=2400)
+          PY
