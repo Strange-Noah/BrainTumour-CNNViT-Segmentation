@@ -11,6 +11,8 @@
 
 No utilization/RSS/throughput plots are fabricated. `report.py` generates figures from actual timestamped rank/system records once runs exist. Sustained reliability, DDP speedup, best useful throughput, RAM plateau, bottleneck attribution, recommended worker/cache/batch choice, and the R2 checkpoint/resume acceptance all remain open.
 
+Independent [Kaggle CPU correctness checks](evidence/kaggle-cpu-checks.json) also passed; that kernel needs neither R2 Secrets nor imaging. This confirms CPU portability, not CUDA/DDP execution.
+
 ## Confirmed access blocker
 
 Private CPU notebook `mathewzhou/novo-tcia-and-r2-verification` saved versions 5 and 6 returned `ConnectionError` for all four R2 Secret names. [v5 evidence](evidence/saved-preflight-v5.json) · [v6 evidence](evidence/saved-preflight-v6.json). Version 6 was the one bounded retry after the owner confirmed all four are available in the **interactive CPU** session. Record that owner confirmation separately from the agent-observed saved-run failure; do not infer either result applies to the other execution mode. No credential values were printed or copied to source/artifacts. Dataset permissions were unchanged.
