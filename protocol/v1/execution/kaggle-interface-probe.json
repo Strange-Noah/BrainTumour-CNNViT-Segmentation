@@ -1,0 +1,19 @@
+{
+  "gpu_allocated": false,
+  "interactive_reused": false,
+  "public_https_status": 200,
+  "runtime_client_source_sha256": "b7b77c30a8e759f54e4e3060926d876d3b982292979f1b17329282fa06507734",
+  "runtime_secret_token_present": true,
+  "secret_available": false,
+  "sanitized_error_chain": [
+    {
+      "type": "ConnectionError"
+    },
+    {
+      "type": "HTTPError",
+      "http_status": 400
+    }
+  ],
+  "private_input_file_found": true,
+  "private_input_valid": true
+}
