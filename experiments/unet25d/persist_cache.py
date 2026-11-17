@@ -1,5 +1,6 @@
 """Resumable private cache transfer; no preprocessing and no GPU imports."""
 import argparse,hashlib,json,os,subprocess,sys,uuid
+from contextlib import closing
 from pathlib import Path,PurePosixPath
 import boto3
 from botocore.config import Config
@@ -16,10 +17,10 @@ def connect():
     return boto3.client('s3',endpoint_url='https://fec4311cb2caaffaf5e1742997da99b3.r2.cloudflarestorage.com',region_name='auto',aws_access_key_id=os.environ['R2_OUTPUT_ACCESS_KEY_ID'],aws_secret_access_key=os.environ['R2_OUTPUT_SECRET_ACCESS_KEY'],config=Config(connect_timeout=10,read_timeout=60,retries={'max_attempts':2,'mode':'standard'}))
 def read(c,key):
     response=c.get_object(Bucket=BUCKET,Key=key)
-    with response['Body'] as body:return body.read()
+    with closing(response['Body']) as body:return body.read()
 def check(c,key,digest,size):
     response=c.get_object(Bucket=BUCKET,Key=key);h=hashlib.sha256();n=0
-    with response['Body'] as body:
+    with closing(response['Body']) as body:
         for block in body.iter_chunks(chunk_size=1024*1024):h.update(block);n+=len(block)
     if h.hexdigest()!=digest or n!=size:raise ValueError('Remote object integrity mismatch')
 def put(c,key,data):

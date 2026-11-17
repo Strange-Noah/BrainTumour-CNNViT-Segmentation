@@ -3,6 +3,7 @@ import contextlib,io,json,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
 from botocore.exceptions import ClientError
+from botocore.response import StreamingBody
 from . import persist_cache as p
 class Body(io.BytesIO):
     def iter_chunks(self,chunk_size):
@@ -13,7 +14,7 @@ class Store:
         if Key not in self.objects:raise ClientError({'ResponseMetadata':{'HTTPStatusCode':404},'Error':{'Code':'404'}},'HeadObject')
         data=self.objects[Key];return dict(ContentLength=len(data),Metadata={'sha256':p.sha(data)})
     def put_object(self,Bucket,Key,Body,**kwargs):self.objects[Key]=Body;self.puts+=1
-    def get_object(self,Bucket,Key):return dict(Body=Body(self.objects[Key]))
+    def get_object(self,Bucket,Key):return dict(Body=StreamingBody(io.BytesIO(self.objects[Key]),len(self.objects[Key])))
 class Transfer(unittest.TestCase):
     def test_resume_and_remote_corruption(self):
         store=Store()

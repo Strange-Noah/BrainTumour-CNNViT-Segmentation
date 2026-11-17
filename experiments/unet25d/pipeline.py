@@ -21,7 +21,7 @@ def stage(work,name):
         record.write_text(json.dumps(dict(stage=name,status='failed',error_type=type(e).__name__,seconds=time.time()-start)));raise
     else:record.write_text(json.dumps(dict(stage=name,status='complete',seconds=time.time()-start)))
 
-def prepare(work):
+def prepare(work,on_visit=None):
     import csv,numpy as np
     from research.dataset import Dataset
     from cloud.storage import connect,DATASET
@@ -81,6 +81,7 @@ def prepare(work):
                     try:meta=prepare_visit(sample,folder)
                     except GeometryConflict as e:conflicts.append(dict(exam=row['exam_id'],reason=str(e)));continue
                     finally:del sample
+                if on_visit:on_visit(folder)
                 if partition=='train':train_records.append(meta)
                 else:(work/'prepared/validation-index.json').write_text(json.dumps([meta]))
                 if sum(p.stat().st_size for p in (work/'prepared').rglob('*') if p.is_file())>16*1024**3:raise RuntimeError('Prepared disk-cache cap 16 GiB exceeded')
