@@ -38,14 +38,33 @@ def restore_existing(work):
 def prepare(dataset):
  from experiments.unet25d.pipeline import prepare as build
  work=WORK/'cache';work.mkdir(exist_ok=True);os.environ['HF_HOME']=str(work/'hf')
+ c,b=connect(output=True)
+ stage_prefix='novo-nordisk/experiments/unet25d/bridge/prepared-visits-v1/'+hashlib.sha256((ROOT/'experiments/unet25d/config.json').read_bytes()).hexdigest()+'/'
+ # Restore per-visit checkpoints, including partial prior build progress.
+ for page in c.get_paginator('list_objects_v2').paginate(Bucket=b,Prefix=stage_prefix):
+  for row in page.get('Contents',[]):
+   if not row['Key'].endswith('/complete.json'):continue
+   record=json.loads(c.get_object(Bucket=b,Key=row['Key'])['Body'].read())
+   for item in record:
+    path=(work/'prepared'/item['relative']).resolve()
+    if not path.is_relative_to((work/'prepared').resolve()):raise ValueError('Invalid visit checkpoint')
+    path.parent.mkdir(parents=True,exist_ok=True)
+    with path.open('wb') as stream:verify(c,b,item['key'],item['sha256'],stream)
+ def save_visit(folder):
+  records=[]
+  for path in sorted(folder.iterdir()):
+   if path.is_file():
+    r=put_once(c,b,stage_prefix+folder.name+'/'+path.name,path);r['relative']=str(path.relative_to(work/'prepared'));records.append(r)
+  receipt=WORK/'visit-complete.json';receipt.write_text(json.dumps(records,sort_keys=True))
+  put_once(c,b,stage_prefix+folder.name+'/complete.json',receipt)
  restored=restore_existing(work)
  if not restored:
   # Single regeneration authorization: immutable claim stops repeated whole-cache builds.
   c,b=connect(output=True);claim=WORK/'build-claim.json';claim.write_text(json.dumps({'run':os.environ['GITHUB_RUN_ID']}))
-  key='novo-nordisk/experiments/unet25d/bridge/bounded-cache-regeneration-v1.json'
+  key='novo-nordisk/experiments/unet25d/bridge/bounded-cache-recovery-v2.json'
   put_once(c,b,key,claim)
   (work/'launch.json').write_text(json.dumps(dict(source_sha=os.environ['NOVO_SOURCE_SHA'],mode='actions-cpu-prepare')))
-  build(work)
+  build(work,on_visit=save_visit)
   from experiments.unet25d.persist_cache import upload
   upload(work) # Preserve the sole regeneration before attempting Kaggle publication.
  subprocess.run([sys.executable,'-m','experiments.unet25d.verify_mount',str(work)],check=True)

@@ -1,0 +1,13 @@
+{
+  "run_id": 44150569383,
+  "source_sha": "744d1b3cca21d19d7624df4284bce008c3242f51",
+  "phase": "upload-existing-completed-cache",
+  "error_type": "AttributeError",
+  "cause": "StreamingBody context manager returned raw HTTPResponse without iter_chunks",
+  "cpu_preparation_completed": true,
+  "complete_remote_cache_verified": false,
+  "gpu_allocated": false,
+  "repeated_regeneration_started": false,
+  "fix": "closing(StreamingBody), actual StreamingBody regression test, per-visit R2 checkpoints before continuing build",
+  "recovery_requires_additional_regeneration_authorization": true
+}
