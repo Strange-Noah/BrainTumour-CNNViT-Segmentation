@@ -60,8 +60,14 @@ def prepare(dataset):
  restored=restore_existing(work)
  if not restored:
   # Single regeneration authorization: immutable claim stops repeated whole-cache builds.
-  c,b=connect(output=True);claim=WORK/'build-claim.json';claim.write_text(json.dumps({'run':os.environ['GITHUB_RUN_ID']}))
+  c,b=connect(output=True);claim=WORK/'build-claim.json';claim.write_text(json.dumps({'recovery_authorization':'v2','config_sha256':hashlib.sha256((ROOT/'experiments/unet25d/config.json').read_bytes()).hexdigest()},sort_keys=True))
   key='novo-nordisk/experiments/unet25d/bridge/bounded-cache-recovery-v2.json'
+  from botocore.exceptions import ClientError
+  try:c.head_object(Bucket=b,Key=key)
+  except ClientError as error:
+   if error.response['ResponseMetadata']['HTTPStatusCode']!=404:raise
+  else:
+   if not list((work/'prepared').glob('*/visit.json')):raise RuntimeError('Recovery already claimed without reusable visit checkpoints; no blind regeneration')
   put_once(c,b,key,claim)
   (work/'launch.json').write_text(json.dumps(dict(source_sha=os.environ['NOVO_SOURCE_SHA'],mode='actions-cpu-prepare')))
   build(work,on_visit=save_visit)
