@@ -4,17 +4,16 @@ from pathlib import Path
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('mode',choices=['preflight','prepare','campaign']);parser.add_argument('--cpu-artifacts',type=Path);args=parser.parse_args()
-    from kaggle_secrets import UserSecretsClient
-    client=UserSecretsClient();availability={}
-    for name in ['R2_ACCESS_KEY_ID','R2_SECRET_ACCESS_KEY','R2_OUTPUT_ACCESS_KEY_ID','R2_OUTPUT_SECRET_ACCESS_KEY']:
-        try:
+    artifact_mode=os.environ.get('NOVO_ARTIFACT_MODE')=='kaggle'
+    if not artifact_mode:
+        from kaggle_secrets import UserSecretsClient
+        client=UserSecretsClient();availability={}
+        for name in ['R2_ACCESS_KEY_ID','R2_SECRET_ACCESS_KEY','R2_OUTPUT_ACCESS_KEY_ID','R2_OUTPUT_SECRET_ACCESS_KEY']:
             if not os.environ.get(name):os.environ[name]=client.get_secret(name)
             availability[name]=bool(os.environ[name])
-        except Exception as e:availability[name]=False
-    print(json.dumps(dict(secret_availability=availability)))
-    if not all(availability.values()):raise RuntimeError('Secret preflight failed: stop before requesting GPU; interactive authentication may be required')
-    os.environ.update(R2_BUCKET='novo-nordisk-pbl',R2_OUTPUT_BUCKET='novo-nordisk-pbl-outputs')
-    if not os.environ.get('R2_ENDPOINT_URL'):raise ValueError('Set non-secret project account endpoint in runtime configuration')
+        if not all(availability.values()):raise RuntimeError('Missing scoped credentials')
+        os.environ.update(R2_BUCKET='novo-nordisk-pbl',R2_OUTPUT_BUCKET='novo-nordisk-pbl-outputs')
+        if not os.environ.get('R2_ENDPOINT_URL'):raise ValueError('Set R2_ENDPOINT_URL')
     if args.mode=='preflight':return
     work=Path('/kaggle/working/novo-unet25d');work.mkdir(exist_ok=True);work.chmod(0o700)
     if args.mode=='prepare':os.environ['HF_HOME']=str(work/'hf')

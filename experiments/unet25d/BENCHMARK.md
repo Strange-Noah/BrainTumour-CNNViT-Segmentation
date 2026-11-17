@@ -35,3 +35,9 @@ All 1,065 existing T1c audit headers were read without imaging transfers. Native
 4. Publish measured comparison and figures, GPU allocation/session/device-time records and any failures. Recommend a configuration for owner review; do not start full-cohort training.
 
 Implementation is a feature-branch candidate with CPU evidence, not a completed or approved GPU benchmark. [Specification and code map](README.md).
+
+## Selected architecture implementation — 2026-11-18
+
+The owner selected Actions → private Kaggle inputs → GPU → Actions. The new manual `kaggle-benchmark.yml` separates prepare, CPU validate, benchmark and collect modes. `KAGGLE_API_TOKEN` stays solely in the Actions orchestration step. GPU code uses artifact mode and contains no R2 credentials or Secrets lookup. Existing R2 independently verified caches are restored first; otherwise an immutable claim permits one bounded regeneration, persisted to R2 before private Kaggle publication. The private CPU validation must pass before benchmark submission. The API hard runtime is 3,600 seconds; GPU code has a shorter internal deadline. Results and checkpoints are collected into R2 and read back through a new client. Mode collect can retry retrieval without rerunning GPU training.
+
+This implementation still requires actual cloud validation; it is not benchmark acceptance. The token setup has been confirmed by the owner. Integrated-source policy remains in force. PR18 and the final PR19 revision require explicit revision approvals demanded by automatic review; no notebook cells or credential values are requested. Do not investigate the old interactive session or its Secrets further. No full training is authorized.

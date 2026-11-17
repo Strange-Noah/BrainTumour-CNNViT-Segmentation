@@ -101,8 +101,10 @@ def campaign(work):
     for name,sha in json.loads((work/'cache-receipts.json').read_text()).items():
         if digest(work/'prepared'/name)!=sha:raise ValueError('Prepared cache changed')
     from cloud.storage import connect
-    output_client,output_bucket=connect(output=True)
-    if output_bucket!='novo-nordisk-pbl-outputs':raise ValueError('Output preflight missing')
+    kaggle_artifacts=os.environ.get('NOVO_ARTIFACT_MODE')=='kaggle'
+    if not kaggle_artifacts:
+        output_client,output_bucket=connect(output=True)
+        if output_bucket!='novo-nordisk-pbl-outputs':raise ValueError('Output preflight missing')
     import torch
     if torch.cuda.device_count()!=2 or not all('T4' in torch.cuda.get_device_name(i) for i in range(2)):raise RuntimeError('Require actual free dual T4 runtime')
     start=time.time();deadline=start+3300 # 55 minutes in-process; launcher adds 60 minute outer timeout.
@@ -139,6 +141,10 @@ def campaign(work):
         completed.append(('resume',2,1,1))
     subprocess.run([sys.executable,'-m','experiments.unet25d.report',str(work)],check=True)
     (work/'campaign.json').write_text(json.dumps(dict(started=start,seconds=time.time()-start,device_hours=2*(time.time()-start)/3600,quota_accounting='unconfirmed platform accounting; elapsed session and device-time reported separately',completed=completed)))
+    if kaggle_artifacts:
+        with stage(work,'local_checkpoint_recovery'):
+            subprocess.run([sys.executable,'-m','experiments.unet25d.recover_local',str(work)],check=True)
+        return # Private Kaggle outputs are persisted/readback-verified by Actions.
     with stage(work,'persistence'):
         from cloud.storage import connect,put_once
         client,bucket=connect(output=True)
