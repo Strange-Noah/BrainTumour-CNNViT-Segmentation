@@ -24,7 +24,9 @@ Sampler draws patients uniformly, then visits, then center slices. Positive/nega
 
 Install [requirements.txt](requirements.txt) while retaining the runtime's matching CUDA torch/torchvision pair. Do not install CPU torch wheels into a GPU session.
 
-Authenticated private Kaggle **CPU** session:
+Authenticated private Kaggle **CPU** session: the self-contained [CPU entry script](kaggle_cpu_entry.py) pins the source commit, reads enabled Secrets in the interactive process, installs dependencies and starts only preparation. It never requests GPUs. Run it in the existing authenticated session; no credential values need to be copied. The saved-run API is currently blocked, so this interactive launch is a real outstanding operation, not a completed step.
+
+For an existing pinned checkout:
 
 ```python
 # Run from the pinned project checkout. Configure public account endpoint separately.

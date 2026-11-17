@@ -23,7 +23,7 @@ All 1,065 existing T1c audit headers were read without imaging transfers. Native
 
 ## Continuation checklist
 
-1. Run the prepared CPU launcher in the confirmed authenticated CPU session; retain private cache, config and receipt outputs. Resolve reported cache/geometry/preflight failures before allocating GPUs.
+1. Run the [pinned CPU entry script](kaggle_cpu_entry.py) in the confirmed authenticated CPU session (the agent browser-control connection is currently unavailable), or run the prepared CPU launcher in the confirmed authenticated CPU session; retain private cache, config and receipt outputs. Resolve reported cache/geometry/preflight failures before allocating GPUs.
 2. Verify mounted preparation receipts and actual two-T4 hardware, then execute the bounded campaign under a platform session cap of 60 minutes. Use no more free quota than remains.
 3. Review single/DDP sustained telemetry (>=10 steady-state minutes), cache turnovers, process-tree memory, finite gradients and early/late rates. Validate native-space metrics and fresh-process checkpoint continuation/readback.
 4. Publish measured comparison and figures, GPU allocation/session/device-time records and any failures. Recommend a configuration for owner review; do not start full-cohort training.
