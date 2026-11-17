@@ -7,7 +7,9 @@ def main():
     from kaggle_secrets import UserSecretsClient
     client=UserSecretsClient();availability={}
     for name in ['R2_ACCESS_KEY_ID','R2_SECRET_ACCESS_KEY','R2_OUTPUT_ACCESS_KEY_ID','R2_OUTPUT_SECRET_ACCESS_KEY']:
-        try:os.environ[name]=client.get_secret(name);availability[name]=bool(os.environ[name])
+        try:
+            if not os.environ.get(name):os.environ[name]=client.get_secret(name)
+            availability[name]=bool(os.environ[name])
         except Exception as e:availability[name]=False
     print(json.dumps(dict(secret_availability=availability)))
     if not all(availability.values()):raise RuntimeError('Secret preflight failed: stop before requesting GPU; interactive authentication may be required')
