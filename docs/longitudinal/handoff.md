@@ -59,3 +59,7 @@ Confirm `hf auth whoami` reports `Mathew-ZHZ`. Creation of the private Gradio Sp
 ## Gate F
 
 With a separate GitHub/Kaggle account, follow the same checkout and secret provisioning. Reopen the mirrored Space and reproduce the R2 readback from receipts alone. Download the canonical manifest by its digest, verify it, and recover a completed experiment report and output from R2. Record the checkout SHA and readback evidence in a PR. Runtime storage and Codex chat history are disposable.
+
+## 2.5D U-Net acquisition audit — 2026-11-17
+
+SMP 0.5.0 ResNet34 ImageNet weights were acquired and hashed. Twelve-channel initialization and synthetic CPU inference passed locally and in the private Kaggle CPU runtime. Two real train visits were inspected, plus existing training-partition audit metadata. [Architecture, preprocessing alternatives and acceptance limits](../../experiments/smp_audit/README.md) · [Kaggle evidence](../../experiments/smp_audit/evidence/kaggle-model.json). Exact training positive/negative slice counts remain unavailable from existing histograms; no full-cohort pixel pass was launched. No training or final preprocessing configuration was implemented. Await the separate preprocessing/training decision.
