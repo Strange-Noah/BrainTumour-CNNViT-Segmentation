@@ -87,6 +87,10 @@ else:
 '''.replace('__SOURCE_LITERAL__',repr(sha)).replace('__MODE_LITERAL__',repr(mode))
 
 def submit(dataset,kernel,mode):
+ deadline=time.monotonic()+600
+ while 'READY' not in cli('datasets','status',dataset).upper():
+  if time.monotonic()>deadline:raise TimeoutError('Private dataset processing incomplete')
+  time.sleep(20)
  sha=os.environ['NOVO_SOURCE_SHA'];folder=WORK/'kernel';folder.mkdir(exist_ok=True)
  ref=kernel if mode=='benchmark' else 'mathewzhou/novo-unet25d-cache-validation'
  title='Novo Unet25d Bounded Benchmark' if mode=='benchmark' else 'Novo Unet25d Cache Validation'
