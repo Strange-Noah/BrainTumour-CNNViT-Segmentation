@@ -1,0 +1,183 @@
+{
+  "train_visits": 746,
+  "train_native_axis2_slices": 215680,
+  "train_empty_raw_masks": 48,
+  "train_no_enhancing_visits": 66,
+  "train_enhancing_voxel_percentiles": [
+    0.0,
+    352.5,
+    2222.0,
+    12298.0,
+    44876.0,
+    185994.9999999998,
+    480979.0
+  ],
+  "train_positive_enhancing_voxels_below_100": 51,
+  "train_positive_negative_slice_counts": "not present in existing full audit; two-visit counts below only; no full-cohort preprocessing launched",
+  "representatives": [
+    {
+      "kind": "positive",
+      "orientation": [
+        "R",
+        "A",
+        "S"
+      ],
+      "shape": [
+        512,
+        512,
+        184
+      ],
+      "spacing": [
+        0.48829999566078186,
+        0.48829999566078186,
+        1.0
+      ],
+      "slice_axis_code": "S",
+      "adjacent_center_distance_mm": 1.0,
+      "positive_slices": 4,
+      "negative_slices": 180,
+      "enhancing_voxels": 57,
+      "modality_statistics": [
+        {
+          "nonzero_fraction": 0.11418836013130519,
+          "percentiles": [
+            1.0,
+            5.0,
+            11.0,
+            343.0,
+            438.0,
+            443.0,
+            873.0
+          ],
+          "mean": 308.4354553222656,
+          "std": 105.6104965209961
+        },
+        {
+          "nonzero_fraction": 0.10557189195052437,
+          "percentiles": [
+            1.0,
+            6.0,
+            18.0,
+            1539.0,
+            3558.94000000041,
+            4143.0,
+            8729.0
+          ],
+          "mean": 1516.302490234375,
+          "std": 566.1826782226562
+        },
+        {
+          "nonzero_fraction": 0.10440942515497623,
+          "percentiles": [
+            1.0,
+            10.0,
+            21.0,
+            422.0,
+            1179.0,
+            1229.0,
+            1479.0
+          ],
+          "mean": 471.3436584472656,
+          "std": 213.64669799804688
+        },
+        {
+          "nonzero_fraction": 0.11272252124288808,
+          "percentiles": [
+            1.0,
+            5.0,
+            10.0,
+            359.0,
+            513.0,
+            539.0,
+            735.0
+          ],
+          "mean": 328.90509033203125,
+          "std": 111.58967590332031
+        }
+      ],
+      "float32_four_volume_bytes": 771751936
+    },
+    {
+      "kind": "negative",
+      "orientation": [
+        "R",
+        "A",
+        "S"
+      ],
+      "shape": [
+        512,
+        512,
+        192
+      ],
+      "spacing": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "slice_axis_code": "S",
+      "adjacent_center_distance_mm": 1.0,
+      "positive_slices": 0,
+      "negative_slices": 192,
+      "enhancing_voxels": 0,
+      "modality_statistics": [
+        {
+          "nonzero_fraction": 0.11281623442967732,
+          "percentiles": [
+            1.0,
+            10.0,
+            23.0,
+            656.0,
+            820.0,
+            835.0,
+            2069.0
+          ],
+          "mean": 594.1336669921875,
+          "std": 188.7801971435547
+        },
+        {
+          "nonzero_fraction": 0.12181556224822998,
+          "percentiles": [
+            1.0,
+            26.0,
+            69.0,
+            1905.0,
+            3028.0,
+            3615.0,
+            7110.0
+          ],
+          "mean": 1815.5147705078125,
+          "std": 550.1469116210938
+        },
+        {
+          "nonzero_fraction": 0.11291015148162842,
+          "percentiles": [
+            1.0,
+            15.0,
+            35.0,
+            587.0,
+            1827.0,
+            1899.0,
+            2283.0
+          ],
+          "mean": 675.5388793945312,
+          "std": 340.3124694824219
+        },
+        {
+          "nonzero_fraction": 0.12168769041697185,
+          "percentiles": [
+            1.0,
+            4.0,
+            9.0,
+            353.0,
+            487.0,
+            503.0,
+            906.0
+          ],
+          "mean": 319.39849853515625,
+          "std": 113.8622055053711
+        }
+      ],
+      "float32_four_volume_bytes": 805306368
+    }
+  ]
+}
