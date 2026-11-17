@@ -36,7 +36,7 @@ def main():
         state=torch.load(a.resume,map_location='cpu',weights_only=True)
         if state['config']!=config:raise ValueError('Resume config mismatch')
         if state['sampler']['world_size']!=world or state['local_batch']!=a.batch:raise ValueError('Exact resume requires same rank/batch allocation')
-        model.load_state_dict(state['model']);optimizer.load_state_dict(state['optimizer']);scaler.load_state_dict(state['scaler']);offset=state['step'];torch.set_rng_state(state['rng_cpu']);torch.cuda.set_rng_state_all(state['rng_cuda']);random.setstate(state['rng_python'])
+        model.load_state_dict(state['model']);optimizer.load_state_dict(state['optimizer']);scaler.load_state_dict(state['scaler']);offset=state['step'];torch.set_rng_state(state['rng_cpu']);random.setstate(state['rng_python'])
     if a.resume:
         rank_rng=state['rank_rng'][rank];torch.set_rng_state(rank_rng['cpu']);torch.cuda.set_rng_state(rank_rng['cuda'],local);random.setstate(rank_rng['python'])
     if world>1:model=torch.nn.parallel.DistributedDataParallel(model,device_ids=[local],broadcast_buffers=True)
@@ -55,7 +55,7 @@ def main():
         if world>1 and status in ['success','running']:dist.barrier()
         if rank==0:
             all_rng=[torch.load(out/f'rng-{r}.pt',map_location='cpu',weights_only=True) for r in range(world)]
-            state=dict(model=raw.state_dict(),optimizer=optimizer.state_dict(),scheduler=None,scaler=scaler.state_dict(),config=config,step=step,epoch=0,local_batch=a.batch,git_sha=os.environ.get('NOVO_SOURCE_SHA','unrecorded'),sampler=dict(seed=42,consumed_global=step*world*a.batch,world_size=world,draws_sha256=hashlib.sha256(json.dumps(draws).encode()).hexdigest()),rng_cpu=torch.get_rng_state(),rng_cuda=torch.cuda.get_rng_state_all(),rng_python=random.getstate(),numpy_seed=42,rank_rng=all_rng,status=status)
+            state=dict(model=raw.state_dict(),optimizer=optimizer.state_dict(),scheduler=None,scaler=scaler.state_dict(),config=config,step=step,epoch=0,local_batch=a.batch,git_sha=os.environ.get('NOVO_SOURCE_SHA','unrecorded'),sampler=dict(seed=42,consumed_global=step*world*a.batch,world_size=world,draws_sha256=hashlib.sha256(json.dumps(draws).encode()).hexdigest()),rng_cpu=torch.get_rng_state(),rng_cuda=torch.cuda.get_rng_state(local),rng_python=random.getstate(),numpy_seed=42,rank_rng=all_rng,status=status)
             temporary=out/'checkpoint.tmp';torch.save(state,temporary);temporary.replace(out/'checkpoint.pt')
             if os.environ.get('R2_OUTPUT_ACCESS_KEY_ID'):
                 from cloud.storage import connect,put_once
@@ -64,9 +64,10 @@ def main():
                 run_id=os.environ.get('NOVO_RUN_ID')
                 if not run_id:raise ValueError('Stable campaign run ID required')
                 key=f'novo-nordisk/experiments/unet25d/{run_id}/{out.name}/periodic-step-{step:09d}.pt'
-                receipt=put_once(client,bucket,key,out/'checkpoint.pt')
+                upload_started=time.monotonic();receipt=put_once(client,bucket,key,out/'checkpoint.pt');receipt['upload_and_readback_seconds']=time.monotonic()-upload_started
                 with (out/'periodic-receipts.jsonl').open('a') as receipts:receipts.write(json.dumps(receipt)+'\n')
 
+    last_checkpoint=time.monotonic()
     try:
         for i in range(a.steps):
             before=time.monotonic();x,y,cache=next(stream);assert tuple(x.shape[1:])==(12,512,512) and tuple(y.shape[1:])==(1,512,512);ready=time.monotonic();torch.cuda.synchronize();t=time.monotonic();x=x.cuda(local,non_blocking=True);y=y.cuda(local,non_blocking=True);torch.cuda.synchronize();h2d=time.monotonic()-t
@@ -79,11 +80,11 @@ def main():
             torch.cuda.synchronize();backward=time.monotonic()-t;t=time.monotonic();scaler.step(optimizer);scaler.update();torch.cuda.synchronize();optim=time.monotonic()-t;step+=1;now=time.monotonic()
             row=dict(step=step,rank=rank,wall=time.time(),elapsed=now-start,phase='warmup' if i<10 else 'steady',samples=a.batch,iteration_seconds=now-previous,data_wait_seconds=ready-before,h2d_seconds=h2d,forward_seconds=forward,backward_including_sync_seconds=backward,optimizer_seconds=optim,loss=float(loss),finite=True,vram_allocated=torch.cuda.max_memory_allocated(),vram_reserved=torch.cuda.max_memory_reserved(),cache={k:v.tolist() for k,v in cache.items()})
             log.write(json.dumps(row)+'\n');log.flush();previous=now
-            stop=torch.tensor(int(now-start>=a.seconds),device=local)
+            stop=torch.tensor([int(now-start>=a.seconds),int(rank==0 and now-last_checkpoint>=120)],device=local)
             if world>1:dist.all_reduce(stop,op=dist.ReduceOp.MAX)
-            if step%100==0:
-                save_state('running')
-            if stop:break
+            if bool(stop[1]):
+                save_state('running');last_checkpoint=time.monotonic()
+            if bool(stop[0]):break
         assert all(torch.equal(m.running_mean,baseline[n]) for n,m in raw.encoder.named_modules() if isinstance(m,torch.nn.BatchNorm2d))
     except Exception as e:
         status=type(e).__name__;raise

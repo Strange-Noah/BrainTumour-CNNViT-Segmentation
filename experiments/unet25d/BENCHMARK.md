@@ -13,6 +13,10 @@ No utilization/RSS/throughput plots are fabricated. `report.py` generates figure
 
 Independent [Kaggle CPU correctness checks](evidence/kaggle-cpu-checks.json) also passed; that kernel needs neither R2 Secrets nor imaging. This confirms CPU portability, not CUDA/DDP execution.
 
+## CPU preparation and persistence update
+
+The owner confirmed successful authenticated interactive CPU preparation. Do not repeat it. API inspection still exposes only private version 7 with preflight script source and zero saved outputs, so mountability is not verified. [Preservation steps, evidence and mount checker](CACHE_PERSISTENCE.md). No GPU was requested.
+
 ## Confirmed access blocker
 
 Private CPU notebook `mathewzhou/novo-tcia-and-r2-verification` saved versions 5 and 6 returned `ConnectionError` for all four R2 Secret names. [v5 evidence](evidence/saved-preflight-v5.json) · [v6 evidence](evidence/saved-preflight-v6.json). Version 6 was the one bounded retry after the owner confirmed all four are available in the **interactive CPU** session. Record that owner confirmation separately from the agent-observed saved-run failure; do not infer either result applies to the other execution mode. No credential values were printed or copied to source/artifacts. Dataset permissions were unchanged.

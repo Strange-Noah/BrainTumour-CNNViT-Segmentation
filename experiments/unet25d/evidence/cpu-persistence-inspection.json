@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "gpu_enabled_in_saved_metadata": false,
+  "format": "script",
+  "source_includes_cpu_entry": false,
+  "saved_display_includes_completion": false,
+  "source_is_availability_preflight": true,
+  "metadata.current_version_number": 7,
+  "metadata.is_private": true,
+  "metadata.kernel_type": "script",
+  "blob.kernel_type": "script",
+  "api_saved_output_files": 0,
+  "owner_reported_interactive_cpu_preparation": "complete without reported errors",
+  "interactive_filesystem_independently_inspected": false,
+  "gpu_allocated": false
+}
