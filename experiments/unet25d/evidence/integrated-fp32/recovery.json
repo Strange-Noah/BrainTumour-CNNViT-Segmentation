@@ -1,0 +1,16 @@
+{
+  "verified": true,
+  "gpu_allocated": false,
+  "new_inference": false,
+  "checkpoints_recovered": 3,
+  "validation_exports": 1,
+  "run_id": 44333112852,
+  "report_key": "novo-nordisk/experiments/unet25d/bridge/44292134002/cpu-recovery/44333112852/report.json",
+  "report_sha256": "b4bf5e24d76622ac84fa214a3177f6acefe6fd9391a816897f97fdfbb92d87d1",
+  "report_bytes": 1019,
+  "gpu_collection_files": 53,
+  "gpu_collection_sha256": "925681c67dd8b14f75fdad28b98f4b09c89937a9979d3577eb1753357517f38e",
+  "quota_before_hours": 0.33,
+  "quota_after_hours": 0.78,
+  "quota_remaining_hours": 29.22
+}
