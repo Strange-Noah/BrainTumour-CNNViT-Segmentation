@@ -22,7 +22,8 @@ def run(command,out,deadline):
             log.write(json.dumps(dict(wall=time.time(),elapsed=time.monotonic()-start,rss=total,processes=rss,available=vm.available,total_ram=vm.total,swap_in=swap.sin,swap_out=swap.sout,gpu=gpu))+'\n');log.flush()
             if vm.available/vm.total<.15:reason='low_available_ram'
             if time.time()>deadline:reason='campaign_deadline'
-            if len(rss_history)==120 and min(rss_history[-30:])>max(rss_history[:30])*1.25:reason='sustained_rss_growth'
+            # Growth is reported; only actual RAM pressure or the hard deadline stops execution.
+            # Mapping a new visit can legitimately increase summed RSS without exhausting RAM.
             if reason:
                 import os,signal
                 os.killpg(process.pid,signal.SIGTERM)

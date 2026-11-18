@@ -12,6 +12,8 @@ for path in root.glob('*/checkpoint.pt'):
  model=Model(encoder_name='resnet34',encoder_weights=None,in_channels=12,classes=1,activation=None);model.load_state_dict(state['model'],strict=True)
  optimizer=torch.optim.AdamW([{'params':model.encoder.parameters()},{'params':list(model.decoder.parameters())+list(model.segmentation_head.parameters())}]);optimizer.load_state_dict(state['optimizer'])
  assert state['step']>0 and state['rank_rng'] and state['sampler']
+ assert {float(v['step']) for v in optimizer.state.values()}=={float(state['step'])}
+ assert all(torch.isfinite(v).all() for v in model.state_dict().values())
  count+=1;del optimizer,model,state
 if not count:raise ValueError('No checkpoint recovered')
 (root/'checkpoint-recovery.json').write_text(json.dumps(dict(verified=True,checkpoints=count,diagnostic_checkpoints_skipped=skipped,method='fresh-process strict model and optimizer restoration')))

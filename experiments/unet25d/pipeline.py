@@ -108,40 +108,30 @@ def campaign(work):
         if output_bucket!='novo-nordisk-pbl-outputs':raise ValueError('Output preflight missing')
     import torch
     if torch.cuda.device_count()!=2 or not all('T4' in torch.cuda.get_device_name(i) for i in range(2)):raise RuntimeError('Require actual free dual T4 runtime')
-    start=time.time();deadline=start+min(3300,int(os.environ.get('NOVO_GPU_BUDGET_SECONDS','3600'))-240) # 55 minutes in-process; launcher adds 60 minute outer timeout.
-    candidates=[('A-short',1,1,1,50,120),('B-short',2,1,1,50,120)]
+    start=time.time();budget=int(os.environ.get('NOVO_GPU_BUDGET_SECONDS','2100'))
+    session_start=float(os.environ.get('NOVO_SESSION_STARTED_AT',str(start)))
+    deadline=session_start+min(2100,budget)-120
     completed=[]
-    with stage(work,'benchmark'):
-        for name,ranks,batch,workers,steps,seconds in candidates:
-            folder=work/name;command=[sys.executable,'-m','torch.distributed.run','--standalone',f'--nproc_per_node={ranks}','-m','experiments.unet25d.train','--cache',str(work/'prepared'),'--out',str(folder),'--steps',str(steps),'--seconds',str(seconds),'--batch',str(batch),'--workers',str(workers)]
-            if run(command,folder,deadline)!=0:raise RuntimeError('Benchmark failed; inspect private diagnostics, no automatic retry')
-            completed.append((name,ranks,batch,workers))
-        # Sustain both baselines for ten measured steady-state minutes each.
-        for name,ranks,batch,workers in [('A-sustained',1,1,1),('B-sustained',2,1,1)]:
-            if time.time()+780>deadline:break
-            folder=work/name;seconds=660 if 'sustained' in name else 120
-            code=run([sys.executable,'-m','torch.distributed.run','--standalone',f'--nproc_per_node={ranks}','-m','experiments.unet25d.train','--cache',str(work/'prepared'),'--out',str(folder),'--steps','100000' if 'sustained' in name else '50','--seconds',str(seconds),'--batch',str(batch),'--workers',str(workers)],folder,deadline)
-            if code:break # Preserve evidence; no silent resolution, worker or architecture change.
-            completed.append((name,ranks,batch,workers))
-    subprocess.run([sys.executable,'-m','experiments.unet25d.report',str(work)],check=True)
-    measured=json.loads((work/'performance.json').read_text())
-    stable=[r for r in measured if r['sustained_accepted'] and r['rss_plateau'] and r['late_rank0_throughput']>=.75*r['early_rank0_throughput']]
-    if not stable:raise RuntimeError('No accepted sustained candidate; stop, retain diagnostics')
-    best=max(stable,key=lambda r:r['samples_per_second']);ranks=best['world_size']
-    for name,batch,workers in [('C-workers2',1,2),('D-batch2',2,1)]:
-        if time.time()+300>deadline:break
-        folder=work/name
-        command=[sys.executable,'-m','torch.distributed.run','--standalone',f'--nproc_per_node={ranks}','-m','experiments.unet25d.train','--cache',str(work/'prepared'),'--out',str(folder),'--steps','50','--seconds','120','--batch',str(batch),'--workers',str(workers)]
-        if run(command,folder,deadline):break
-        completed.append((name,ranks,batch,workers))
-    with stage(work,'validation_smoke'):
-        subprocess.run([sys.executable,'-m','experiments.unet25d.validate',str(work/'prepared'),str(work/'B-short/checkpoint.pt'),str(work/'validation')],check=True,timeout=300)
-    with stage(work,'resume_training'):
-        command=[sys.executable,'-m','torch.distributed.run','--standalone','--nproc_per_node=2','-m','experiments.unet25d.train','--cache',str(work/'prepared'),'--out',str(work/'resume'),'--steps','2','--seconds','60','--resume',str(work/'B-short/checkpoint.pt')]
-        if run(command,work/'resume',deadline):raise RuntimeError('Resume continuation failed')
-        completed.append(('resume',2,1,1))
-    subprocess.run([sys.executable,'-m','experiments.unet25d.report',str(work)],check=True)
-    (work/'campaign.json').write_text(json.dumps(dict(started=start,seconds=time.time()-start,device_hours=2*(time.time()-start)/3600,quota_accounting='unconfirmed platform accounting; elapsed session and device-time reported separately',completed=completed)))
+    try:
+        with stage(work,'benchmark'):
+            # The first ten actual optimizer steps are warmup/fail-fast; healthy
+            # execution continues in the same process, not another micro-job.
+            for name,ranks in [('A-sustained',1),('B-sustained',2)]:
+                folder=work/name
+                command=[sys.executable,'-m','torch.distributed.run','--standalone',f'--nproc_per_node={ranks}','-m','experiments.unet25d.train','--cache',str(work/'prepared'),'--out',str(folder),'--steps','100000','--seconds','660','--batch','1','--workers','1','--capacity','2']
+                if run(command,folder,deadline):raise RuntimeError('Sustained FP32 training failed; stop without automatic retry')
+                completed.append((name,ranks,1,1))
+        with stage(work,'resume_training'):
+            command=[sys.executable,'-m','torch.distributed.run','--standalone','--nproc_per_node=2','-m','experiments.unet25d.train','--cache',str(work/'prepared'),'--out',str(work/'resume'),'--steps','4','--seconds','60','--batch','1','--workers','1','--capacity','2','--resume',str(work/'B-sustained/checkpoint.pt')]
+            if run(command,work/'resume',deadline):raise RuntimeError('Fresh-process resume failed')
+            if not json.loads((work/'resume/resume-verification.json').read_text())['verified']:raise RuntimeError('Resume state mismatch')
+            completed.append(('resume',2,1,1))
+        with stage(work,'validation_smoke'):
+            command=[sys.executable,'-m','experiments.unet25d.validate',str(work/'prepared'),str(work/'resume/checkpoint.pt'),str(work/'validation')]
+            if run(command,work/'validation-monitor',deadline):raise RuntimeError('Native-space validation failed or exhausted remaining budget')
+    finally:
+        subprocess.run([sys.executable,'-m','experiments.unet25d.report',str(work)],check=True)
+    (work/'campaign.json').write_text(json.dumps(dict(started=start,seconds=time.time()-start,session_seconds=time.time()-session_start,device_hours=2*(time.time()-session_start)/3600,precision='float32',quota_accounting='account quota, session wall time and summed device time are distinct',completed=completed)))
     if kaggle_artifacts:
         with stage(work,'local_checkpoint_recovery'):
             subprocess.run([sys.executable,'-m','experiments.unet25d.recover_local',str(work)],check=True)

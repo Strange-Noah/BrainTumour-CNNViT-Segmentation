@@ -85,7 +85,8 @@ def prepare(dataset):
  print(json.dumps(dict(publication=publish_result('publication.json',ready))))
 
 def kernel_code(mode,sha):
- return '''import os,sys,subprocess,urllib.request,zipfile,io,json
+ return '''import os,sys,subprocess,urllib.request,zipfile,io,json,time
+os.environ['NOVO_SESSION_STARTED_AT']=str(time.time())
 from pathlib import Path
 sha=__SOURCE_LITERAL__
 root=Path('/tmp/novo-source');root.mkdir(exist_ok=True)
@@ -160,6 +161,7 @@ def main():
  budget=int(os.environ.get('GPU_SESSION_SECONDS','3600'))
  if not 1200<=budget<=3600:raise ValueError('GPU session budget must be 1200-3600 seconds')
  mode=os.environ['MODE'];dataset=os.environ['DATASET'];kernel=os.environ['KERNEL']
+ if mode=='benchmark' and budget>2100:raise ValueError('Remaining campaign session cap is 2100 seconds')
  if not all(re.fullmatch('mathewzhou/[a-z0-9-]+',s) for s in [dataset,kernel]):raise ValueError('Expected owner-private resource names')
  if mode=='prepare':prepare(dataset)
  elif mode in ['validate','benchmark']:submit(dataset,kernel,mode)

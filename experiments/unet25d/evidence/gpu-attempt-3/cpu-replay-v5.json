@@ -1,0 +1,31 @@
+{
+  "source_sha": "5f0eee17ba10927fc267903e2a6ba1cd23499fc6",
+  "draw_position": 835,
+  "input_finite": true,
+  "input_max_abs": 13.404247283935547,
+  "target_voxels": 0,
+  "results": {
+    "current_fp16_with_island": {
+      "gradient_finite": null,
+      "loss_finite": false,
+      "loss": null,
+      "first_nonfinite": {
+        "module": "encoder.layer4.2",
+        "finite": false,
+        "max_abs": null,
+        "dtype": "torch.float16"
+      },
+      "max_finite_activation": 55328.0
+    },
+    "encoder_and_first_decoder_fp32": {
+      "gradient_finite": true,
+      "loss_finite": true,
+      "loss": 0.5041045546531677,
+      "first_nonfinite": null,
+      "max_finite_activation": 96325.359375
+    }
+  },
+  "gpu_allocated": false,
+  "optimizer_updates": 0,
+  "original_sha256": "b93296baaebd23196a840c812a85c7115747e4c0c5aae6e741f631e46598346d"
+}

@@ -69,23 +69,35 @@ def restore(prediction,meta,order=0):
     return result
 
 class SliceCache(torch.utils.data.Dataset):
-    def __init__(self,root,draws,capacity=1):
-        self.root=Path(root);self.draws=draws;self.capacity=capacity;self.cache=OrderedDict();self.hits=0;self.misses=0
+    def __init__(self,root,draws,capacity=2,max_mapped_bytes=3*1024**3):
+        if capacity<1 or max_mapped_bytes<1:raise ValueError('Positive cache bounds required')
+        self.root=Path(root);self.draws=draws;self.capacity=capacity;self.max_mapped_bytes=max_mapped_bytes
+        self.cache=OrderedDict();self.hits=0;self.misses=0;self.mapped_bytes=0
     def __len__(self):return len(self.draws)
+    def _evict(self):
+        _,(arrays,size)=self.cache.popitem(last=False)
+        for a in arrays:a._mmap.close()
+        self.mapped_bytes-=size
+    def close(self):
+        while self.cache:self._evict()
     def __getitem__(self,i):
         visit,z=self.draws[i];folder=self.root/visit
         if visit in self.cache:self.hits+=1;self.cache.move_to_end(visit)
         else:
-            self.misses+=1
-            while len(self.cache)>=self.capacity:
-                _,arrays=self.cache.popitem(last=False)
+            self.misses+=1;paths=[folder/'images.npy',folder/'target.npy'];size=sum(p.stat().st_size for p in paths)
+            if size>self.max_mapped_bytes:raise MemoryError('Visit exceeds per-worker mapping byte bound')
+            while self.cache and (len(self.cache)>=self.capacity or self.mapped_bytes+size>self.max_mapped_bytes):self._evict()
+            arrays=[]
+            try:
+                for p in paths:arrays.append(np.load(p,mmap_mode='r'))
+            except Exception:
                 for a in arrays:a._mmap.close()
-            self.cache[visit]=(np.load(folder/'images.npy',mmap_mode='r'),np.load(folder/'target.npy',mmap_mode='r'))
-        images,target=self.cache[visit];indices=np.clip([z-1,z,z+1],0,images.shape[-1]-1)
-        # Copy only one 12-channel sample, never a decoded volume per worker.
-        x=np.stack([images[c,:,:,k] for c in range(4) for k in indices]).astype(np.float32)
+                raise
+            self.cache[visit]=(arrays,size);self.mapped_bytes+=size
+        (images,target),_=self.cache[visit];indices=np.clip([z-1,z,z+1],0,images.shape[-1]-1)
+        x=np.stack([images[c,:,:,k] for c in range(4) for k in indices])
         y=np.array(target[:,:,z],dtype=np.float32,copy=True)[None]
-        return torch.from_numpy(x),torch.from_numpy(y),dict(hit=self.hits,miss=self.misses,occupancy=len(self.cache))
+        return torch.from_numpy(x),torch.from_numpy(y),dict(hit=self.hits,miss=self.misses,occupancy=len(self.cache),mapped_bytes=self.mapped_bytes)
 
 def sample_draws(records,count,seed,world=1):
     rng=np.random.default_rng(seed); pools={True:{},False:{}}
@@ -105,3 +117,22 @@ def sample_draws(records,count,seed,world=1):
             if not candidates:raise ValueError('Need both tumor-bearing and negative-visit negative centers')
         patients=sorted(candidates);patient=patients[int(rng.integers(len(patients)))];visits=candidates[patient];r=visits[int(rng.integers(len(visits)))];zs=r['positive' if flag else 'negative'];result.append((r['exam_id'],int(zs[int(rng.integers(len(zs)))])))
     return result
+
+
+def locality_draws(records,count,seed,world=1,window=64):
+    """Reorder fixed per-rank windows only; preserve every original patient-aware draw.
+
+    Always generate the entire final window before truncation. A shorter resumed
+    request therefore has exactly the same prefix as an uninterrupted request.
+    """
+    if world<1 or window<4 or window%4:raise ValueError('Invalid locality window')
+    block=world*window;padded=((count+block-1)//block)*block
+    original=sample_draws(records,padded,seed,world);result=[]
+    for start in range(0,padded,block):
+        streams=[]
+        for rank in range(world):
+            groups=OrderedDict()
+            for visit,z in original[start+rank:start+block:world]:groups.setdefault(visit,[]).append(z)
+            streams.append([(visit,z) for visit,zs in groups.items() for z in sorted(zs)])
+        result.extend(streams[rank][i] for i in range(window) for rank in range(world))
+    return result[:count]

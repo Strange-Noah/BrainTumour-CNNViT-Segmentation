@@ -1,3 +1,5 @@
+> Current strategy: [integrated full-FP32 campaign](INTEGRATED_FP32.md). Earlier access and preparation blockers below are historical and superseded. Reuse private cache version 1; do not repeat preparation or interactive Secrets work.
+
 # Benchmark acceptance record — 2026-11-17
 
 **Campaign pending; no GPU result is claimed.** Free Kaggle quota before any launch was 0.00 h used / 30.00 h remaining. Allocated session time and GPU-device time for this task are both zero. Quota accounting semantics (session time versus summed device-hours) have not been empirically established; these units are not interchangeable.

@@ -1,0 +1,73 @@
+[
+  {
+    "configuration": "A-short",
+    "local_batch": 1,
+    "world_size": 1,
+    "samples_per_second": 5.995302244533011,
+    "steady_seconds": 6.671890485000176,
+    "peak_vram_allocated_per_rank": [
+      600538112
+    ],
+    "peak_vram_reserved_per_rank": [
+      666894336
+    ],
+    "peak_rss": 4697612288,
+    "early_rank0_throughput": 6.21425616320987,
+    "late_rank0_throughput": 5.779310556249128,
+    "data_wait_fraction": 0.6502294455752231,
+    "sustained_accepted": false,
+    "rss_plateau": false,
+    "late_to_middle_rss_ratio": null,
+    "sync_overhead": "backward includes DDP synchronization; cannot isolate overlap from this timer",
+    "rss_limitation": "sum RSS double-counts shared mmap pages; available RAM and page faults must also be reviewed",
+    "speedup_vs_A_sustained": 0.9456952730778229
+  },
+  {
+    "configuration": "A-sustained",
+    "local_batch": 1,
+    "world_size": 1,
+    "samples_per_second": 6.339570911696465,
+    "steady_seconds": 130.1349904419999,
+    "peak_vram_allocated_per_rank": [
+      600538112
+    ],
+    "peak_vram_reserved_per_rank": [
+      666894336
+    ],
+    "peak_rss": 5317640192,
+    "early_rank0_throughput": 6.3103064950126075,
+    "late_rank0_throughput": 6.196542638048165,
+    "data_wait_fraction": 0.6369311468765957,
+    "sustained_accepted": false,
+    "rss_plateau": true,
+    "late_to_middle_rss_ratio": 0.9255437978608234,
+    "sync_overhead": "backward includes DDP synchronization; cannot isolate overlap from this timer",
+    "rss_limitation": "sum RSS double-counts shared mmap pages; available RAM and page faults must also be reviewed",
+    "speedup_vs_A_sustained": 1.0
+  },
+  {
+    "configuration": "B-short",
+    "local_batch": 1,
+    "world_size": 2,
+    "samples_per_second": 10.072209505605972,
+    "steady_seconds": 7.94264654199992,
+    "peak_vram_allocated_per_rank": [
+      699104256,
+      699104256
+    ],
+    "peak_vram_reserved_per_rank": [
+      765460480,
+      765460480
+    ],
+    "peak_rss": 10582294528,
+    "early_rank0_throughput": 4.610159535312135,
+    "late_rank0_throughput": 5.119763173933255,
+    "data_wait_fraction": 0.3681045044922553,
+    "sustained_accepted": false,
+    "rss_plateau": false,
+    "late_to_middle_rss_ratio": null,
+    "sync_overhead": "backward includes DDP synchronization; cannot isolate overlap from this timer",
+    "rss_limitation": "sum RSS double-counts shared mmap pages; available RAM and page faults must also be reviewed",
+    "speedup_vs_A_sustained": 1.588784106353762
+  }
+]
