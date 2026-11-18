@@ -2,12 +2,13 @@
 import json,sys
 from pathlib import Path
 import torch
-from .train import Model
+from .train import Model,RUNTIME_PRECISION
 root=Path(sys.argv[1]);count=0;skipped=0
 for path in root.glob('*/checkpoint.pt'):
  state=torch.load(path,map_location='cpu',weights_only=True)
  if state['status']!='success':
   skipped+=1;del state;continue
+ if state.get('runtime_precision')!=RUNTIME_PRECISION:raise ValueError('Checkpoint runtime precision mismatch')
  model=Model(encoder_name='resnet34',encoder_weights=None,in_channels=12,classes=1,activation=None);model.load_state_dict(state['model'],strict=True)
  optimizer=torch.optim.AdamW([{'params':model.encoder.parameters()},{'params':list(model.decoder.parameters())+list(model.segmentation_head.parameters())}]);optimizer.load_state_dict(state['optimizer'])
  assert state['step']>0 and state['rank_rng'] and state['sampler']
