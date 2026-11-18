@@ -23,3 +23,13 @@ Six targeted tests passed: actual GradScaler skip/recovery, fatal guards, AdamW 
 Observed account quota after the two attempts: 0.24 hours used / 29.76 remaining. Account quota accounting differs from aggregate device-hours. The next dispatch must use **gpu_session_seconds=2400**, within the original 60-minute campaign envelope; this is not a new budget. Reuse private dataset version 1; never prepare or publish the cache again.
 
 After this precise source change is reviewed and integrated into main, run the existing manual benchmark workflow. Require >=600 steady seconds for single and DDP, RAM stability, loader measurements, evaluation, fresh-process continuation, and private R2 output/readback. Stop after the benchmark. No paid compute or full-cohort training is authorized.
+
+## Actual retry measurements (incomplete)
+
+| Stage | Samples/s | Steady seconds | Loader wait |
+|---|---:|---:|---:|
+| A-short | 6.036 | 6.63 | 65.9% |
+| A-sustained | 6.368 | 157.04 | 63.8% |
+| B-short | 10.265 | 7.79 | 33.1% |
+
+[Aggregate measured results](evidence/gpu-attempt-2.json). None satisfies the sustained acceptance duration. Short single/DDP comparisons are preliminary; the longer single-stage rate is not a matching-duration DDP baseline.
