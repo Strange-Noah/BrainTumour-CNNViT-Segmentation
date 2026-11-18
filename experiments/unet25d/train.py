@@ -7,7 +7,17 @@ import torch.distributed as dist
 import segmentation_models_pytorch as smp
 from .data import SliceCache, sample_draws
 
+RUNTIME_PRECISION={'autocast':'fp16','fp32_island':'decoder.blocks.0.conv1'}
+
 class Model(smp.Unet):
+    def __init__(self,**kwargs):
+        super().__init__(**kwargs)
+        block=self.decoder.blocks[0].conv1
+        original=block.forward
+        def stable_forward(value):
+            with torch.autocast(value.device.type,enabled=False):
+                return original(value.float())
+        block.forward=stable_forward
     def train(self,mode=True):
         super().train(mode)
         for m in self.encoder.modules():
@@ -44,7 +54,7 @@ def main():
     scaler=torch.amp.GradScaler('cuda',init_scale=config['grad_scaler_init_scale']);offset=0
     if a.resume:
         state=torch.load(a.resume,map_location='cpu',weights_only=True)
-        if state['config']!=config:raise ValueError('Resume config mismatch')
+        if state['config']!=config or state.get('runtime_precision')!=RUNTIME_PRECISION:raise ValueError('Resume configuration/precision mismatch')
         if state['sampler']['world_size']!=world or state['local_batch']!=a.batch:raise ValueError('Exact resume requires same rank/batch allocation')
         model.load_state_dict(state['model']);optimizer.load_state_dict(state['optimizer']);scaler.load_state_dict(state['scaler']);offset=state['step'];draw_offset=state.get('draw_position',offset);overflow_skips=state.get('amp_overflow_skips',0);torch.set_rng_state(state['rng_cpu']);random.setstate(state['rng_python'])
     if a.resume:
@@ -64,8 +74,10 @@ def main():
         torch.save(rank_rng,out/f'rng-{rank}.pt')
         if world>1 and status in ['success','running']:dist.barrier()
         if rank==0:
+            optimizer_steps={float(v['step']) for v in optimizer.state.values() if 'step' in v}
+            if optimizer_steps and optimizer_steps!={float(step)}:raise ValueError('Optimizer/checkpoint step counter mismatch')
             all_rng=[torch.load(out/f'rng-{r}.pt',map_location='cpu',weights_only=True) for r in range(world)]
-            state=dict(model=raw.state_dict(),optimizer=optimizer.state_dict(),scheduler=None,scaler=scaler.state_dict(),config=config,step=step,epoch=0,draw_position=draw_position,amp_overflow_skips=overflow_skips,local_batch=a.batch,git_sha=os.environ.get('NOVO_SOURCE_SHA','unrecorded'),sampler=dict(seed=42,consumed_global=draw_position*world*a.batch,world_size=world,draws_sha256=hashlib.sha256(json.dumps(draws).encode()).hexdigest()),rng_cpu=torch.get_rng_state(),rng_cuda=torch.cuda.get_rng_state(local),rng_python=random.getstate(),numpy_seed=42,rank_rng=all_rng,status=status)
+            state=dict(model=raw.state_dict(),optimizer=optimizer.state_dict(),scheduler=None,scaler=scaler.state_dict(),config=config,runtime_precision=RUNTIME_PRECISION,step=step,epoch=0,draw_position=draw_position,amp_overflow_skips=overflow_skips,local_batch=a.batch,git_sha=os.environ.get('NOVO_SOURCE_SHA','unrecorded'),sampler=dict(seed=42,consumed_global=draw_position*world*a.batch,world_size=world,draws_sha256=hashlib.sha256(json.dumps(draws).encode()).hexdigest()),rng_cpu=torch.get_rng_state(),rng_cuda=torch.cuda.get_rng_state(local),rng_python=random.getstate(),numpy_seed=42,rank_rng=all_rng,status=status)
             temporary=out/'checkpoint.tmp';torch.save(state,temporary);temporary.replace(out/'checkpoint.pt')
             if os.environ.get('R2_OUTPUT_ACCESS_KEY_ID'):
                 from cloud.storage import connect,put_once
@@ -88,6 +100,7 @@ def main():
             if world>1:dist.all_reduce(finite,op=dist.ReduceOp.MIN)
             torch.cuda.synchronize();backward=time.monotonic()-t;t=time.monotonic()
             overflow_skips,updated=amp_step(scaler,optimizer,bool(torch.isfinite(loss)),bool(finite),overflow_skips)
+            step+=int(updated)
             torch.cuda.synchronize();optim=time.monotonic()-t;draw_position=draw_offset+i+1;now=time.monotonic()
             row=dict(step=step,rank=rank,wall=time.time(),elapsed=now-start,phase='warmup' if i<10 else 'steady',samples=a.batch if updated else 0,optimizer_updated=updated,amp_scale=scaler.get_scale(),amp_overflow_skips=overflow_skips,iteration_seconds=now-previous,data_wait_seconds=ready-before,h2d_seconds=h2d,forward_seconds=forward,backward_including_sync_seconds=backward,optimizer_seconds=optim,loss=float(loss.detach()),finite=updated,vram_allocated=torch.cuda.max_memory_allocated(),vram_reserved=torch.cuda.max_memory_reserved(),cache={k:v.tolist() for k,v in cache.items()})
             log.write(json.dumps(row)+'\n');log.flush();previous=now
