@@ -6,6 +6,9 @@ on:
         type: choice
         options: [prepare, validate, benchmark, collect]
         required: true
+      gpu_session_seconds:
+        type: number
+        default: 3600
       dataset:
         type: string
         default: mathewzhou/novo-unet25d-benchmark-cache
@@ -34,6 +37,7 @@ jobs:
           python -m pip install -q -r experiments/unet25d/requirements.txt
       - name: Orchestrate private inputs and artifacts
         env:
+          GPU_SESSION_SECONDS: ${{ inputs.gpu_session_seconds }}
           MODE: ${{ inputs.mode }}
           DATASET: ${{ inputs.dataset }}
           KERNEL: ${{ inputs.kernel }}

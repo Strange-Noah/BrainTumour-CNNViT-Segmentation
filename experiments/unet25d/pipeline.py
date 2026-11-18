@@ -108,7 +108,7 @@ def campaign(work):
         if output_bucket!='novo-nordisk-pbl-outputs':raise ValueError('Output preflight missing')
     import torch
     if torch.cuda.device_count()!=2 or not all('T4' in torch.cuda.get_device_name(i) for i in range(2)):raise RuntimeError('Require actual free dual T4 runtime')
-    start=time.time();deadline=start+3300 # 55 minutes in-process; launcher adds 60 minute outer timeout.
+    start=time.time();deadline=start+min(3300,int(os.environ.get('NOVO_GPU_BUDGET_SECONDS','3600'))-240) # 55 minutes in-process; launcher adds 60 minute outer timeout.
     candidates=[('A-short',1,1,1,50,120),('B-short',2,1,1,50,120)]
     completed=[]
     with stage(work,'benchmark'):

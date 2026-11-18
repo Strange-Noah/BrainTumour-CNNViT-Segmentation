@@ -23,6 +23,13 @@
       "gpu_allocated": false
     }
   ],
-  "kaggle_publication_verified": false,
-  "gpu_allocated": false
+  "kaggle_publication_verified": true,
+  "gpu_allocated": false,
+  "dataset_metadata": {
+    "ref": "mathewzhou/novo-unet25d-benchmark-cache",
+    "version": 1,
+    "is_private": true,
+    "total_bytes": 11911622238
+  },
+  "independent_cpu_validation_run": 44166879820
 }

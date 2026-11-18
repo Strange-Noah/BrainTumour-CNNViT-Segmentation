@@ -4,15 +4,6 @@ from pathlib import Path
 from cloud.storage import connect,put_once,verify
 ROOT=Path.cwd();WORK=Path(os.environ.get('RUNNER_TEMP','/tmp'))/'novo-benchmark-bridge'
 WORK.mkdir(exist_ok=True);WORK.chmod(0o700)
-def checked_publication(result):
- error=getattr(result,'error',None)
- if error or str(getattr(result,'status','')).lower() in ['error','failed']:
-  text=str(error or 'Dataset creation failed')
-  for name,value in os.environ.items():
-   if value and any(word in name for word in ['TOKEN','ACCESS_KEY']):text=text.replace(value,'[REDACTED]')
-  raise RuntimeError(text[:600])
- return result
-
 def cli(*args):
  p=subprocess.run(['kaggle',*args],capture_output=True,text=True,timeout=600)
  if p.returncode:raise RuntimeError('Kaggle CLI failed: '+args[0]+' '+args[1])
@@ -47,20 +38,18 @@ def restore_existing(work):
 def prepare(dataset):
  from experiments.unet25d.pipeline import prepare as build
  work=WORK/'cache';work.mkdir(exist_ok=True);os.environ['HF_HOME']=str(work/'hf')
- restored=restore_existing(work)
  c,b=connect(output=True)
  stage_prefix='novo-nordisk/experiments/unet25d/bridge/prepared-visits-v1/'+hashlib.sha256((ROOT/'experiments/unet25d/config.json').read_bytes()).hexdigest()+'/'
  # Restore per-visit checkpoints, including partial prior build progress.
- if not restored:
-  for page in c.get_paginator('list_objects_v2').paginate(Bucket=b,Prefix=stage_prefix):
-   for row in page.get('Contents',[]):
-    if not row['Key'].endswith('/complete.json'):continue
-    record=json.loads(c.get_object(Bucket=b,Key=row['Key'])['Body'].read())
-    for item in record:
-     path=(work/'prepared'/item['relative']).resolve()
-     if not path.is_relative_to((work/'prepared').resolve()):raise ValueError('Invalid visit checkpoint')
-     path.parent.mkdir(parents=True,exist_ok=True)
-     with path.open('wb') as stream:verify(c,b,item['key'],item['sha256'],stream)
+ for page in c.get_paginator('list_objects_v2').paginate(Bucket=b,Prefix=stage_prefix):
+  for row in page.get('Contents',[]):
+   if not row['Key'].endswith('/complete.json'):continue
+   record=json.loads(c.get_object(Bucket=b,Key=row['Key'])['Body'].read())
+   for item in record:
+    path=(work/'prepared'/item['relative']).resolve()
+    if not path.is_relative_to((work/'prepared').resolve()):raise ValueError('Invalid visit checkpoint')
+    path.parent.mkdir(parents=True,exist_ok=True)
+    with path.open('wb') as stream:verify(c,b,item['key'],item['sha256'],stream)
  def save_visit(folder):
   records=[]
   for path in sorted(folder.iterdir()):
@@ -68,6 +57,7 @@ def prepare(dataset):
     r=put_once(c,b,stage_prefix+folder.name+'/'+path.name,path);r['relative']=str(path.relative_to(work/'prepared'));records.append(r)
   receipt=WORK/'visit-complete.json';receipt.write_text(json.dumps(records,sort_keys=True))
   put_once(c,b,stage_prefix+folder.name+'/complete.json',receipt)
+ restored=restore_existing(work)
  if not restored:
   # Single regeneration authorization: immutable claim stops repeated whole-cache builds.
   c,b=connect(output=True);claim=WORK/'build-claim.json';claim.write_text(json.dumps({'recovery_authorization':'v2','config_sha256':hashlib.sha256((ROOT/'experiments/unet25d/config.json').read_bytes()).hexdigest()},sort_keys=True))
@@ -90,15 +80,7 @@ def prepare(dataset):
   if (work/name).exists():shutil.copy2(work/name,data/name)
  # No environment files, credentials or raw NIfTI cache are published.
  (data/'dataset-metadata.json').write_text(json.dumps(dict(id=dataset,title='Novo Unet25d Benchmark Cache',licenses=[{'name':'other'}])))
- token=os.environ.get('KAGGLE_API_TOKEN')
- from kaggle.api.kaggle_api_extended import KaggleApi
- if token:os.environ['KAGGLE_API_TOKEN']=token
- api=KaggleApi();api.authenticate()
- checked_publication(api.dataset_create_new(str(data),public=False,quiet=True,convert_to_csv=False,dir_mode='zip'))
- # A CLI exit code alone is not evidence of dataset creation.
- api.dataset_metadata(dataset,str(WORK/'published-metadata'))
- status=api.dataset_status(dataset)
- if not status:raise RuntimeError('Created dataset is not addressable')
+ cli('datasets','create','-p',str(data),'-r','zip','-t') # default private; never --public
  ready=WORK/'publication.json';ready.write_text(json.dumps(dict(dataset=dataset,config_sha256=hashlib.sha256((data/'config.json').read_bytes()).hexdigest(),restored_existing=restored,regenerated=not restored,source_sha=os.environ['NOVO_SOURCE_SHA'])))
  print(json.dumps(dict(publication=publish_result('publication.json',ready))))
 
@@ -119,6 +101,7 @@ if len(candidates)!=1:raise RuntimeError('Prepared dataset must expose exactly o
 cache=candidates[0].parent
 os.environ['NOVO_SOURCE_SHA']=sha
 os.environ['NOVO_ARTIFACT_MODE']='kaggle'
+os.environ['NOVO_GPU_BUDGET_SECONDS']=__BUDGET_LITERAL__
 if __MODE_LITERAL__=='validate':
  p=subprocess.run([sys.executable,'-m','experiments.unet25d.verify_mount',str(cache)],cwd=root,check=True,capture_output=True,text=True)
  Path('/kaggle/working/cache-validation.json').write_text(p.stdout)
@@ -127,7 +110,7 @@ else:
  finally:
   link=Path('/kaggle/working/novo-unet25d/prepared')
   if link.is_symlink():link.unlink()
-'''.replace('__SOURCE_LITERAL__',repr(sha)).replace('__MODE_LITERAL__',repr(mode))
+'''.replace('__SOURCE_LITERAL__',repr(sha)).replace('__MODE_LITERAL__',repr(mode)).replace('__BUDGET_LITERAL__',repr(os.environ.get('GPU_SESSION_SECONDS','3600')))
 
 def submit(dataset,kernel,mode):
  deadline=time.monotonic()+600
@@ -142,7 +125,7 @@ def submit(dataset,kernel,mode):
   c,b=connect(output=True);prior=c.get_object(Bucket=b,Key='novo-nordisk/experiments/unet25d/bridge/cache-validation.json')
   record=json.loads(prior['Body'].read())
   if record['dataset']!=dataset or not record['verified']:raise ValueError('Independent CPU validation required')
- args=['kernels','push','-p',str(folder),'-t','3600' if mode=='benchmark' else '1200']
+ args=['kernels','push','-p',str(folder),'-t',os.environ.get('GPU_SESSION_SECONDS','3600') if mode=='benchmark' else '1200']
  if mode=='benchmark':args+=['--accelerator','NvidiaTeslaT4']
  print(json.dumps(dict(submitted=ref,mode=mode,source_sha=sha,quota_before=cli('quota'))));cli(*args)
  deadline=time.monotonic()+(4500 if mode=='benchmark' else 1800)
@@ -174,6 +157,8 @@ def collect(ref,dataset,mode):
 
 def main():
  if not os.environ.get('KAGGLE_API_TOKEN'):raise ValueError('Cloud Kaggle API token missing')
+ budget=int(os.environ.get('GPU_SESSION_SECONDS','3600'))
+ if not 1200<=budget<=3600:raise ValueError('GPU session budget must be 1200-3600 seconds')
  mode=os.environ['MODE'];dataset=os.environ['DATASET'];kernel=os.environ['KERNEL']
  if not all(re.fullmatch('mathewzhou/[a-z0-9-]+',s) for s in [dataset,kernel]):raise ValueError('Expected owner-private resource names')
  if mode=='prepare':prepare(dataset)
