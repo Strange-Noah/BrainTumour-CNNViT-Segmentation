@@ -1,0 +1,35 @@
+{
+  "run_id": 44153000932,
+  "r2_verifications": [
+    {
+      "verified": true,
+      "verification": "fresh-process GET of every chunk and whole-file SHA-256",
+      "files": 45,
+      "bytes": 11737028514,
+      "source_sha": "1cb04c851e94e2dd5a302c5174beb5bcc6d33fc9",
+      "config_sha256": "ab91d206fefff7d65ac2437f9402e9b161a5772d7341ec2fb2b6d279afec5bf4",
+      "manifest_sha256": "37176945ceff56d7d8411e74a40e676a66a168f39780aea58d7659793034547e",
+      "gpu_allocated": false
+    },
+    {
+      "verified": true,
+      "prepared_files": 38,
+      "prepared_bytes": 11648937496,
+      "train_visits": 8,
+      "validation_visits": 1,
+      "config_sha256": "ab91d206fefff7d65ac2437f9402e9b161a5772d7341ec2fb2b6d279afec5bf4",
+      "receipt_sha256": "76eb4365ae28177b9efb53a8a13093f4c0e856bf0919eeda035eb01bdc18140b",
+      "offline_weight_verified": true,
+      "gpu_allocated": false
+    }
+  ],
+  "kaggle_publication_verified": true,
+  "gpu_allocated": false,
+  "dataset_metadata": {
+    "ref": "mathewzhou/novo-unet25d-benchmark-cache",
+    "version": 1,
+    "is_private": true,
+    "total_bytes": 11911622238
+  },
+  "independent_cpu_validation_run": 44166879820
+}

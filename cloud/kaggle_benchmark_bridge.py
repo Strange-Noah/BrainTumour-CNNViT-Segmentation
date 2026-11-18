@@ -101,6 +101,7 @@ if len(candidates)!=1:raise RuntimeError('Prepared dataset must expose exactly o
 cache=candidates[0].parent
 os.environ['NOVO_SOURCE_SHA']=sha
 os.environ['NOVO_ARTIFACT_MODE']='kaggle'
+os.environ['NOVO_GPU_BUDGET_SECONDS']=__BUDGET_LITERAL__
 if __MODE_LITERAL__=='validate':
  p=subprocess.run([sys.executable,'-m','experiments.unet25d.verify_mount',str(cache)],cwd=root,check=True,capture_output=True,text=True)
  Path('/kaggle/working/cache-validation.json').write_text(p.stdout)
@@ -109,7 +110,7 @@ else:
  finally:
   link=Path('/kaggle/working/novo-unet25d/prepared')
   if link.is_symlink():link.unlink()
-'''.replace('__SOURCE_LITERAL__',repr(sha)).replace('__MODE_LITERAL__',repr(mode))
+'''.replace('__SOURCE_LITERAL__',repr(sha)).replace('__MODE_LITERAL__',repr(mode)).replace('__BUDGET_LITERAL__',repr(os.environ.get('GPU_SESSION_SECONDS','3600')))
 
 def submit(dataset,kernel,mode):
  deadline=time.monotonic()+600
@@ -124,7 +125,7 @@ def submit(dataset,kernel,mode):
   c,b=connect(output=True);prior=c.get_object(Bucket=b,Key='novo-nordisk/experiments/unet25d/bridge/cache-validation.json')
   record=json.loads(prior['Body'].read())
   if record['dataset']!=dataset or not record['verified']:raise ValueError('Independent CPU validation required')
- args=['kernels','push','-p',str(folder),'-t','3600' if mode=='benchmark' else '1200']
+ args=['kernels','push','-p',str(folder),'-t',os.environ.get('GPU_SESSION_SECONDS','3600') if mode=='benchmark' else '1200']
  if mode=='benchmark':args+=['--accelerator','NvidiaTeslaT4']
  print(json.dumps(dict(submitted=ref,mode=mode,source_sha=sha,quota_before=cli('quota'))));cli(*args)
  deadline=time.monotonic()+(4500 if mode=='benchmark' else 1800)
@@ -156,6 +157,8 @@ def collect(ref,dataset,mode):
 
 def main():
  if not os.environ.get('KAGGLE_API_TOKEN'):raise ValueError('Cloud Kaggle API token missing')
+ budget=int(os.environ.get('GPU_SESSION_SECONDS','3600'))
+ if not 1200<=budget<=3600:raise ValueError('GPU session budget must be 1200-3600 seconds')
  mode=os.environ['MODE'];dataset=os.environ['DATASET'];kernel=os.environ['KERNEL']
  if not all(re.fullmatch('mathewzhou/[a-z0-9-]+',s) for s in [dataset,kernel]):raise ValueError('Expected owner-private resource names')
  if mode=='prepare':prepare(dataset)

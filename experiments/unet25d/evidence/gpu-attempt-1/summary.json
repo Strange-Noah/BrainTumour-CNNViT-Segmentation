@@ -1,0 +1,14 @@
+{
+  "actions_run": 44167758270,
+  "source_sha": "1cb04c851e94e2dd5a302c5174beb5bcc6d33fc9",
+  "result": "stopped by finite-gradient safeguard",
+  "stop_step": 1011,
+  "short_single_samples_per_second": 5.536663391947592,
+  "short_ddp_samples_per_second": 9.443173685873521,
+  "short_speedup": 1.705571210922354,
+  "sustained_acceptance": false,
+  "gpu_quota_hours_used": 0.14,
+  "remaining_campaign_seconds_next_run_cap": 3000,
+  "checkpoint_artifacts_collected_to_private_R2": true,
+  "training_resume_tested": false
+}

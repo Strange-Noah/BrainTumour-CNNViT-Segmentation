@@ -28,7 +28,7 @@ def main():
     os.environ['NOVO_RUN_ID']=hashlib.sha256(json.dumps(launch,sort_keys=True).encode()).hexdigest()[:16]
     (work/'launch.json').write_text(json.dumps(dict(**launch,run_id=os.environ['NOVO_RUN_ID'])))
     process=subprocess.Popen([sys.executable,'-m','experiments.unet25d.pipeline',args.mode,str(work)])
-    try:code=process.wait(timeout=3500 if args.mode=='campaign' else 7200)
+    try:code=process.wait(timeout=min(3500,int(os.environ.get('NOVO_GPU_BUDGET_SECONDS','3600'))-60) if args.mode=='campaign' else 7200)
     except subprocess.TimeoutExpired:
         import psutil
         for child in reversed(psutil.Process(process.pid).children(recursive=True)):
