@@ -5,8 +5,9 @@ import nibabel as nib
 import numpy as np
 import torch
 from .train import Model,RUNTIME_PRECISION
-from .data import SliceCache,restore
-from research.evaluate import evaluate,export
+from .data import SliceCache
+from .export_native import export_native
+from research.evaluate import evaluate
 
 def main():
     cache,checkpoint,output=map(Path,sys.argv[1:]);output.mkdir(parents=True,exist_ok=True)
@@ -24,9 +25,9 @@ def main():
                 logits=model(x[None].cuda())
                 if not torch.isfinite(logits).all():raise FloatingPointError('Nonfinite validation logits')
                 prediction[:,:,z]=logits[0,0].float().cpu().numpy()
-        original=restore(prediction,meta,order=1)>=0;truth=np.load(cache/meta['exam_id']/'native-target.npy',mmap_mode='r')
-        reference=nib.Nifti1Image(np.empty(meta['native_shape'],dtype=np.uint8),np.asarray(meta['native_affine']));reference.header.set_xyzt_units('mm')
+        prediction.flush();dataset.close()
+        original,reference=export_native(prediction,meta,folder/'prediction',state['git_sha'],str(checkpoint.name))
+        truth=np.load(cache/meta['exam_id']/'native-target.npy',mmap_mode='r')
         metrics=evaluate(original,truth,reference.affine);(folder/'metrics.json').write_text(json.dumps(metrics))
-        export(original,reference,folder,dict(patient_id=meta['patient_id'],exam_id=meta['exam_id'],task='enhancing',git_sha=state.get('git_sha','unrecorded'),model_version='unet25d-benchmark',checkpoint_ref=str(checkpoint.name)))
         del prediction,dataset,original,truth
 if __name__=='__main__':main()
