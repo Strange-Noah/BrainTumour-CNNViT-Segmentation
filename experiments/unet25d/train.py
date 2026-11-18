@@ -7,17 +7,18 @@ import torch.distributed as dist
 import segmentation_models_pytorch as smp
 from .data import SliceCache, sample_draws
 
-RUNTIME_PRECISION={'autocast':'fp16','fp32_island':'decoder.blocks.0.conv1'}
+RUNTIME_PRECISION={'autocast':'fp16','fp32_modules':['encoder','decoder.blocks.0.conv1']}
 
 class Model(smp.Unet):
     def __init__(self,**kwargs):
         super().__init__(**kwargs)
-        block=self.decoder.blocks[0].conv1
-        original=block.forward
-        def stable_forward(value):
-            with torch.autocast(value.device.type,enabled=False):
-                return original(value.float())
-        block.forward=stable_forward
+        # Residual additions can overflow even when the individual conv/BN outputs are finite.
+        for block in (self.encoder,self.decoder.blocks[0].conv1):
+            original=block.forward
+            def stable_forward(value,original=original):
+                with torch.autocast(value.device.type,enabled=False):
+                    return original(value.float())
+            block.forward=stable_forward
     def train(self,mode=True):
         super().train(mode)
         for m in self.encoder.modules():

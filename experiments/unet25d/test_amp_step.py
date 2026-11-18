@@ -36,9 +36,11 @@ class PrecisionIsland(unittest.TestCase):
   def hook(name):
    def record(module,args,out):seen[name]=out.dtype
    return record
+  model.encoder.conv1.register_forward_hook(hook('encoder_conv'))
+  model.encoder.layer4[2].register_forward_hook(hook('residual'))
   model.decoder.blocks[0].conv1.register_forward_hook(hook('island'))
   model.decoder.blocks[0].conv2.register_forward_hook(hook('next'))
   with torch.autocast('cpu',dtype=torch.float16):out=model(torch.randn(1,12,64,64))
-  self.assertTrue(torch.isfinite(out).all());self.assertEqual(seen,{'island':torch.float32,'next':torch.float16})
+  self.assertTrue(torch.isfinite(out).all());self.assertEqual(seen,{'encoder_conv':torch.float32,'residual':torch.float32,'island':torch.float32,'next':torch.float16})
 
 if __name__=='__main__':unittest.main()
