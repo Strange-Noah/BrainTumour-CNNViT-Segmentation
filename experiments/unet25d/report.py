@@ -15,6 +15,16 @@ def main():
         systems=read(folder/'system.jsonl');rss=[r['rss'] for r in systems];early=[r for r in steady[0][:max(1,len(steady[0])//3)]];late=steady[0][-max(1,len(steady[0])//3):]
         rate=lambda rows:sum(r['samples'] for r in rows)/sum(r['iteration_seconds'] for r in rows)
         row=dict(configuration=folder.name,local_batch=steady[0][0]['samples'],world_size=len(ranks),samples_per_second=speed,steady_seconds=duration,peak_vram_allocated_per_rank=[max(r['vram_allocated'] for r in rows) for rows in ranks],peak_vram_reserved_per_rank=[max(r['vram_reserved'] for r in rows) for rows in ranks],peak_rss=sum([]) if not rss else max(rss),early_rank0_throughput=rate(early),late_rank0_throughput=rate(late),data_wait_fraction=sum(r['data_wait_seconds'] for rows in steady for r in rows)/sum(r['iteration_seconds'] for rows in steady for r in rows),sustained_accepted=duration>=600,rss_plateau=bool(len(rss)>=30 and np.median(rss[-max(1,len(rss)//3):])<=1.10*np.median(rss[len(rss)//3:2*len(rss)//3])),late_to_middle_rss_ratio=float(np.median(rss[-max(1,len(rss)//3):])/max(1,np.median(rss[len(rss)//3:2*len(rss)//3]))) if len(rss)>=30 else None,sync_overhead='backward includes DDP synchronization; cannot isolate overlap from this timer',rss_limitation='sum RSS double-counts shared mmap pages; available RAM and page faults must also be reviewed')
+        row['precision']=steady[0][0].get('precision','legacy-mixed')
+        row['min_available_ram_fraction']=min((r['available']/r['total_ram'] for r in systems),default=None)
+        row['swap_in_delta_bytes']=max((r['swap_in'] for r in systems),default=0)-min((r['swap_in'] for r in systems),default=0)
+        hits=[max(max(r['cache']['hit']) for r in rows) for rows in ranks]
+        misses=[max(max(r['cache']['miss']) for r in rows) for rows in ranks]
+        row['cache_hit_fraction']=sum(hits)/max(1,sum(hits)+sum(misses))
+        row['mmap_visit_opens_per_rank']=misses
+        row['peak_mapped_bytes_per_rank']=[max(max(r['cache'].get('mapped_bytes',[0])) for r in rows) for rows in ranks]
+        seconds=sum(r['iteration_seconds'] for rows in steady for r in rows)
+        row['time_fraction']={key:sum(r[key] for rows in steady for r in rows)/seconds for key in ['data_wait_seconds','h2d_seconds','forward_seconds','backward_including_sync_seconds','optimizer_seconds']}
         table.append(row)
     baseline=next((r['samples_per_second'] for r in table if r['configuration']=='A-sustained'),None)
     for r in table:r['speedup_vs_A_sustained']=r['samples_per_second']/baseline if baseline else None

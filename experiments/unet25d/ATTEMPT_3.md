@@ -1,5 +1,7 @@
 # Bounded GPU attempt 3 — acceptance remains open
 
+The selective-FP32 continuation discussed below is historical. The owner has superseded it with the [full-FP32 integrated strategy](INTEGRATED_FP32.md).
+
 The owner approved PR #23 revision `e1a916b8eba609187197b86947803bf176bdd12b`. It merged as [5f0eee17ba10927fc267903e2a6ba1cd23499fc6](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/commit/5f0eee17ba10927fc267903e2a6ba1cd23499fc6). [Actions run 44255895457](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/44255895457) dispatched the private Kaggle notebook from that exact integrated source with a 2,400-second cap. Submission source and private metadata were read back. Existing private cache version 1 was reused; no preprocessing or full-cohort training ran.
 
 The GPU session stopped early with **nonfinite forward loss**. It did not reach ten-minute sustained acceptance, sustained DDP, worker/batch tuning, validation or resume continuation. Do not select the final formal training configuration from these partial results. No further GPU run was launched.

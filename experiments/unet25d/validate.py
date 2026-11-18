@@ -4,13 +4,15 @@ from pathlib import Path
 import nibabel as nib
 import numpy as np
 import torch
-from .train import Model
+from .train import Model,RUNTIME_PRECISION
 from .data import SliceCache,restore
 from research.evaluate import evaluate,export
 
 def main():
     cache,checkpoint,output=map(Path,sys.argv[1:]);output.mkdir(parents=True,exist_ok=True)
     state=torch.load(checkpoint,map_location='cpu',weights_only=True)
+    if state['status']!='success' or state.get('runtime_precision')!=RUNTIME_PRECISION:raise ValueError('Validation requires healthy FP32 checkpoint')
+    torch.backends.cuda.matmul.allow_tf32=False;torch.backends.cudnn.allow_tf32=False
     model=Model(encoder_name='resnet34',encoder_weights=None,in_channels=12,classes=1,activation=None);model.load_state_dict(state['model']);model.cuda().eval()
     for meta in json.loads((cache/'validation-index.json').read_text()):
         folder=output/meta['exam_id'];folder.mkdir(exist_ok=True);z_count=meta['shape'][2]
@@ -19,7 +21,8 @@ def main():
         with torch.inference_mode():
             for z in range(z_count):
                 x,_,_=dataset[z]
-                with torch.autocast('cuda',dtype=torch.float16):logits=model(x[None].cuda())
+                logits=model(x[None].cuda())
+                if not torch.isfinite(logits).all():raise FloatingPointError('Nonfinite validation logits')
                 prediction[:,:,z]=logits[0,0].float().cpu().numpy()
         original=restore(prediction,meta,order=1)>=0;truth=np.load(cache/meta['exam_id']/'native-target.npy',mmap_mode='r')
         reference=nib.Nifti1Image(np.empty(meta['native_shape'],dtype=np.uint8),np.asarray(meta['native_affine']));reference.header.set_xyzt_units('mm')

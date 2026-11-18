@@ -8,7 +8,7 @@ on:
         required: true
       gpu_session_seconds:
         type: number
-        default: 3600
+        default: 2100
       dataset:
         type: string
         default: mathewzhou/novo-unet25d-benchmark-cache
