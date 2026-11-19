@@ -1,0 +1,23 @@
+{
+  "train": {
+    "patients": 210,
+    "visits": 746,
+    "axial_planes": 215680,
+    "tile_planes": 220384,
+    "oversized_visits": 4,
+    "oblique_visits": 36,
+    "uncompressed_image_label_bytes": 965097291776
+  },
+  "validation": {
+    "patients": 45,
+    "visits": 159,
+    "axial_planes": 41566,
+    "tile_planes": 41566,
+    "oversized_visits": 0,
+    "oblique_visits": 15,
+    "uncompressed_image_label_bytes": 185236717568
+  },
+  "test_pixels_accessed": false,
+  "basis": "completed ingestion manifest and completed audit headers only; no repeated audit or MRI transfer",
+  "split_sha256": "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0"
+}

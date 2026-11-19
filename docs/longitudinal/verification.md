@@ -1,3 +1,9 @@
+# Current verification update — 2026-11-16
+
+The dated ledger below includes historical blockers. Current ingestion and complete audit supersede its older Gate C status: all 300 patients / 1,065 exams / 11,405 files are present, with zero audit failures. [Full acceptance record](full-dataset-audit.md) · [Machine-readable audit](../../protocol/v1/full-audit-summary.json).
+
+Dataset credentials remain read-only in the CNN verification environment. Separate output secrets are now configured; checkpoint persistence passed in run 43810710239; fresh-session recovery passed in run 43811539630 after the approved PR #16 merge. [Output evidence](cnn-output-verification.md) · [Runtime handoff](handoff.md). A GitHub output test does not establish a Kaggle-originated write. Hosted deployment and full model training remain unverified and unauthorized respectively.
+
 # Migration and acceptance report
 
 Updated 2026-11-15 · Asia/Shanghai
@@ -33,3 +39,7 @@ GitHub API reported ADMIN access, public visibility, enabled Actions with all ac
 ## Cost and next execution
 
 No paid workload or subscription was initiated. See [architecture](architecture.md) for estimated raw Standard R2 storage and [handoff](handoff.md) for access setup and gate commands.
+
+## Full-cohort training transition — 2026-11-19
+
+Accepted execution infrastructure is frozen; no GPU was allocated for this source change. [Coverage/configuration/preparation and budget report](../../experiments/unet25d/cohort/README.md) distinguishes existing metadata counts and CPU contracts from pending actual 905-visit preparation. The accepted sustained GPU campaign is run 44292134002; native export/checkpoint CPU recovery is run 44333112852. The new entry refuses formal submission while owner budget fields remain false/zero. No test evaluation or full-cohort diagnostic-checkpoint evaluation.

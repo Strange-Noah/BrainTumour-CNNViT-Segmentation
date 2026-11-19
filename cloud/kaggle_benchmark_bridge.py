@@ -36,6 +36,9 @@ def restore_existing(work):
  return False
 
 def prepare(dataset):
+ if dataset=='mathewzhou/novo-unet25d-full-cohort-input':
+  from experiments.unet25d.cohort.stage import publish_from_existing_runtime
+  return publish_from_existing_runtime(dataset)
  from experiments.unet25d.pipeline import prepare as build
  work=WORK/'cache';work.mkdir(exist_ok=True);os.environ['HF_HOME']=str(work/'hf')
  c,b=connect(output=True)
@@ -114,6 +117,10 @@ else:
 '''.replace('__SOURCE_LITERAL__',repr(sha)).replace('__MODE_LITERAL__',repr(mode)).replace('__BUDGET_LITERAL__',repr(os.environ.get('GPU_SESSION_SECONDS','3600')))
 
 def submit(dataset,kernel,mode):
+ if dataset=='mathewzhou/novo-unet25d-full-cohort-input':
+  if mode!='benchmark':raise ValueError('Cohort inputs use normal preparation checks, not another validation campaign')
+  from experiments.unet25d.cohort.kaggle import submit_one
+  return submit_one(dataset,kernel)
  deadline=time.monotonic()+600
  while 'READY' not in cli('datasets','status',dataset).upper():
   if time.monotonic()>deadline:raise TimeoutError('Private dataset processing incomplete')
@@ -147,6 +154,9 @@ def collect(ref,dataset,mode):
  # New client readback, with full SHA checks after transfer out of Kaggle.
  reader,read_bucket=connect(output=True)
  for r in receipts:verify(reader,read_bucket,r['key'],r['sha256'])
+ if mode=='formal':
+  from experiments.unet25d.cohort.stage import persist_training_state
+  persist_training_state(folder,c,b,receipts)
  if mode=='validate':
   result=json.loads(next(folder.rglob('cache-validation.json')).read_text())
   if not result.get('verified'):raise ValueError('Private input validation failed')
@@ -161,10 +171,10 @@ def main():
  budget=int(os.environ.get('GPU_SESSION_SECONDS','3600'))
  if not 1200<=budget<=3600:raise ValueError('GPU session budget must be 1200-3600 seconds')
  mode=os.environ['MODE'];dataset=os.environ['DATASET'];kernel=os.environ['KERNEL']
- if mode=='benchmark' and budget>2100:raise ValueError('Remaining campaign session cap is 2100 seconds')
+ if mode=='benchmark' and dataset!='mathewzhou/novo-unet25d-full-cohort-input' and budget>2100:raise ValueError('Remaining campaign session cap is 2100 seconds')
  if not all(re.fullmatch('mathewzhou/[a-z0-9-]+',s) for s in [dataset,kernel]):raise ValueError('Expected owner-private resource names')
  if mode=='prepare':prepare(dataset)
  elif mode in ['validate','benchmark']:submit(dataset,kernel,mode)
- elif mode=='collect':collect(kernel,dataset,'benchmark')
+ elif mode=='collect':collect(kernel,dataset,'formal' if dataset=='mathewzhou/novo-unet25d-full-cohort-input' else 'benchmark')
  else:raise ValueError('Unsupported mode')
 if __name__=='__main__':main()
