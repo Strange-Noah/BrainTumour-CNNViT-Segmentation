@@ -1,3 +1,7 @@
+## Adaptive formal training — 2026-11-20
+
+[Focused CPU acceptance](../../experiments/unet25d/cohort/ADAPTIVE_ACCEPTANCE.json): 29 checks passed; metadata-only exact 220,384-position plan / 110,192 updates, correct four-category 67,200 plan and concentration bounds. [Science/execution handoff](../../experiments/unet25d/cohort/ADAPTIVE_TRAINING.md). Reuses accepted CPU input read; no MRI re-preparation, GPU benchmark or test evaluation. GPU_TRAINING_STARTED=false until actual integrated-source submission is recorded.
+
 # Current verification update — 2026-11-16
 
 The dated ledger below includes historical blockers. Current ingestion and complete audit supersede its older Gate C status: all 300 patients / 1,065 exams / 11,405 files are present, with zero audit failures. [Full acceptance record](full-dataset-audit.md) · [Machine-readable audit](../../protocol/v1/full-audit-summary.json).

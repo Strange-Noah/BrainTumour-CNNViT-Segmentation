@@ -112,6 +112,12 @@ def publish_from_existing_runtime(dataset,session_seconds=12*3600,final_check=Fa
     key=keybase()+'/training-input-readiness/'+science_hash()+'.json'
     try:prior=read_json_record(c,b,key)
     except c.exceptions.NoSuchKey:prior=None
+    if prior is None:
+        # Training science changed; the accepted data-policy/input read has not.
+        accepted='1db818f21ca0b2e90d2d6a9fae1ce58c0bcf5e385ea28349c88adc0d2a68e5b2'
+        try:prior=read_json_record(c,b,keybase()+'/training-input-readiness/'+accepted+'.json')
+        except c.exceptions.NoSuchKey:pass
+        if prior and (prior.get('encoder_sha256')!=json.loads(CONFIG.read_text())['encoder_checkpoint_sha256'] or not prior.get('cpu_only')):raise ValueError('Accepted CPU input evidence mismatch')
     if final_check and prior is None:
         from .accept_input import check_published_input
         result=check_published_input(dataset,version,folder);result.update(source_sha=os.environ['NOVO_SOURCE_SHA'],encoder_sha256=json.loads(CONFIG.read_text())['encoder_checkpoint_sha256'])
@@ -135,14 +141,15 @@ def persist_training_state(folder,client,bucket,receipts):
     if not paths:return # Preserve failure diagnostics even when no new checkpoint was produced.
     if len(paths)!=1:raise ValueError('Ambiguous formal training state')
     state=json.loads(paths[0].read_text())
-    if state['science_sha256']!=science_hash() or state['data_mode']!='full-cohort-v1':raise ValueError('Experiment state mismatch')
+    if state['science_sha256']!=science_hash() or state['data_mode']!='adaptive-two-phase-v1':raise ValueError('Experiment state mismatch')
     checkpoint=next(r for r in receipts if r['key'].endswith('/novo-unet25d-full/checkpoint.pt'))
     pointer=dict(state=state,checkpoint=checkpoint)
-    best=next((r for r in receipts if r['key'].endswith('/novo-unet25d-full/best.pt')),None)
+    bests={name:next((r for r in receipts if r['key'].endswith('/novo-unet25d-full/'+name+'.pt')),None) for name in ['best-positive-dice','best-tradeoff']}
     try:
         response=client.get_object(Bucket=bucket,Key=latest_key());old=json.loads(response['Body'].read());response['Body'].close()
         if old['state']['step']>state['step']:raise ValueError('Refuse experiment-state rollback')
-        if not best:best=old.get('best')
+        for name in bests:
+            if not bests[name]:bests[name]=old.get(name)
     except client.exceptions.NoSuchKey:pass
-    if best:pointer['best']=best
+    pointer.update({k:v for k,v in bests.items() if v})
     raw=json.dumps(pointer,sort_keys=True).encode();client.put_object(Bucket=bucket,Key=latest_key(),Body=raw,Metadata={'sha256':hashlib.sha256(raw).hexdigest()})

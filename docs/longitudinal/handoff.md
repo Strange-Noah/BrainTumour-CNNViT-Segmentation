@@ -1,3 +1,7 @@
+## Active instruction — adaptive formal training (2026-11-20)
+
+The owner now authorizes actual formal training using currently available free Kaggle quota. Follow [two-phase science and execution](../../experiments/unet25d/cohort/ADAPTIVE_TRAINING.md) and [focused CPU evidence](../../experiments/unet25d/cohort/ADAPTIVE_ACCEPTANCE.json). Supersedes older preparation-only/30-pass/budget-awaiting notes below. Exhaust all 220,384 training positions before performance stopping; then adaptive 67,200-example cycles and complete validation. Keep model/FP32/BCE+Dice/data policy and existing infrastructure. No paid compute, new preparation, separate GPU benchmark, or test-cohort evaluation. Integrated source is required before credential-bearing launch. Until an actual run is recorded, GPU_TRAINING_STARTED=false.
+
 # Team and cross-account recovery
 
 Clone [GitHub](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation) and create a feature branch from reviewed main. Pin an immutable commit for experiments and open PRs against main. Start with [team onboarding](../../TEAM_ONBOARDING.md). The archived branch is the exact summer code and report tree. Data access is separate from GitHub membership. Read [verification](verification.md) and resume at the first open gate.

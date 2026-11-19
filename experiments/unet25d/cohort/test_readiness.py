@@ -25,7 +25,7 @@ class Unattended(unittest.TestCase):
   self.assertEqual(events,['collect','resume'])
  def test_final_validation_and_error_stop_further_gpu(self):
   for status,epoch,pending,terminal in [('COMPLETE',30,False,'training_complete'),('ERROR',5,False,'failed')]:
-   record=self.record();latest=dict(state=dict(catalogue_sha256='sha',epoch=epoch,pending_validation=pending),checkpoint=dict(key='private/outputs/checkpoint.pt'))
+   record=self.record();latest=dict(state=dict(catalogue_sha256='sha',epoch=epoch,pending_validation=pending,scientific_stop='TARGET_REACHED' if epoch==30 else None),checkpoint=dict(key='private/outputs/checkpoint.pt'))
    with patch('cloud.kaggle_benchmark_bridge.collect',return_value=dict(collection=dict(key='private/collection.json'))),patch.object(u,'read',return_value=latest),patch.object(u,'write'),patch.object(u,'start_session') as start:
     if status=='ERROR':
      with self.assertRaises(RuntimeError):u.recover(object(),'private',record,status)
@@ -41,7 +41,7 @@ class Unattended(unittest.TestCase):
   from .kaggle import render
   code=render('a'*40,43200,86400);compile(code,'long-formal-session','exec');self.assertIn('43200',code)
   c=json.loads(CONFIG.read_text());self.assertFalse(c['formal_training_authorized']);self.assertEqual(c['approved_budget_seconds'],0);self.assertEqual(c['precision'],'float32')
-  self.assertEqual(c['validation_every_coverage_epochs'],5);self.assertEqual(c['checkpoint_every_minutes'],10)
+  self.assertEqual(c['phase2_samples_per_validation'],67200);self.assertEqual(c['checkpoint_every_minutes'],10)
  def test_collection_control_plane_needs_no_torch_import(self):
   import subprocess,sys
   result=subprocess.run([sys.executable,'-c',"import sys; from experiments.unet25d.cohort.stage import latest_key; from experiments.unet25d.cohort.unattended import recover; assert 'torch' not in sys.modules; print(latest_key())"],capture_output=True,text=True)
