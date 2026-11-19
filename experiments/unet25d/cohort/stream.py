@@ -25,7 +25,7 @@ class SignedFetch:
 class TrainingInput(torch.utils.data.Dataset):
     def __init__(self,catalogue,lease,cache_root,epoch,cursor=0,rank=0,world=2):
         visits=[v for v in catalogue['visits'] if v['partition']=='train'];self.visits={v['metadata']['exam_id']:v for v in visits}
-        from .prepare import CONFIG
+        from .settings import CONFIG
         config=json.loads(CONFIG.read_text())
         self.plan,self.plan_sha=epoch_plan(visits,epoch,seed=config['seed'],samples_per_patient=config['samples_per_training_patient_per_coverage_epoch']);self.draws=resume_rank(self.plan,cursor,rank,world);self.epoch=epoch;self.cursor=cursor
         self.cache=ShardCache(Path(cache_root)/str(rank),SignedFetch(lease),config['gpu_cache_bytes'],config['decoded_cache_bytes_per_worker'])

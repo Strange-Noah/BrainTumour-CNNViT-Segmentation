@@ -16,7 +16,7 @@ def make_private_input(catalogue_key,catalogue_sha,folder,session_seconds):
     with path.open('wb') as out:verify(c,b,catalogue_key,catalogue_sha,out)
     catalogue=json.loads(path.read_text())
     if not catalogue['summary']['complete'] or catalogue['summary']['test_included']:raise ValueError('Incomplete or test-containing input catalogue')
-    lifetime=min(13*3600,session_seconds+3600);objects={}
+    lifetime=min(18*3600,session_seconds+6*3600);objects={}
     for v in catalogue['visits']:
         if v['partition'] not in ['train','validation']:raise ValueError('Test access forbidden')
         for obj in [*v['shards'],v['native_labels']]:
@@ -29,9 +29,10 @@ def make_private_input(catalogue_key,catalogue_sha,folder,session_seconds):
 def restore_encoder(folder,client):
     # Reuse only the already verified 87 MB encoder dependencies, not the MRI cache.
     from ..persist_cache import read,sha
-    from ..repair_validation import CACHE_PREFIX,CACHE_SHA
+    from .settings import CACHE_PREFIX,CACHE_SHA
     raw=read(client,CACHE_PREFIX+'/manifest.json')
     if sha(raw)!=CACHE_SHA:raise ValueError('Encoder cache manifest identity mismatch')
+    restored=[]
     for row in json.loads(raw)['files']:
         if not row['path'].startswith('hf/') or not row['path'].endswith(('/config.json','/model.safetensors')):continue
         path=Path(folder)/row['path'];path.parent.mkdir(parents=True,exist_ok=True);h=hashlib.sha256()
@@ -41,17 +42,21 @@ def restore_encoder(folder,client):
                 if sha(data)!=chunk['sha256'] or len(data)!=chunk['bytes']:raise ValueError('Encoder dependency integrity mismatch')
                 h.update(data);f.write(data)
         if h.hexdigest()!=row['sha256']:raise ValueError('Encoder dependency checksum mismatch')
+        restored.append((row['path'],h.hexdigest()))
+    from .settings import CONFIG
+    config=json.loads(CONFIG.read_text());weights=[h for path,h in restored if path.endswith('/model.safetensors') and config['encoder_checkpoint_revision'] in path]
+    if weights!=[config['encoder_checkpoint_sha256']] or len(restored)!=2:raise ValueError('Pinned encoder dependency set is incomplete')
 
-def publish_from_existing_runtime(dataset):
+def publish_from_existing_runtime(dataset,session_seconds=12*3600,final_check=False):
     from cloud.kaggle_benchmark_bridge import WORK,cli
-    from .prepare import keybase
+    from .settings import keybase
     if dataset!='mathewzhou/novo-unet25d-full-cohort-input':raise ValueError('Unexpected private input target')
     c,b=connect(output=True);response=c.get_object(Bucket=b,Key=keybase()+'/ready.json');raw=response['Body'].read();response['Body'].close()
     if hashlib.sha256(raw).hexdigest()!=response['Metadata']['sha256']:raise ValueError('Prepared catalogue pointer identity mismatch')
     ready=json.loads(raw)
     if not ready['complete']:raise ValueError('One-time cohort preparation is not complete')
-    folder=WORK/'cohort-private-input';result=make_private_input(ready['manifest']['key'],ready['manifest']['sha256'],folder,3600);restore_encoder(folder,c)
-    from .prepare import CONFIG
+    folder=WORK/'cohort-private-input';result=make_private_input(ready['manifest']['key'],ready['manifest']['sha256'],folder,session_seconds);restore_encoder(folder,c)
+    from .settings import CONFIG
     (folder/'training-config.json').write_bytes(CONFIG.read_bytes())
     try:
         response=c.get_object(Bucket=b,Key=latest_key());pointer=json.loads(response['Body'].read());response['Body'].close()
@@ -65,13 +70,36 @@ def publish_from_existing_runtime(dataset):
     if check.returncode==0:
         meta=json.loads((WORK/'existing-cohort-metadata/dataset-metadata.json').read_text())
         if not meta['info']['isPrivate']:raise ValueError('Refuse public dataset publication')
-        cli('datasets','version','-p',str(folder),'-m','Refresh private data lease','-r','zip')
+        cli('datasets','version','-p',str(folder),'-m','Refresh private data lease','-r','zip','-t')
     else:cli('datasets','create','-p',str(folder),'-r','zip','-t')
-    print(json.dumps(dict(private_input_published=dataset,catalogue_sha256=ready['manifest']['sha256'],gpu_allocated=False)))
+    import time,os,tempfile
+    deadline=time.monotonic()+900
+    while 'READY' not in cli('datasets','status',dataset).upper():
+        if time.monotonic()>deadline:raise TimeoutError('Private input publication still processing')
+        time.sleep(20)
+    from kaggle.api.kaggle_api_extended import KaggleApi
+    api=KaggleApi();api.authenticate();row=next(r for r in api.dataset_list(mine=True,search=dataset.split('/')[1]) if r.ref==dataset)
+    if not row.is_private:raise ValueError('Input publication must remain private')
+    version=int(row.current_version_number)
+    from .settings import read_json_record
+    key=keybase()+'/training-input-readiness/'+science_hash()+'.json'
+    try:prior=read_json_record(c,b,key)
+    except c.exceptions.NoSuchKey:prior=None
+    if final_check and prior is None:
+        from .accept_input import check_published_input
+        result=check_published_input(dataset,version,folder);result.update(source_sha=os.environ['NOVO_SOURCE_SHA'],encoder_sha256=json.loads(CONFIG.read_text())['encoder_checkpoint_sha256'])
+        with tempfile.TemporaryDirectory() as d:
+            path=Path(d)/'input-readiness.json';path.write_text(json.dumps(result,sort_keys=True))
+            from cloud.storage import put_once
+            result['receipt']=put_once(c,b,key,path)
+    elif prior:
+        result=prior
+        if not prior['verified'] or prior['catalogue_sha256']!=ready['manifest']['sha256']:raise ValueError('Prior input readiness differs')
+    else:raise ValueError('Complete final CPU input check before formal launch')
+    published=dict(private_input_published=dataset,version=version,catalogue_sha256=ready['manifest']['sha256'],gpu_allocated=False,input_readiness=result)
+    print(json.dumps(published));return published
 
-def science_hash():
-    from .prepare import CONFIG
-    c=json.loads(CONFIG.read_text());return hashlib.sha256(json.dumps({k:v for k,v in c.items() if k not in ['formal_training_authorized','approved_budget_seconds']},sort_keys=True).encode()).hexdigest()
+from .settings import science_hash
 
 def latest_key():return 'novo-nordisk/experiments/unet25d/full-runs/'+science_hash()+'/latest.json'
 

@@ -38,7 +38,7 @@ def restore_existing(work):
 def prepare(dataset):
  if dataset=='mathewzhou/novo-unet25d-full-cohort-input':
   from experiments.unet25d.cohort.stage import publish_from_existing_runtime
-  return publish_from_existing_runtime(dataset)
+  return publish_from_existing_runtime(dataset,final_check=True)
  from experiments.unet25d.pipeline import prepare as build
  work=WORK/'cache';work.mkdir(exist_ok=True);os.environ['HF_HOME']=str(work/'hf')
  c,b=connect(output=True)
@@ -164,15 +164,19 @@ def collect(ref,dataset,mode):
   # Config-specific input selected once; a conflicting publication must be reviewed.
   put_once(c,b,'novo-nordisk/experiments/unet25d/bridge/cache-validation.json',path)
  report=WORK/'collection.json';report.write_text(json.dumps(dict(kernel=ref,dataset=dataset,mode=mode,receipts=receipts,independent_readback=True,quota_after=cli('quota'))))
- print(json.dumps(dict(collection=publish_result('collection.json',report),files=len(receipts))))
+ evidence=dict(collection=publish_result('collection.json',report),files=len(receipts));print(json.dumps(evidence));return evidence
 
 def main():
  if not os.environ.get('KAGGLE_API_TOKEN'):raise ValueError('Cloud Kaggle API token missing')
  budget=int(os.environ.get('GPU_SESSION_SECONDS','3600'))
- if not 1200<=budget<=3600:raise ValueError('GPU session budget must be 1200-3600 seconds')
+ if not 1200<=budget<=43200:raise ValueError('Session timeout must be 1200-43200 seconds')
  mode=os.environ['MODE'];dataset=os.environ['DATASET'];kernel=os.environ['KERNEL']
  if mode=='benchmark' and dataset!='mathewzhou/novo-unet25d-full-cohort-input' and budget>2100:raise ValueError('Remaining campaign session cap is 2100 seconds')
  if not all(re.fullmatch('mathewzhou/[a-z0-9-]+',s) for s in [dataset,kernel]):raise ValueError('Expected owner-private resource names')
+ if mode in ['formal','recover']:
+  from experiments.unet25d.cohort.unattended import launch,recover
+  return launch(dataset,kernel) if mode=='formal' else recover()
+ if dataset!='mathewzhou/novo-unet25d-full-cohort-input' and budget>3600:raise ValueError('Legacy benchmark timeout remains bounded')
  if mode=='prepare':prepare(dataset)
  elif mode in ['validate','benchmark']:submit(dataset,kernel,mode)
  elif mode=='collect':collect(kernel,dataset,'formal' if dataset=='mathewzhou/novo-unet25d-full-cohort-input' else 'benchmark')

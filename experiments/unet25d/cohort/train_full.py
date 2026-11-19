@@ -6,14 +6,22 @@ import psutil
 import torch
 import torch.distributed as dist
 from ..train import Model,loss_fn,fp32_step,RUNTIME_PRECISION
-from .prepare import CONFIG
+from .settings import CONFIG,PROVIDER_SESSION_SECONDS,FINALIZATION_MARGIN_SECONDS
 from .stream import TrainingInput,SignedFetch
 from .loading import ShardCache
+
+def gpu_telemetry():
+    import subprocess
+    try:
+        lines=subprocess.check_output(['nvidia-smi','--query-gpu=utilization.gpu,memory.used,memory.total','--format=csv,noheader,nounits'],text=True,timeout=5).splitlines()
+        return [dict(utilization_percent=float(v[0]),memory_used_mib=float(v[1]),memory_total_mib=float(v[2])) for v in [line.split(',') for line in lines]]
+    except Exception:return None
+
 from .validation import validate_patients
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--input',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--approved-budget-seconds',type=int,required=True);p.add_argument('--session-seconds',type=int,default=3600);p.add_argument('--resume',type=Path);a=p.parse_args()
-    if not 600<=a.session_seconds<=3600 or a.approved_budget_seconds<a.session_seconds:raise ValueError('Explicit approved research budget required')
+    p=argparse.ArgumentParser();p.add_argument('--input',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--approved-budget-seconds',type=int,required=True);p.add_argument('--session-seconds',type=int,default=PROVIDER_SESSION_SECONDS);p.add_argument('--resume',type=Path);a=p.parse_args()
+    if not 600<=a.session_seconds<=PROVIDER_SESSION_SECONDS or a.approved_budget_seconds<a.session_seconds:raise ValueError('Explicit approved research budget required')
     rank=int(os.environ['RANK']);world=int(os.environ['WORLD_SIZE']);local=int(os.environ['LOCAL_RANK'])
     if world!=2 or torch.cuda.device_count()!=2 or not all('T4' in torch.cuda.get_device_name(i) for i in range(2)):raise RuntimeError('Frozen dual-T4 configuration required')
     torch.cuda.set_device(local);dist.init_process_group('nccl');torch.set_num_threads(2);torch.manual_seed(42);random.seed(42)
@@ -31,7 +39,7 @@ def main():
         if old['data_mode']!='full-cohort-v1' or old['catalogue_sha256']!=catalogue_sha or old['runtime_precision']!=RUNTIME_PRECISION or old['config']!=science:raise ValueError('Incompatible research checkpoint; diagnostic checkpoints are forbidden')
         model.load_state_dict(old.pop('model'),strict=True);optimizer.load_state_dict(old.pop('optimizer'));rng=old.pop('rank_rng')[rank];torch.set_rng_state(rng['cpu']);torch.cuda.set_rng_state(rng['cuda'],local);random.setstate(rng['python']);state=old
     model=torch.nn.parallel.DistributedDataParallel(model,device_ids=[local]);a.output.mkdir(parents=True,exist_ok=True)
-    started=float(os.environ.get('NOVO_SESSION_STARTED_AT',str(time.time())));prior=float(state['consumed_seconds']);deadline=min(started+a.session_seconds-120,started+a.approved_budget_seconds-prior-120);last_save=time.time()
+    started=float(os.environ.get('NOVO_SESSION_STARTED_AT',str(time.time())));prior=float(state['consumed_seconds']);deadline=min(started+a.session_seconds-FINALIZATION_MARGIN_SECONDS,started+a.approved_budget_seconds-prior-FINALIZATION_MARGIN_SECONDS);last_save=time.time()
     def save():
         rng=dict(cpu=torch.get_rng_state(),cuda=torch.cuda.get_rng_state(local),python=random.getstate());all_rng=[None]*world;dist.all_gather_object(all_rng,rng)
         tensors=list(model.module.state_dict().values())+[v for s in optimizer.state.values() for v in s.values() if torch.is_tensor(v)]
@@ -66,12 +74,15 @@ def main():
             for x,y in loader:
                 wait+=time.monotonic()-previous
                 x=x.cuda(local,non_blocking=True);y=y.cuda(local,non_blocking=True);optimizer.zero_grad(set_to_none=True);loss=loss_fn(model(x),y);loss.backward();flags=torch.stack([torch.isfinite(loss),torch.stack([torch.isfinite(p.grad).all() for p in model.parameters() if p.grad is not None]).all()]).int();dist.all_reduce(flags,op=dist.ReduceOp.MIN);fp32_step(optimizer,bool(flags[0]),bool(flags[1]));state['training_source_sha']=os.environ['NOVO_SOURCE_SHA'];state['step']+=1;state['global_cursor']+=world;window_samples+=world
-                if state['step']%100==0:
+                if state['step']%100==0 or state['step']==1:
                     memory=psutil.virtual_memory()
                     pressure=torch.tensor(int(memory.available/memory.total<.15),device=local);dist.all_reduce(pressure,op=dist.ReduceOp.MAX)
                     if bool(pressure):raise MemoryError('Actual host RAM pressure')
                     elapsed=time.monotonic()-window_start
-                    with (a.output/f'rank-{rank}.jsonl').open('a') as log:log.write(json.dumps(dict(step=state['step'],epoch=state['epoch'],global_cursor=state['global_cursor'],samples_per_second=window_samples/elapsed,loader_wait_fraction=wait/elapsed,loss=float(loss.detach())))+'\n')
+                    event=dict(event='training_update',unix_time=time.time(),session_started_at=started,step=state['step'],epoch=state['epoch'],global_cursor=state['global_cursor'],samples_per_second=window_samples/elapsed,loader_wait_fraction=wait/elapsed,loss=float(loss.detach()),loss_and_gradients_finite=True,host_ram_available_fraction=memory.available/memory.total,gpu_memory_allocated_bytes=torch.cuda.memory_allocated(local),gpu_peak_allocated_bytes=torch.cuda.max_memory_allocated(local))
+                    with (a.output/f'rank-{rank}.jsonl').open('a') as log:log.write(json.dumps(event)+'\n')
+                    if rank==0:
+                        event['gpus']=gpu_telemetry();event['checkpoint_interval_seconds']=600;event['validation_every_coverage_passes']=5;print(json.dumps(event),flush=True)
                     window_start=time.monotonic();wait=0.;window_samples=0
                 stop=torch.tensor([int(time.time()>deadline),int(time.time()-last_save>=600)],device=local);dist.all_reduce(stop,op=dist.ReduceOp.MAX)
                 if bool(stop[1]):save();last_save=time.time()

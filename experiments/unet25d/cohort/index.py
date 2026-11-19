@@ -2,7 +2,7 @@
 import csv,hashlib,json,os,tempfile
 from pathlib import Path
 from cloud.storage import connect,put_once,DATASET
-from .prepare import ROOT,CONFIG,MANIFEST_SHA,policy_hash,keybase,read_json_record
+from .settings import ROOT,CONFIG,MANIFEST_SHA,policy_hash,keybase,read_json_record
 
 def main():
     read,b=connect();write,out=connect(output=True)
@@ -17,10 +17,11 @@ def main():
     split=ROOT/'protocol/v1/patients.csv';config=json.loads(CONFIG.read_text())
     if hashlib.sha256(split.read_bytes()).hexdigest()!=config['split_sha256']:raise ValueError('Frozen split changed')
     with split.open() as f:parts={r['patient_id']:r['partition'] for r in csv.DictReader(f)}
-    records=[];missing=0
+    records=[];expected=[];missing=0
     for row in map(json.loads,raw.splitlines()):
         partition=parts[row['patient_id']]
         if partition=='test':continue
+        expected.append(row)
         try:
             r=read_json_record(write,out,keybase()+'/'+partition+'/'+row['exam_id']+'/receipt.json')
         except write.exceptions.NoSuchKey:missing+=1;continue
@@ -30,6 +31,8 @@ def main():
     summary=dict(data_policy_sha256=policy_hash(),complete=missing==0,missing_visits=missing,prepared_visits=len(records),patients={p:len({r['metadata']['patient_id'] for r in records if r['partition']==p}) for p in ['train','validation']},compressed_shard_bytes=sum(s['bytes'] for r in records for s in r['shards']),test_included=False,reused_normalized_visits=sum('reused_normalization_manifest_sha256' in r['metadata'] for r in records))
     if missing:print(json.dumps(summary));return
     if summary['patients']!={'train':210,'validation':45}:raise ValueError('Incomplete frozen patient coverage')
+    from .accept_input import coverage
+    summary.update(coverage(records,expected));summary['compressed_prepared_bytes']=summary['compressed_shard_bytes']+summary['compressed_native_label_bytes']
     with tempfile.TemporaryDirectory() as d:
         path=Path(d)/'manifest.json';path.write_text(json.dumps(dict(config_sha256=hashlib.sha256(CONFIG.read_bytes()).hexdigest(),data_policy_sha256=policy_hash(),split_sha256=config['split_sha256'],visits=records,summary=summary)))
         summary['manifest']=put_once(write,out,keybase()+'/catalogues/'+hashlib.sha256(path.read_bytes()).hexdigest()+'.json',path)
