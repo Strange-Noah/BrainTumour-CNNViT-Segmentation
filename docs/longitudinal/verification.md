@@ -1,6 +1,6 @@
 ## Adaptive formal training — 2026-11-20
 
-[Focused CPU acceptance](../../experiments/unet25d/cohort/ADAPTIVE_ACCEPTANCE.json): 29 checks passed; metadata-only exact 220,384-position plan / 110,192 updates, correct four-category 67,200 plan and concentration bounds. [Science/execution handoff](../../experiments/unet25d/cohort/ADAPTIVE_TRAINING.md). Reuses accepted CPU input read; no MRI re-preparation, GPU benchmark or test evaluation. GPU_TRAINING_STARTED=false until actual integrated-source submission is recorded.
+[Focused CPU acceptance](../../experiments/unet25d/cohort/ADAPTIVE_ACCEPTANCE.json): 29 checks passed; metadata-only exact 220,384-position plan / 110,192 updates, correct four-category 67,200 plan and concentration bounds. [Science/execution handoff](../../experiments/unet25d/cohort/ADAPTIVE_TRAINING.md). Reuses accepted CPU input read; no MRI re-preparation, GPU benchmark or test evaluation. GPU_TRAINING_STARTED=true; [completed initial observation and actual run evidence](../../experiments/unet25d/cohort/FORMAL_EXECUTION.md). Independent CPU observer 44578714815 succeeded; terminal R2 collection of this new checkpoint remains pending session completion.
 
 # Current verification update — 2026-11-16
 

@@ -34,4 +34,4 @@ After integrated source and CPU checks pass, launch through owner-authorized exi
 
 ## Evidence and current status
 
-[Minimal CPU acceptance](ADAPTIVE_ACCEPTANCE.json). Source, CI and actual execution links are added with publication/run evidence. At implementation preparation: GPU_TRAINING_STARTED=false; no GPU has been allocated by the CPU checks. Full-cohort runtime measurements remain pending actual submission. [Project handoff](../../../docs/longitudinal/handoff.md).
+[Minimal CPU acceptance](ADAPTIVE_ACCEPTANCE.json). Source, CI and actual execution links are added with publication/run evidence. The CPU checks allocated no GPU. Formal training subsequently started from reviewed main; [actual first-ten-minute results and independent handoff](FORMAL_EXECUTION.md). GPU_TRAINING_STARTED=true. [Project handoff](../../../docs/longitudinal/handoff.md).
