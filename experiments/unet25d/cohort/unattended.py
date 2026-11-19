@@ -69,46 +69,66 @@ def start_session(c,b,record):
     published=publish_from_existing_runtime(DATASET,seconds);record['catalogue_sha256']=published['catalogue_sha256'];record['input_version']=published['version']
     folder=WORK/'full-kernel';folder.mkdir(exist_ok=True)
     (folder/'run.py').write_text(render(record['source_sha'],seconds,record['approved_budget_seconds']))
-    (folder/'kernel-metadata.json').write_text(json.dumps(dict(id=record['kernel'],title='Novo Full Cohort Training',code_file='run.py',language='python',kernel_type='script',is_private=True,enable_gpu=True,enable_internet=True,dataset_sources=[DATASET+'/'+str(record['input_version'])],competition_sources=[],kernel_sources=[],machine_shape='NvidiaTeslaT4')))
+    (folder/'kernel-metadata.json').write_text(json.dumps(dict(id=record['kernel'],title=record['kernel'].split('/')[1],code_file='run.py',language='python',kernel_type='script',is_private=True,enable_gpu=True,enable_internet=True,dataset_sources=[DATASET+'/'+str(record['input_version'])],competition_sources=[],kernel_sources=[],machine_shape='NvidiaTeslaT4')))
     # Persist intent before submission. An interrupted/ambiguous push is never blindly retried.
     record['reserved_seconds']+=seconds;record['status']='submitting';record['submitted_at']=time.time();write(c,b,record)
     result=cli('kernels','push','-p',str(folder),'-t',str(seconds),'--accelerator','NvidiaTeslaT4')
     version=re.search(r'[Vv]ersion\s+(\d+)',result)
     if version is None:raise RuntimeError('Ambiguous GPU submission result; inspect the unique kernel status before any retry')
+    returned=re.search(r'https://www\.kaggle\.com/code/(mathewzhou/[a-z0-9-]+)',result)
+    if returned:record['requested_kernel']=record['kernel'];record['kernel']=returned.group(1)
     record['version']=int(version.group(1));record['status']='running';write(c,b,record)
     print(json.dumps(dict(submitted=record['kernel'],source_sha=record['source_sha'],session_seconds=seconds,approved_budget_seconds=record['approved_budget_seconds'],reserved_seconds=record['reserved_seconds'],catalogue_sha256=record['catalogue_sha256'],input_version=record['input_version'],execution_url='https://www.kaggle.com/code/'+record['kernel'],recovery='existing half-hourly CPU bridge')),flush=True)
 
 def observe(c,b,record):
+    # One-shot Kaggle logs are persisted only; live sessions require SSE follow.
+    import subprocess,threading,queue
     from cloud.kaggle_benchmark_bridge import cli
-    wall_deadline=time.monotonic()+3600;first=None;last=None
-    while time.monotonic()<wall_deadline:
-        status=cli('kernels','status',record['kernel']).upper()
-        if any(s in status for s in TERMINAL):return recover(c,b,record,status)
-        logs=cli('kernels','logs',record['kernel'])
-        for line in logs.splitlines():
-            checkpoint_marker=line.find('{"event": "checkpoint_saved"')
-            if checkpoint_marker>=0:
-                try:record['last_checkpoint']=json.loads(line[checkpoint_marker:])
-                except json.JSONDecodeError:pass
-            marker=line.find('{"event": "training_update"')
-            if marker<0:continue
-            try:event=json.loads(line[marker:])
-            except json.JSONDecodeError:continue
-            if event['step']>record.get('last_observed_step',-1):
-                record['last_observed_step']=event['step'];last=event
-                if first is None:first=time.monotonic()
-                print(json.dumps(event),flush=True)
-        if first is not None and time.monotonic()-first>=600:
-            if record.get('free_resource_authorized'):
-                quota=free_quota();record['initial_observation_quota']=quota
-                before=record['quota_before_session'];elapsed=time.time()-record['submitted_at']
-                if quota['refresh_at']==before['refresh_at'] and elapsed>0:
-                    rate=max(0,quota['used_seconds']-before['used_seconds'])/elapsed
-                    record['quota_safety_rate']=max(record['quota_safety_rate'],rate*1.1)
-            record['initial_health']=last;record['initial_observation_complete']=True;record['expected_session_end_unix']=last['session_started_at']+record['session_seconds'];write(c,b,record)
-            print(json.dumps(dict(initial_observation_complete=True,kernel=record['kernel'],unattended=True,expected_session_end_unix=record['expected_session_end_unix'],health=last,last_checkpoint=record.get('last_checkpoint'),quota_after_observation=record.get('initial_observation_quota'),quota_safety_rate=record.get('quota_safety_rate'))),flush=True);return
-        time.sleep(30)
-    print(json.dumps(dict(initial_observation_pending=True,kernel=record['kernel'],unattended_recovery_enabled=True)),flush=True)
+    proc=subprocess.Popen(['kaggle','kernels','logs',record['kernel'],'--follow'],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True,bufsize=1)
+    lines=queue.Queue(maxsize=10000)
+    def reader():
+        for line in proc.stdout:lines.put(line)
+    threading.Thread(target=reader,daemon=True).start()
+    wall_deadline=time.monotonic()+3600;first=None;last=None;last_status=0
+    try:
+        while time.monotonic()<wall_deadline:
+            if time.monotonic()-last_status>=30:
+                status=cli('kernels','status',record['kernel']).upper();last_status=time.monotonic()
+                if any(s in status for s in TERMINAL):return recover(c,b,record,status)
+            try:line=lines.get(timeout=10)
+            except queue.Empty:
+                if proc.poll() is not None:break
+                continue
+            event=parse_event(line)
+            if event is None:continue
+            if event['event']=='checkpoint_saved':record['last_checkpoint']=event;continue
+            if event['step']<=record.get('last_observed_step',-1):continue
+            record['last_observed_step']=event['step'];last=event
+            if first is None:first=event['unix_time']
+            print(json.dumps(event),flush=True)
+            if event['unix_time']-first>=600:
+                if record.get('free_resource_authorized'):
+                    quota=free_quota();record['initial_observation_quota']=quota
+                    before=record['quota_before_session'];elapsed=time.time()-record['submitted_at']
+                    if quota['refresh_at']==before['refresh_at'] and elapsed>0:
+                        rate=max(0,quota['used_seconds']-before['used_seconds'])/elapsed
+                        record['quota_safety_rate']=max(record['quota_safety_rate'],rate*1.1)
+                record['initial_health']=last;record['initial_observation_complete']=True;record['expected_session_end_unix']=last['session_started_at']+record['session_seconds'];write(c,b,record)
+                print(json.dumps(dict(initial_observation_complete=True,kernel=record['kernel'],unattended=True,expected_session_end_unix=record['expected_session_end_unix'],health=last,last_checkpoint=record.get('last_checkpoint'),quota_after_observation=record.get('initial_observation_quota'),quota_safety_rate=record.get('quota_safety_rate'))),flush=True);return
+        print(json.dumps(dict(initial_observation_pending=True,kernel=record['kernel'],unattended_recovery_enabled=True)),flush=True)
+    finally:
+        proc.terminate()
+        try:proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:proc.kill();proc.wait(timeout=5)
+        proc.stdout.close()
+
+def parse_event(line):
+    for kind in ['training_update','checkpoint_saved']:
+        marker=line.find('{"event": "'+kind+'"')
+        if marker>=0:
+            try:return json.loads(line[marker:])
+            except json.JSONDecodeError:return None
+    return None
 
 def launch(dataset,kernel):
     if os.environ.get('GITHUB_ACTOR')!='Strange-Noah':raise PermissionError('Only the project owner may authorize formal GPU execution')
@@ -140,9 +160,10 @@ def recover(c=None,b=None,record=None,status=None):
             if record['preparation_errors']>=2:record['status']='blocked'
             write(c,b,record);raise
         return
-    status=status or cli('kernels','status',record['kernel']).upper()
+    status=status or resolved_status(c,b,record)
     if not any(s in status for s in TERMINAL):
         if time.time()-record['submitted_at']>18*3600:record['status']='blocked';write(c,b,record);raise TimeoutError('Provider session did not reach terminal status')
+        if not record.get('initial_observation_complete'):return observe(c,b,record)
         print(json.dumps(dict(kernel=record['kernel'],running=True,gpu_submitted=False)));return
     try:
         evidence=collect(record['kernel'],DATASET,'formal');record['collections'].append(evidence);record['collection_errors']=0
@@ -165,3 +186,20 @@ def recover(c=None,b=None,record=None,status=None):
     if latest['state'].get('scientific_stop') in ['TARGET_REACHED','PLATEAU_BELOW_TARGET'] and not latest['state']['pending_validation']:
         record['status']='training_complete';write(c,b,record);print(json.dumps(dict(training_complete=True,kernel=record['kernel'])));return
     start_session(c,b,record) # Existing resume checkpoint; minimum sessions, no discretionary approval.
+
+def resolved_status(c,b,record):
+    """Repair only the demonstrated first formal title/slug mismatch, never push."""
+    from cloud.kaggle_benchmark_bridge import cli,WORK
+    from .kaggle import render
+    try:return cli('kernels','status',record['kernel']).upper()
+    except RuntimeError:
+        if record['source_sha']!='e818635a9e7df4d91792afaad7fc9ff3dd4b2a23' or record['session_no']!=1:raise
+        canonical='mathewzhou/novo-full-cohort-training'
+        folder=WORK/'canonical-recovery';folder.mkdir(exist_ok=True)
+        cli('kernels','pull',canonical,'-p',str(folder),'-m')
+        meta=json.loads((folder/'kernel-metadata.json').read_text());files=list(folder.glob('*.py'))
+        expected=render(record['source_sha'],record['session_seconds'],record['approved_budget_seconds'])
+        if meta.get('id')!=canonical or not meta.get('is_private') or len(files)!=1 or files[0].read_text().strip()!=expected.strip():raise ValueError('Canonical recovery code/identity mismatch')
+        status=cli('kernels','status',canonical).upper()
+        record['requested_kernel']=record['kernel'];record['kernel']=canonical;record['canonical_source_verified']=True;write(c,b,record)
+        return status

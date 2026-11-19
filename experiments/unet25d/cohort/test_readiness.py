@@ -5,6 +5,22 @@ from unittest.mock import patch
 from . import unattended as u
 from .settings import science_hash,CONFIG,policy_hash
 class Unattended(unittest.TestCase):
+ def test_known_canonical_identity_repair_verifies_exact_private_source(self):
+  from .kaggle import render
+  r=dict(source_sha='e818635a9e7df4d91792afaad7fc9ff3dd4b2a23',session_no=1,session_seconds=43200,approved_budget_seconds=83433,kernel='mathewzhou/requested')
+  with tempfile.TemporaryDirectory() as d:
+   def cli(*args):
+    if args[:2]==('kernels','pull'):
+     p=Path(d)/'canonical-recovery';(p/'kernel-metadata.json').write_text(json.dumps(dict(id='mathewzhou/novo-full-cohort-training',is_private=True)));(p/'run.py').write_text(render(r['source_sha'],43200,83433));return ''
+    if args[2]=='mathewzhou/requested':raise RuntimeError('missing slug')
+    return 'RUNNING'
+   with patch('cloud.kaggle_benchmark_bridge.WORK',Path(d)),patch('cloud.kaggle_benchmark_bridge.cli',side_effect=cli) as call,patch.object(u,'write'):
+    self.assertEqual(u.resolved_status(None,None,r),'RUNNING');self.assertTrue(r['canonical_source_verified'])
+   self.assertFalse(any(x.args[:2]==('kernels','push') for x in call.call_args_list))
+ def test_live_event_parser_and_canonical_submission_url(self):
+  event=dict(event='training_update',step=2,unix_time=42)
+  self.assertEqual(u.parse_event('prefix '+json.dumps(event)),event);self.assertIsNone(u.parse_event('private non-telemetry text'))
+  self.assertEqual(u.parse_event(json.dumps(dict(event='checkpoint_saved',step=2)))['step'],2)
  def record(self):return dict(status='running',science_sha256=science_hash(),approved_budget_seconds=86400,reserved_seconds=43200,session_no=1,kernel='mathewzhou/synthetic',catalogue_sha256='sha',submitted_at=0,collections=[])
  def test_provider_budget_cap_and_no_unauthorized_launch(self):
   self.assertEqual(u.session_budget(86400,0),43200);self.assertEqual(u.session_budget(28800,0),28800);self.assertEqual(u.session_budget(28800,28800),0)
@@ -52,7 +68,7 @@ class Unattended(unittest.TestCase):
   with tempfile.TemporaryDirectory() as d,patch('cloud.kaggle_benchmark_bridge.WORK',Path(d)),patch('cloud.kaggle_benchmark_bridge.cli',side_effect=cli) as call,patch('experiments.unet25d.cohort.stage.publish_from_existing_runtime',return_value=dict(catalogue_sha256='sha',version=3)),patch.object(u,'write'),patch.object(u,'require_integrated_source'):
    u.start_session(None,None,record)
    meta=json.loads((Path(d)/'full-kernel/kernel-metadata.json').read_text())
-  self.assertEqual(record['reserved_seconds'],43200);self.assertEqual(record['session_seconds'],43200);self.assertEqual(meta['dataset_sources'],[u.DATASET+'/3']);self.assertTrue(meta['is_private']);self.assertEqual(record['status'],'running')
+  self.assertEqual(record['reserved_seconds'],43200);self.assertEqual(record['session_seconds'],43200);self.assertEqual(meta['dataset_sources'],[u.DATASET+'/3']);self.assertTrue(meta['is_private']);self.assertEqual(meta['title'],meta['id'].split('/')[1]);self.assertEqual(record['status'],'running')
   self.assertIn(unittest.mock.call('kernels','push','-p',unittest.mock.ANY,'-t','43200','--accelerator','NvidiaTeslaT4'),call.call_args_list)
  def test_receipt_catalogue_completeness_and_geometry(self):
   import hashlib,numpy as np
