@@ -1,20 +1,33 @@
 name: Private Kaggle benchmark bridge
 on:
+  schedule:
+    - cron: '17,47 * * * *'
   workflow_dispatch:
     inputs:
       mode:
         type: choice
-        options: [prepare, validate, benchmark, collect]
+        options: [prepare, validate, benchmark, collect, formal, recover]
         required: true
       gpu_session_seconds:
         type: number
         default: 2100
+      formal_training_authorized:
+        type: boolean
+        default: false
+        description: Owner-approved formal training only
+      approved_gpu_budget_seconds:
+        type: number
+        default: 0
+        description: Explicit cumulative owner budget; zero forbids GPU submission
       dataset:
         type: string
         default: mathewzhou/novo-unet25d-benchmark-cache
       kernel:
         type: string
         default: mathewzhou/novo-unet25d-bounded-benchmark
+concurrency:
+  group: novo-private-kaggle-bridge
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:
@@ -26,6 +39,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
@@ -37,10 +51,12 @@ jobs:
           python -m pip install -q -r experiments/unet25d/requirements.txt
       - name: Orchestrate private inputs and artifacts
         env:
-          GPU_SESSION_SECONDS: ${{ inputs.gpu_session_seconds }}
-          MODE: ${{ inputs.mode }}
-          DATASET: ${{ inputs.dataset }}
-          KERNEL: ${{ inputs.kernel }}
+          GPU_SESSION_SECONDS: ${{ inputs.gpu_session_seconds || 43200 }}
+          MODE: ${{ github.event_name == 'schedule' && 'recover' || inputs.mode }}
+          DATASET: ${{ github.event_name == 'schedule' && 'mathewzhou/novo-unet25d-full-cohort-input' || inputs.dataset }}
+          KERNEL: ${{ github.event_name == 'schedule' && 'mathewzhou/novo-unet25d-full-cohort-training' || inputs.kernel }}
+          FORMAL_TRAINING_AUTHORIZED: ${{ inputs.formal_training_authorized || false }}
+          APPROVED_GPU_BUDGET_SECONDS: ${{ inputs.approved_gpu_budget_seconds || 0 }}
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
           NOVO_SOURCE_SHA: ${{ github.sha }}
           R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}

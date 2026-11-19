@@ -35,13 +35,21 @@ def validate_patients(model,catalogue,cache,fetch,output,checkpoint_source,check
                 if world>1:dist.barrier()
                 continue
             m=visit['metadata'];folder=output/m['exam_id'];folder.mkdir();path=folder/'canonical-logits.npy';prediction=np.lib.format.open_memmap(path,mode='w+',dtype='float32',shape=tuple(m['shape']))
+            finished_visit=True
             for z in range(m['shape'][2]):
+                if time.time()>deadline:
+                    finished_visit=False;break
                 tiles=[]
                 for origin in windows(m['shape']):
                     x,_=cache.sample(visit,origin,z);logits=raw(x[None].to(device))
                     if not torch.isfinite(logits).all():raise FloatingPointError('Nonfinite full-validation logits')
                     tiles.append((origin,logits[0,0].float().cpu().numpy()))
                 prediction[:,:,z]=merge_logits(tiles,m['shape'])
+            if not finished_visit:
+                import shutil
+                del prediction;shutil.rmtree(folder)
+                if world>1:dist.barrier()
+                continue
             prediction.flush();native=restore(prediction,m,order=1)>=0
             native_path=folder/'native-labels.npy.gz';fetch(visit['native_labels']['key'],visit['native_labels']['sha256'],native_path)
             with gzip.open(native_path,'rb') as f:truth=np.load(f,allow_pickle=False)==3

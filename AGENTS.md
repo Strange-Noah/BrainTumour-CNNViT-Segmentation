@@ -8,3 +8,7 @@
 - Use unique experiment IDs and immutable raw keys. Record source commit, data version, input hashes, config, environment and output hashes.
 - Develop models and loaders while ingestion progresses. Record verified evidence. Do not launch paid compute or full training without authorization.
 - Publish the longitudinal viewer from reviewed GitHub code to the project owner's new Space. Preserve the historical TLOMMP Space.
+
+## Unattended GPU execution
+
+After explicit owner total-budget authorization: launch, observe approximately ten minutes of actual GPU computation, report measured health/execution links, then leave healthy training unattended. Preserve automatic correctness, checkpoint, deterministic resume, memory, validation and provider/cumulative-budget safeguards. The existing persistent CPU collector must recover private results independently of the chat. Stop genuine correctness failures; no speculative GPU retry, redundant smoke campaigns or general-purpose scheduler.
