@@ -61,7 +61,8 @@ class FullInput(unittest.TestCase):
   from unittest.mock import patch
   from .validation import validate_patients
   visits=[dict(partition='validation',metadata=dict(patient_id=f'p{i}',exam_id=f'v{i}')) for i in range(45)]
-  results=[dict(patient_id=f'p{i}',exam_id=f'v{i}',dice=.5,hd95_mm=1.,lesion_sensitivity=.5,false_positives=0,absolute_volume_error_mm3=0) for i in range(45)]
+  results=[dict(patient_id=f'p{i}',exam_id=f'v{i}',dice=.5,hd95_mm=1.,lesion_sensitivity=.5,false_positives=0,absolute_volume_error_mm3=0,truth_lesions=2,lesion_strata={s:dict(truth=1,matched=0) for s in ['lt100_mm3','100_to_lt1000_mm3','ge1000_mm3']},loss_sum=1,loss_planes=2) for i in range(45)]
+  for r in results:r['threshold_grid']={str(t):dict(dice=.5,truth_lesions=2,matched_lesions=1,lesion_sensitivity=.5,false_positives=0) for t in [.3,.7]}
   model=torch.nn.Linear(1,1).train()
   with tempfile.TemporaryDirectory() as d,patch('torch.distributed.is_initialized',return_value=True),patch('torch.distributed.get_world_size',return_value=2),patch('torch.distributed.get_rank',return_value=1),patch('torch.distributed.all_gather_object',side_effect=lambda out,local:out.__setitem__(slice(None),[[],[]])):
    result=validate_patients(model,dict(visits=visits),None,None,d,'source','checkpoint',5,previous_results=results)

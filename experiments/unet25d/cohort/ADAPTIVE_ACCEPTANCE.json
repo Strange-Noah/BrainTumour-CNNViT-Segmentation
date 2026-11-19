@@ -1,0 +1,50 @@
+{
+  "schema": "adaptive-training-cpu-acceptance-v1",
+  "date": "2026-11-20",
+  "base_source": "c4b70a933ce5f36d41798f9051b3db197185b162",
+  "science_sha256": "c3a7a581affc95bb5ea8723c9d286c7f95376717de40bbecdb03e2887bf427b0",
+  "data_policy_sha256": "3bbb16ca8e4659d70c3dc3e5503150e2f10fa7be9da0d7291865484719d7318a",
+  "catalogue_sha256": "04b59724c5cc6ac654f85d51ad19e8a8a0766944d8211ecfd03a3495a418de1e",
+  "synthetic_cpu_tests_passed": 29,
+  "private_metadata_only": true,
+  "phase1": {
+    "unique_positions": 220384,
+    "optimizer_updates": 110192,
+    "training_visits": 746,
+    "plan_sha256": "1e396a03543c649a098a5431b589f4ffbf583cfdc663f35632c8d50112d0a91a",
+    "rank_disjoint": true,
+    "resume_consumed_prefix": true,
+    "prefetch_not_counted": true
+  },
+  "phase2": {
+    "samples": 67200,
+    "category_counts": {
+      "baseline": 26880,
+      "hard_positive": 16800,
+      "hard_negative": 13440,
+      "ordinary_negative": 10080
+    },
+    "empty_mining_plan_sha256": "cd62c6123ce8023c79900b1bf1ac6a7b6d9c8fd2983337afedd00e8a216f1eaf",
+    "patient_cap": 672,
+    "visit_cap": 336,
+    "observed_max_patient": 320,
+    "observed_max_visit": 211,
+    "empty_pool_fallback_explicit": true
+  },
+  "checks": [
+    "DDP partition and deterministic interruption/resume",
+    "actual-update-only cursor and phase transition",
+    "training-only bounded decayed difficulty and peak/top-k FP scoring",
+    "3D GT physical component volume",
+    "positive-only patient Dice and empty-GT handling",
+    "complete-validation targets/plateau/revert and persistence",
+    "private collection latest/best pointers",
+    "CPU-only control plane and free-quota guard",
+    "unchanged data policy/model/FP32/loss/no augmentation"
+  ],
+  "accepted_actual_cpu_input_read_run": "https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/44556878634",
+  "MRI_reprepared": false,
+  "standalone_GPU_benchmark": false,
+  "GPU_TRAINING_STARTED": false,
+  "runtime_acceptance": "Pending integrated-source execution and measured first ten minutes"
+}
