@@ -81,4 +81,17 @@ class Unattended(unittest.TestCase):
   self.assertEqual(cli.call_args_list,[unittest.mock.call('datasets','status','private/input')]*3);self.assertEqual(sleep.call_count,2)
   with patch('experiments.unet25d.cohort.stage.time.monotonic',side_effect=[0,1,901]),patch('experiments.unet25d.cohort.stage.time.sleep'):
    with self.assertRaises(TimeoutError):wait_private_ready('private/input',unittest.mock.Mock(return_value='processing'))
+ def test_publication_binds_exact_receipt_despite_stale_listing(self):
+  from .stage import wait_published_version
+  from types import SimpleNamespace
+  with tempfile.TemporaryDirectory() as d:
+   folder=Path(d);(folder/'input-package.json').write_bytes(b'{"publication_id":"new"}')
+   api=unittest.mock.Mock();api.dataset_list.side_effect=[[SimpleNamespace(ref='private/input',is_private=True,current_version_number=v)] for v in [1,1,2]]
+   def cli(*args):
+    target=Path(args[args.index('-p')+1])/'input-package.json';target.write_bytes(b'{"publication_id":"old"}' if args[3].endswith('/1') else b'{"publication_id":"new"}')
+   with patch('experiments.unet25d.cohort.stage.time.sleep') as sleep:
+    version=wait_published_version('private/input',folder,cli,api)
+   self.assertEqual(version,2);self.assertEqual(sleep.call_count,2)
+   api.dataset_list.side_effect=None;api.dataset_list.return_value=[SimpleNamespace(ref='private/input',is_private=False,current_version_number=2)]
+   with self.assertRaises(ValueError):wait_published_version('private/input',folder,cli,api)
 if __name__=='__main__':unittest.main()
