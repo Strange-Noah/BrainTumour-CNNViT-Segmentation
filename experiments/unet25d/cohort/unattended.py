@@ -32,7 +32,7 @@ def require_integrated_source(sha):
 
 def start_session(c,b,record):
     from cloud.kaggle_benchmark_bridge import WORK,cli
-    from .stage import publish_from_existing_runtime
+    from .stage import publish_from_existing_runtime,wait_private_ready
     from .kaggle import render
     require_integrated_source(record['source_sha'])
     seconds=session_budget(record['approved_budget_seconds'],record['reserved_seconds'])
@@ -44,10 +44,7 @@ def start_session(c,b,record):
     if len(record['kernel'].split('/')[1])>64:raise ValueError('Training kernel slug too long')
     record['status']='preparing';write(c,b,record)
     published=publish_from_existing_runtime(DATASET,seconds);record['catalogue_sha256']=published['catalogue_sha256'];record['input_version']=published['version']
-    deadline=time.monotonic()+900
-    while 'READY' not in cli('datasets','status',DATASET).upper():
-        if time.monotonic()>deadline:raise TimeoutError('Private input still processing; no GPU submitted')
-        time.sleep(20)
+    wait_private_ready(DATASET,cli)
     folder=WORK/'full-kernel';folder.mkdir(exist_ok=True)
     (folder/'run.py').write_text(render(record['source_sha'],seconds,record['approved_budget_seconds']))
     (folder/'kernel-metadata.json').write_text(json.dumps(dict(id=record['kernel'],title='Novo Full Cohort Training',code_file='run.py',language='python',kernel_type='script',is_private=True,enable_gpu=True,enable_internet=True,dataset_sources=[DATASET+'/'+str(record['input_version'])],competition_sources=[],kernel_sources=[],machine_shape='NvidiaTeslaT4')))

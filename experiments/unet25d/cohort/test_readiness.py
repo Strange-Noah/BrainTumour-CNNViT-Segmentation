@@ -74,4 +74,11 @@ class Unattended(unittest.TestCase):
   with self.assertRaises(ValueError):coverage(records,expected)
   records[0]=records[1]
   with self.assertRaises(ValueError):coverage(records,expected)
+ def test_new_private_publication_visibility_is_polled_without_reupload(self):
+  from .stage import wait_private_ready
+  with patch('experiments.unet25d.cohort.stage.time.monotonic',side_effect=[0,1,2,3]),patch('experiments.unet25d.cohort.stage.time.sleep') as sleep:
+   cli=unittest.mock.Mock(side_effect=[RuntimeError('temporary API visibility'), 'processing','ready']);wait_private_ready('private/input',cli)
+  self.assertEqual(cli.call_args_list,[unittest.mock.call('datasets','status','private/input')]*3);self.assertEqual(sleep.call_count,2)
+  with patch('experiments.unet25d.cohort.stage.time.monotonic',side_effect=[0,1,901]),patch('experiments.unet25d.cohort.stage.time.sleep'):
+   with self.assertRaises(TimeoutError):wait_private_ready('private/input',unittest.mock.Mock(return_value='processing'))
 if __name__=='__main__':unittest.main()
