@@ -1,0 +1,64 @@
+# Frozen full-cohort training inputs — 2026-11-19
+
+Status: implementation and targeted CPU contracts verified; **905-visit preparation has not yet run**. Formal GPU training is forbidden until the owner approves a total budget. `formal_training_authorized=false`, `approved_budget_seconds=0`; the submission entry refuses before calling Kaggle. No new GPU campaign is proposed.
+
+This is model input/training code on the accepted Actions → private Kaggle inputs → GPU → Actions/R2 execution path. No workflow, environment, secret, permission, bucket or provider changes. The existing bridge gets a small model-data-format adapter: its original marker identifies the bounded benchmark's 8+1 cache and cannot represent the full cohort. The original benchmark path remains intact. Summer history and main protections are unchanged.
+
+## Frozen science configuration
+
+[config.json](config.json): SMP 0.5.0 U-Net / ResNet34; ImageNet encoder with pinned revision and SHA; **full FP32, autocast/GradScaler/TF32 off, two T4s, local batch 1 / global batch 2**. Four modalities T1n/T1c/T2/FLAIR, modality-major adjacent slices −1/0/+1 (12 channels), enhancing tissue `raw == 3`; all original tissue labels retained. ImageNet initialization, **never** the low-Dice diagnostic checkpoint. AdamW encoder LR 1e-4 / decoder LR 3e-4, weight decay 1e-4; equal BCE and soft Dice. Encoder BN running statistics frozen, affine parameters trainable; decoder BN trains as in the accepted benchmark. Seed 42; no scheduler or augmentation in this initial baseline. These are a reproducible starting configuration, not optimized hyperparameters.
+
+## Coverage and geometry
+
+[coverage-plan.json](coverage-plan.json) uses the existing manifest, frozen split and previously audited headers; it does not repeat ingestion/audit or read test pixels.
+
+| Partition | Patients | Visits | Native axial planes | Tile-plane sites | Oversized visits | Oblique visits |
+|---|---:|---:|---:|---:|---:|---:|
+| Train | 210 | 746 | 215,680 | 220,384 | 4 | 36 |
+| Validation | 45 | 159 | 41,566 | 41,566 | 0 | 15 |
+
+Frozen patients.csv SHA-256: `57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0`. Neither preparation nor training exposes a test-partition option. No patient, visit, modality, native field of view or raw tissue class is dropped. The other two oversized examinations belong to test and remain untouched.
+
+Each modality is aligned to the actual T1c voxel lattice using its physical affine; differing image grids use linear interpolation. Labels must match the native T1c grid (with the existing two documented missing-unit exceptions); raw labels remain exact. Closest-RAS axis permutation/flips preserve the full oblique affine and voxel spacing; **oblique T1c is not unnecessarily orthogonalized/resampled**. Smaller dimensions are symmetrically zero-padded, then each modality receives visit-wide nonzero z-score normalization before any tiles are extracted. No in-plane downsampling.
+
+640×640 uses exactly `(0,0), (128,0), (0,128), (128,128)`, in x/y coordinates. More general dimensions use edge-anchored stride 384, leaving no uncovered pixels. Training samples virtual 512×512 tiles; storage is not duplicated fourfold. Validation infers every window, combines **continuous logits** with strictly positive Gaussian weights (sigma 128 pixels, floor 1e-6), divides by accumulated weights, restores the merged volume to original T1c shape/affine, **then thresholds logits at zero**. No mask voting. Native-space shared metrics and prediction exports retain frozen split/source provenance. Exact inverse permutation/flips need no interpolation; the legacy benchmark's resampled geometry remains supported separately.
+
+## One-time bounded preparation and loading
+
+`prepare.py` runs in the existing authorized CPU runtime, one visit at a time, within a 30-minute batch envelope. It reuses compatible normalized visits from the original 11.74 GB cache; incompatible legacy orthogonal-oblique inputs are prepared once under the new native-lattice policy. Encoder weights/dependencies are recovered from that same verified cache. No repeated full cache rebuild.
+
+Prepared data lives only in private `novo-nordisk-pbl-outputs`, below `novo-nordisk/experiments/unet25d/full-cohort/<data-policy-sha>/...`. Recipe/config/source/split hashes and normalization statistics are recorded. Each losslessly compressed shard contains eight centre slices plus one context slice at either edge for the image channels, and all raw centre-plane labels. The native raw label volume is retained once. Conditional immutable writes and per-object SHA-256 readback prevent conflicting/corrupt objects. A completed visit receipt skips that visit on restart; partial visits reuse identical shard hashes. No entire cohort is held on a runner or Kaggle disk.
+
+The final catalogue is assembled from these normal preparation receipts by `index.py`; it does not rerun imaging audits. It is published only with all 255 patients / 905 visits and contiguous axial shard coverage. Source dimensions total **1,150,334,009,344 bytes (~1.15 TB decimal)** for normalized channels and labels before compression/halo overhead. Eight-slice shards add roughly 25% context overlap; actual compressed R2 size will be reported by preparation. Storage is an existing-resource cost; no new compute service is provisioned. Do not assume the full prepared dataset fits Kaggle.
+
+The existing private-input publisher stages only the catalogue, pinned encoder dependencies, current resume checkpoint and **short-lived, object-specific GET-only signed URLs** for prepared objects. These URLs are private bearer capabilities: never print them, publish their artifacts, put them in model checkpoints, or grant bucket writes. The GPU receives no long-lived R2/API credentials. Each session refreshes this private input; expiry causes a safe retrieval failure, not reprocessing. Input files are ignored by Git.
+
+GPU cache: per rank at most 3 GiB compressed disk plus 512 MiB decoded arrays, one persistent worker, prefetch two, pinned batches. Validation reuses the rank cache after loader workers exit. Hashes are checked before use. Aggregate active disk cache is at most 6 GiB, independent of cohort size. Preparation, partial caches and native inference use disk-backed arrays, with a real host-memory-pressure stop rather than loading all visits into RAM.
+
+## Patient-aware coverage and deterministic resume
+
+A **coverage pass is not an exhaustive slice epoch**. Each pass has 210×64 = 13,440 draws (6,720 optimizer updates), guarantees every training patient, visit and virtual tile at least one centre, then fills the remaining draws with patient → visit → tile → slice selection. The nominal 64 is a cohort draw budget per patient, not exactly 64 draws for each individual. Total strata are 50% enhancing-positive centres, 25% negative centres from enhancing visits, 25% centres from label-3-empty visits. Replacement is allowed. Full coverage does not imply every axial slice was trained that pass.
+
+Fixed draws are reordered into shuffled patient blocks and visit/tile/shard locality. Reordering preserves the selected multiset and class balance. Seed/coverage-pass/global consumed cursor/plan SHA and per-rank RNG are checkpointed; prefetch does not advance the consumed cursor. Resume takes the remaining rank-strided plan and strictly restores model/optimizer state. Visits with more tiles receive the explicit minimum tile-coverage floor, not silent exclusion.
+
+## Proposed normal training schedule and budget
+
+- Save atomic finite model/optimizer/RNG/sampler checkpoints every 10 minutes and at session end; persist through the existing collector with SHA-256 readback. Keep a separate best checkpoint based on complete validation-patient mean Dice. No test evaluation.
+- Full validation every five completed coverage passes, maximum proposed 30 passes. All 45 patients / 159 visits are evaluated in native space, partitioned between GPUs; summarize visit metrics within patient before the cohort mean. A partially completed validation resumes from the same checkpoint and reports no complete-cohort score until finished. The final scheduled validation is not skipped at the maximum pass count.
+- Existing sessions remain bounded to at most 3,600 seconds including setup, with time reserved for checkpoint/output recovery. Session-to-session latest state is private R2; total consumed session seconds are counted cumulatively. Correctness errors stop execution; no speculative GPU retries.
+
+The accepted small-cache measurement was 15.4033 samples/s dual-T4 versus 8.43893 single (1.825×). Thus one 13,440-draw pass has an optimistic **14.54-minute compute-only** floor; 30 passes have a **7.27-hour training-compute-only** floor. This is **not a measured full-cohort runtime**. Cold R2 shard downloads/decompression will increase it. Full validation has 41,566 planes; allow roughly 30–90 minutes per full validation, with substantial uncertainty until normal execution. A conservative 30-pass planning envelope is **12–24 dual-T4 session hours**, not an authorized allocation or convergence guarantee. Count two device-hours per dual session-hour; Kaggle's own quota accounting remains authoritative.
+
+Recommended first authorization: **up to 8 dual-T4 session hours**, aim for 10 coverage passes and two complete validations, stop at the budget even if cold-data costs prevent that target. This corresponds to up to 16 T4 device-hours; it does not authorize the proposed 30-pass maximum. The last observed account quota was 29.22 hours remaining; it is historical, not a current balance. No GPU was allocated for this change. Preparation will supply actual compressed size; the first sustained formal run will supply the actual streamed-cohort rate, without a separate benchmark campaign.
+
+## Verification and execution handoff
+
+14 targeted CPU tests passed (`unittest` over `cohort.test_pipeline`, `test_amp_step`, `test_export_native`); `git diff --check` passed. Targeted CPU tests cover four-window full-field coverage; positive weights; merge-before-threshold; exact preservation of 640 labels/native shape; halo/context loading; bounded decoded cache; oblique affine physical-coordinate restoration; patient/visit coverage and resume; private reader spawn serialization; budget refusal before GPU calls; and returning the same validation summary on both ranks. Existing FP32 finite-gradient/state and native-export tests are retained. These synthetic contracts are not a claim that all 905 real visits have been prepared or that real-data full training has occurred.
+
+After the owner authorizes source integration, use the **existing** manual `project-execute.yml` with the integrated immutable SHA, entrypoint `experiments.unet25d.cohort.prepare`, and existing `experiments/unet25d/cpu_recovery_requirements.txt`. Run bounded groups of up to 10 patients, train starts 0,10,...,200 and validation starts 0,10,...,40. Reissue a group only when its output reports `bounded_cpu_time`; completed visit receipts skip work. Keep at most four ordinary existing CPU jobs active. Then run `experiments.unet25d.cohort.index` once and existing `kaggle-benchmark.yml` mode `prepare`, dataset `mathewzhou/novo-unet25d-full-cohort-input` (CPU publication only). No user notebook operations.
+
+The minimal private diagnostic is `experiments.unet25d.cohort.inspect_saved` through the same CPU entry. It uses only the saved prediction, saved GT and one original T1c; saves a private three-plane overlay and empty/false-positive/grid-overlap summary to R2. It performs no model inference and creates no viewer/deployment. It has not run yet. The old Dice ~0.0216 is not evidence of model quality and will not trigger full-dataset evaluation.
+
+Remaining work: integrate reviewed source; execute the one-time sharded CPU preparation and private saved-output inspection; publish the small private input; obtain **explicit total GPU budget authorization**. Do not dispatch formal GPU mode while funding fields remain false/zero. Funding changes are excluded from science/data-recipe identity, so authorization does not cause re-preparation or reset an experiment. No ingestion, infrastructure-capability or precision gates are reopened.
+
+Accepted benchmark and recovery evidence: [GPU run 44292134002](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/44292134002), [CPU recovery 44333112852](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/44333112852), [results/report PR #26](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/pull/26). [Project handoff](../../../docs/longitudinal/handoff.md).

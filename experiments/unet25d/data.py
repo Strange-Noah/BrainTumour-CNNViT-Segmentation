@@ -8,14 +8,17 @@ import torch
 
 class GeometryConflict(ValueError): pass
 
-def prepare_visit(sample, folder):
+def prepare_visit(sample, folder, *, allow_tiles=False):
     folder=Path(folder);folder.mkdir(parents=True,exist_ok=True)
     ref=sample['reference']; affine=ref.affine
     orientation=nib.orientations.io_orientation(affine)
     transform=nib.orientations.ornt_transform(orientation,nib.orientations.axcodes2ornt(('R','A','S')))
     canonical_affine=affine @ nib.orientations.inv_ornt_aff(transform,ref.shape)
     # Oblique grids need actual physical resampling, never just axis permutation.
-    oblique=bool(np.max(np.abs(nib.affines.obliquity(affine)))>1e-4)
+    source_oblique=bool(np.max(np.abs(nib.affines.obliquity(affine)))>1e-4)
+    # Full-cohort tiling keeps the actual T1c lattice/affine, including obliquity.
+    # Only legacy benchmark preparation orthogonalizes to its strict 512 RAS grid.
+    oblique=source_oblique and not allow_tiles
     native_shape=ref.shape
     axes=np.argsort(orientation[:,0]).astype(int)
     base_shape=tuple(map(int,np.asarray(native_shape)[axes]));spacing=np.asarray(nib.affines.voxel_sizes(affine))[axes]
@@ -24,22 +27,29 @@ def prepare_visit(sample, folder):
         corners=np.array(list(itertools.product(*[[-.5,n-.5] for n in native_shape])))
         world=nib.affines.apply_affine(affine,corners);low=world.min(0);high=world.max(0)
         needed=np.ceil((high-low)/spacing).astype(int)
-        if np.any(needed[:2]>512):raise GeometryConflict(f'Oblique full-FOV native-spacing RAS grid needs {needed.tolist()}; cannot fit 512 without resolution/FOV change')
-        shape=(512,512,int(needed[2]));canonical_affine=np.diag([*spacing,1.])
-        canonical_affine[:3,3]=[(low[0]+high[0])/2-255.5*spacing[0],(low[1]+high[1])/2-255.5*spacing[1],low[2]+.5*spacing[2]]
+        if np.any(needed[:2]>512) and not allow_tiles:raise GeometryConflict(f'Oblique full-FOV native-spacing RAS grid needs {needed.tolist()}; cannot fit 512 without resolution/FOV change')
+        shape=(max(512,int(needed[0])),max(512,int(needed[1])),int(needed[2]));canonical_affine=np.diag([*spacing,1.])
+        canonical_affine[:3,3]=[(low[0]+high[0])/2-(shape[0]-1)/2*spacing[0],(low[1]+high[1])/2-(shape[1]-1)/2*spacing[1],low[2]+.5*spacing[2]]
         padding=[[0,0],[0,0],[0,0]]
     else:
-        if any(n>512 for n in base_shape[:2]):raise GeometryConflict(f'Native RAS shape {base_shape} exceeds 512; cannot preserve both resolution and full FOV')
-        padding=[[(512-n)//2,512-n-(512-n)//2] for n in base_shape[:2]]+[[0,0]]
+        if any(n>512 for n in base_shape[:2]) and not allow_tiles:raise GeometryConflict(f'Native RAS shape {base_shape} exceeds 512; cannot preserve both resolution and full FOV')
+        padding=[[max(0,512-n)//2,max(0,512-n)-max(0,512-n)//2] for n in base_shape[:2]]+[[0,0]]
         shift=np.eye(4);shift[:3,3]=[-p[0] for p in padding];canonical_affine=canonical_affine@shift
-        shape=(512,512,base_shape[2])
+        shape=(max(512,base_shape[0]),max(512,base_shape[1]),base_shape[2])
     norm=np.lib.format.open_memmap(folder/'images.npy',mode='w+',dtype='float32',shape=(4,*shape))
     stats=[]
     for c,source in enumerate(sample['images']):
         if oblique:
             from nibabel.processing import resample_from_to
-            arr=resample_from_to(nib.Nifti1Image(source,affine),(shape,canonical_affine),order=1).get_fdata(dtype=np.float32)
-        else:arr=np.pad(nib.orientations.apply_orientation(source,transform),padding)
+            image=source if isinstance(source,nib.spatialimages.SpatialImage) else nib.Nifti1Image(source,affine)
+            arr=resample_from_to(image,(shape,canonical_affine),order=1).get_fdata(dtype=np.float32)
+        else:
+            if isinstance(source,nib.spatialimages.SpatialImage):
+                if source.shape!=ref.shape or not np.allclose(source.affine,affine,atol=1e-4):
+                    from nibabel.processing import resample_from_to
+                    source=resample_from_to(source,ref,order=1)
+                source=source.get_fdata(dtype=np.float32)
+            arr=np.pad(nib.orientations.apply_orientation(source,transform),padding)
         if not np.isfinite(arr).all(): raise ValueError('Nonfinite channel: reject visit; no silent replacement')
         foreground=arr!=0; values=arr[foreground];mean=float(values.mean(dtype=np.float64)) if values.size else 0.;std=float(values.std(dtype=np.float64)) if values.size else 0.
         norm[c]=0
@@ -51,8 +61,14 @@ def prepare_visit(sample, folder):
         target=resample_from_to(nib.Nifti1Image(sample['target'].astype(np.uint8),affine),(shape,canonical_affine),order=0).get_fdata().astype(np.uint8)
     else:target=np.pad(nib.orientations.apply_orientation(sample['target'],transform),padding).astype(np.uint8)
     np.save(folder/'target.npy',target)
+    if allow_tiles:
+        raw=sample['raw_labels']
+        np.save(folder/'native-raw-labels.npy',raw.astype(np.uint8))
+        if oblique:raw=resample_from_to(nib.Nifti1Image(raw.astype(np.uint8),affine),(shape,canonical_affine),order=0).get_fdata().astype(np.uint8)
+        else:raw=np.pad(nib.orientations.apply_orientation(raw,transform),padding).astype(np.uint8)
+        np.save(folder/'raw-labels.npy',raw)
     positives=np.flatnonzero(target.any(axis=(0,1))).tolist();negatives=np.flatnonzero(~target.any(axis=(0,1))).tolist()
-    meta=dict(exam_id=sample['visit']['exam_id'],patient_id=sample['visit']['patient_id'],shape=list(shape),native_shape=list(ref.shape),native_affine=affine.tolist(),canonical_affine=canonical_affine.tolist(),orientation_transform=transform.tolist(),oblique_resampled=oblique,padding=padding,normalization=stats,positive=positives,negative=negatives)
+    meta=dict(source_oblique=source_oblique,grid_policy='native-T1c-with-affine' if allow_tiles else 'orthogonal-RAS',exam_id=sample['visit']['exam_id'],patient_id=sample['visit']['patient_id'],shape=list(shape),native_shape=list(ref.shape),native_affine=affine.tolist(),canonical_affine=canonical_affine.tolist(),orientation_transform=transform.tolist(),oblique_resampled=oblique,padding=padding,normalization=stats,positive=positives,negative=negatives)
     (folder/'visit.json').write_text(json.dumps(meta));return meta
 
 def restore(prediction,meta,order=0):

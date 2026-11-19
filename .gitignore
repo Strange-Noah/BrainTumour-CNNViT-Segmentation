@@ -42,3 +42,7 @@ exports/
 !outputs/**/*.csv
 !outputs/**/*.json
 !outputs/**/*.png
+
+# Private cohort capabilities and clinical input catalogues
+private-data-lease.json
+catalogue.json
