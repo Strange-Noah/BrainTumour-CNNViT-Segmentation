@@ -1,0 +1,8 @@
+[
+  {
+    "epoch": 1,
+    "train_loss_mean": 1.8490832448005676,
+    "validation_patient_macro_dice": 3.489823086538669e-05,
+    "validation_patients_seen": 2
+  }
+]

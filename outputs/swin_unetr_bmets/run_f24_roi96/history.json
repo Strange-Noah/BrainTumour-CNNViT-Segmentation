@@ -1,0 +1,128 @@
+[
+  {
+    "epoch": 1,
+    "train_loss_mean": 1.1823182505513004,
+    "validation_patient_macro_dice": 0.06374292685284666,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 2,
+    "train_loss_mean": 0.9902502824489936,
+    "validation_patient_macro_dice": 0.08590450961177219,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 3,
+    "train_loss_mean": 0.9119965324413042,
+    "validation_patient_macro_dice": 0.09144678495881957,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 4,
+    "train_loss_mean": 0.853175757717511,
+    "validation_patient_macro_dice": 0.10129117613517007,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 5,
+    "train_loss_mean": 0.7973411576597684,
+    "validation_patient_macro_dice": 0.08801175905169151,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 6,
+    "train_loss_mean": 0.7377928346894861,
+    "validation_patient_macro_dice": 0.08706141208595691,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 7,
+    "train_loss_mean": 0.7059753034213913,
+    "validation_patient_macro_dice": 0.10288962354717941,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 8,
+    "train_loss_mean": 0.6967395282782435,
+    "validation_patient_macro_dice": 0.10317090430929743,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 9,
+    "train_loss_mean": 0.6732981444184166,
+    "validation_patient_macro_dice": 0.12899120620006846,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 10,
+    "train_loss_mean": 0.6688560237683575,
+    "validation_patient_macro_dice": 0.13922303008523032,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 11,
+    "train_loss_mean": 0.6344822783462564,
+    "validation_patient_macro_dice": 0.11100677587663414,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 12,
+    "train_loss_mean": 0.6403872323030202,
+    "validation_patient_macro_dice": 0.13571044397552592,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 13,
+    "train_loss_mean": 0.629585343140899,
+    "validation_patient_macro_dice": 0.13714697646189403,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 14,
+    "train_loss_mean": 0.6445949591406629,
+    "validation_patient_macro_dice": 0.13150604146766806,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 15,
+    "train_loss_mean": 0.6291764140548559,
+    "validation_patient_macro_dice": 0.13816927887053085,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 16,
+    "train_loss_mean": 0.6121400925942544,
+    "validation_patient_macro_dice": 0.16390292070098547,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 17,
+    "train_loss_mean": 0.6018084142177338,
+    "validation_patient_macro_dice": 0.12073895149088154,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 18,
+    "train_loss_mean": 0.6154662247887006,
+    "validation_patient_macro_dice": 0.07700502110999594,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 19,
+    "train_loss_mean": 0.5958338433092625,
+    "validation_patient_macro_dice": 0.1714854498574898,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 20,
+    "train_loss_mean": 0.5704524726844106,
+    "validation_patient_macro_dice": 0.16084607482036686,
+    "validation_patients_seen": 12
+  },
+  {
+    "epoch": 21,
+    "train_loss_mean": 0.5959496224004446,
+    "validation_patient_macro_dice": 0.1742188265599368,
+    "validation_patients_seen": 12
+  }
+]

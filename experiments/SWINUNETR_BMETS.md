@@ -44,19 +44,19 @@ If CUDA runs out of memory, choose a new output folder and repeat with `--roi 64
 
 ## Full training
 
-After the sanity run completes, train with every visit belonging to the 210 frozen training patients. Checkpoint selection uses a patient-balanced sample of 12 visits from the 45 validation patients each epoch; the later validation partition run evaluates every validation visit:
+The completed run used every visit belonging to the 210 frozen training patients for 21 epochs. Checkpoint selection used the same patient-balanced sample of 12 visits from the 45 frozen validation patients each epoch; the best subset score was at epoch 21. To reproduce this configuration, use:
 
 ```powershell
 python -m experiments.train_swin_unetr `
   --manifest "$cache\visits.jsonl" `
   --cache "$cache" `
   --output "$project\outputs\swin_unetr_bmets\run_f24_roi96" `
-  --epochs 30 `
+  --epochs 21 `
   --roi 96 `
   --feature-size 24
 ```
 
-Use a distinct output name and `--roi 64` if reducing the crop size. The trainer writes `best_checkpoint.pt`, `run_metadata.json`, and `history.json`; checkpoint selection uses mean visit Dice within each patient, then averages across validation patients.
+Use a distinct output name and `--roi 64` if reducing the crop size. The trainer writes `best_checkpoint.pt`, `run_metadata.json`, and `history.json`; checkpoint selection uses mean visit Dice within each patient, then averages across validation patients. In the completed run, training loss fell from 1.1823 at epoch 1 to 0.5960 at epoch 21. The selected checkpoint was from epoch 21. The model was randomly initialized; no Swin pretrained checkpoint was used.
 
 ## Full validation evaluation
 
@@ -78,7 +78,23 @@ python -m experiments.run_swin_partition `
   --output "$project\outputs\swin_unetr_bmets\validation_run1"
 ```
 
-Review `validation_run1\metrics.json` and several saved masks in `validation_run1\visits`. Confirm prediction overlays align with T1c before freezing the model configuration.
+### Completed full-validation result
+
+The local full-validation run evaluated all 159 visits from the 45 frozen validation patients. Results below are patient-macro means as specified by Protocol v1; visit metrics are averaged within each patient before averaging across patients.
+
+| Metric | Result |
+| --- | ---: |
+| Dice | 0.2552 |
+| HD95 | 74.03 mm |
+| Lesion-level sensitivity | 0.4808 |
+| False-positive components | 56.10 per patient (visit-averaged) |
+| Absolute volume error | 2,503.68 mm³ |
+
+All 45 patients had defined patient-level aggregates for these metrics. At visit level, 15 visits had no enhancing-tissue reference lesions; lesion sensitivity and HD95 are undefined for those visits under the shared evaluator convention. Across all 159 visits, 464 of 1,238 reference lesion components were matched, while 8,349 predicted components were unmatched. The high false-positive count, low Dice, and high HD95 indicate that this first model is not yet a reliable segmentation source for lesion tracking. Review the saved overlays and per-visit metrics to check model errors and confirm alignment.
+
+The detailed report is `outputs/swin_unetr_bmets/validation_run1/metrics.json`; one original-T1c-grid prediction and candidate sidecar per visit are under `outputs/swin_unetr_bmets/validation_run1/visits/`. Training history and run metadata are under `outputs/swin_unetr_bmets/run_f24_roi96/`.
+
+The test partition has **not** been evaluated. Keep it untouched until the team reviews these validation predictions and decides whether to freeze this preliminary baseline or run another validation-only iteration.
 
 ## Final test evaluation
 

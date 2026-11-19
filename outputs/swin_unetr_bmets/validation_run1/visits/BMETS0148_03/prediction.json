@@ -1,0 +1,371 @@
+{
+  "checkpoint_ref": "C:\\Users\\chany\\Desktop\\BlendEd\\Novo Nordisk Project\\bmets\\bmets-project\\outputs\\swin_unetr_bmets\\run_f24_roi96\\best_checkpoint.pt",
+  "framework_version": "torch=2.15.0+cu132; monai=1.6.1",
+  "model_config": {
+    "architecture": "MONAI SwinUNETR",
+    "initialization": "random initialization",
+    "in_channels": 4,
+    "out_channels": 2,
+    "feature_size": 24,
+    "roi": 96,
+    "target": "enhancing tissue, original label 3",
+    "input_order": [
+      "T1",
+      "T1c",
+      "T2",
+      "FLAIR"
+    ],
+    "normalization": "per-volume z-score over nonzero voxels per modality",
+    "loss": "MONAI DiceCELoss; foreground Dice plus softmax cross-entropy",
+    "optimizer": "AdamW lr=1e-4 weight_decay=1e-5",
+    "amp": "CUDA float16",
+    "split_sha256": "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0",
+    "manifest_sha256": "040ec6c523d5beae43a30b64fede2bee226e1a08e8c14b2cca8043b01b9c39f4"
+  },
+  "patient_id": "BMETS0148",
+  "exam_id": "BMETS0148_03",
+  "model_version": "swinunetr-f24-roi96-run1",
+  "git_sha": "6c6c01943ca5402f1d2bb5148c7228e4a02cfbaf",
+  "task": "enhancing",
+  "split_sha256": "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0",
+  "raw_positive_labels": [
+    3
+  ],
+  "prediction_labels": {
+    "0": "background",
+    "1": "enhancing"
+  },
+  "candidates": [
+    {
+      "candidate_id": 1,
+      "volume_mm3": 45.75,
+      "centroid_world_mm": [
+        -67.06599426269531,
+        2.3216598594123496,
+        -93.57085948172814
+      ]
+    },
+    {
+      "candidate_id": 2,
+      "volume_mm3": 1.0,
+      "centroid_world_mm": [
+        -65.81599426269531,
+        38.30799865722656,
+        -89.39599609375
+      ]
+    },
+    {
+      "candidate_id": 3,
+      "volume_mm3": 0.25,
+      "centroid_world_mm": [
+        -65.06599426269531,
+        15.307998657226562,
+        -109.39599609375
+      ]
+    },
+    {
+      "candidate_id": 4,
+      "volume_mm3": 5.25,
+      "centroid_world_mm": [
+        -63.99456569126674,
+        13.569903419131322,
+        -40.82456752232143
+      ]
+    },
+    {
+      "candidate_id": 5,
+      "volume_mm3": 2.5,
+      "centroid_world_mm": [
+        -61.16599426269531,
+        38.45799865722657,
+        -44.69599609375
+      ]
+    },
+    {
+      "candidate_id": 6,
+      "volume_mm3": 1.25,
+      "centroid_world_mm": [
+        -59.36599426269531,
+        37.60799865722656,
+        -37.995996093749994
+      ]
+    },
+    {
+      "candidate_id": 7,
+      "volume_mm3": 141.0,
+      "centroid_world_mm": [
+        -56.18212901446836,
+        -13.861327583908192,
+        -109.2718826185727
+      ]
+    },
+    {
+      "candidate_id": 8,
+      "volume_mm3": 0.25,
+      "centroid_world_mm": [
+        -52.06599426269531,
+        -12.192001342773438,
+        -113.39599609375
+      ]
+    },
+    {
+      "candidate_id": 9,
+      "volume_mm3": 5.25,
+      "centroid_world_mm": [
+        -31.661232357933415,
+        -26.596763247535343,
+        -124.34837704613095
+      ]
+    },
+    {
+      "candidate_id": 10,
+      "volume_mm3": 0.75,
+      "centroid_world_mm": [
+        -30.39932759602864,
+        48.141331990559905,
+        -114.39599609375
+      ]
+    },
+    {
+      "candidate_id": 11,
+      "volume_mm3": 150.25,
+      "centroid_world_mm": [
+        -16.754846176172848,
+        2.742274863549355,
+        -16.95173652636231
+      ]
+    },
+    {
+      "candidate_id": 12,
+      "volume_mm3": 3.5,
+      "centroid_world_mm": [
+        -18.78027997698102,
+        20.27228437151227,
+        -122.25313895089286
+      ]
+    },
+    {
+      "candidate_id": 13,
+      "volume_mm3": 242.5,
+      "centroid_world_mm": [
+        -13.415478798777784,
+        44.49098834794822,
+        -96.87743939271907
+      ]
+    },
+    {
+      "candidate_id": 14,
+      "volume_mm3": 1.0,
+      "centroid_world_mm": [
+        -11.315994262695312,
+        -56.81700134277344,
+        -91.64599609375
+      ]
+    },
+    {
+      "candidate_id": 15,
+      "volume_mm3": 221.25,
+      "centroid_world_mm": [
+        -4.049610081904348,
+        -16.75132337667175,
+        -14.236674059851708
+      ]
+    },
+    {
+      "candidate_id": 16,
+      "volume_mm3": 76.75,
+      "centroid_world_mm": [
+        -4.784235305040596,
+        5.23633741944154,
+        -6.516517266388433
+      ]
+    },
+    {
+      "candidate_id": 17,
+      "volume_mm3": 5.5,
+      "centroid_world_mm": [
+        -4.952357899058953,
+        -48.57836497913707,
+        -111.25963245738637
+      ]
+    },
+    {
+      "candidate_id": 18,
+      "volume_mm3": 764.75,
+      "centroid_world_mm": [
+        1.2975232266802976,
+        -26.41298859350897,
+        -122.69282512284448
+      ]
+    },
+    {
+      "candidate_id": 19,
+      "volume_mm3": 12.75,
+      "centroid_world_mm": [
+        -3.6542295568129646,
+        -24.329256244734225,
+        -22.631290211397072
+      ]
+    },
+    {
+      "candidate_id": 20,
+      "volume_mm3": 211.5,
+      "centroid_world_mm": [
+        -1.3094930806622216,
+        18.67265586762845,
+        -45.13358474623227
+      ]
+    },
+    {
+      "candidate_id": 21,
+      "volume_mm3": 1.25,
+      "centroid_world_mm": [
+        -3.465994262695318,
+        46.70799865722657,
+        -34.795996093750006
+      ]
+    },
+    {
+      "candidate_id": 22,
+      "volume_mm3": 957.25,
+      "centroid_world_mm": [
+        -0.6760752237817513,
+        45.123616311966714,
+        -33.62373179497749
+      ]
+    },
+    {
+      "candidate_id": 23,
+      "volume_mm3": 0.25,
+      "centroid_world_mm": [
+        1.4340057373046875,
+        -20.692001342773438,
+        -10.39599609375
+      ]
+    },
+    {
+      "candidate_id": 24,
+      "volume_mm3": 0.25,
+      "centroid_world_mm": [
+        2.4340057373046875,
+        -20.692001342773438,
+        -10.39599609375
+      ]
+    },
+    {
+      "candidate_id": 25,
+      "volume_mm3": 308.0,
+      "centroid_world_mm": [
+        13.923859633408597,
+        41.65702463125254,
+        -96.33511947037337
+      ]
+    },
+    {
+      "candidate_id": 26,
+      "volume_mm3": 376.5,
+      "centroid_world_mm": [
+        44.93898581698596,
+        -23.854351940382998,
+        -113.52348613359064
+      ]
+    },
+    {
+      "candidate_id": 27,
+      "volume_mm3": 2.25,
+      "centroid_world_mm": [
+        41.71178351508246,
+        10.196887546115448,
+        -112.95155164930556
+      ]
+    },
+    {
+      "candidate_id": 28,
+      "volume_mm3": 0.75,
+      "centroid_world_mm": [
+        41.93400573730469,
+        12.307998657226562,
+        -120.39599609375
+      ]
+    },
+    {
+      "candidate_id": 29,
+      "volume_mm3": 0.25,
+      "centroid_world_mm": [
+        41.93400573730469,
+        48.30799865722656,
+        -114.39599609375
+      ]
+    },
+    {
+      "candidate_id": 30,
+      "volume_mm3": 6.5,
+      "centroid_world_mm": [
+        51.7993903526893,
+        1.404152503380402,
+        -121.62676532451923
+      ]
+    },
+    {
+      "candidate_id": 31,
+      "volume_mm3": 22.25,
+      "centroid_world_mm": [
+        68.63625292831591,
+        1.6450773089119508,
+        -97.09262530723315
+      ]
+    },
+    {
+      "candidate_id": 32,
+      "volume_mm3": 8.25,
+      "centroid_world_mm": [
+        68.3430966463956,
+        14.944362293590203,
+        -85.3050870028409
+      ]
+    },
+    {
+      "candidate_id": 33,
+      "volume_mm3": 1.75,
+      "centroid_world_mm": [
+        68.43400573730469,
+        11.02228437151227,
+        -88.53885323660714
+      ]
+    }
+  ],
+  "candidate_identity_scope": "visit",
+  "prediction_sha256": "d3fc06cf2744fb1f8349abbffcd19f37a959161e396ab60d485f3ada61177b87",
+  "reference_shape": [
+    512,
+    512,
+    188
+  ],
+  "reference_affine": [
+    [
+      0.5,
+      0.0,
+      0.0,
+      -126.56599426269531
+    ],
+    [
+      0.0,
+      0.5,
+      0.0,
+      -83.69200134277344
+    ],
+    [
+      0.0,
+      0.0,
+      1.0,
+      -162.39599609375
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "spatial_units": "mm"
+}
