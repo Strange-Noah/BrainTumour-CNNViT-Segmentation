@@ -47,6 +47,17 @@ def restore_encoder(folder,client):
     config=json.loads(CONFIG.read_text());weights=[h for path,h in restored if path.endswith('/model.safetensors') and config['encoder_checkpoint_revision'] in path]
     if weights!=[config['encoder_checkpoint_sha256']] or len(restored)!=2:raise ValueError('Pinned encoder dependency set is incomplete')
 
+def wait_private_ready(dataset,cli,seconds=900):
+    # A successful private upload may temporarily return an API error while the
+    # new version is becoming visible. Poll only status, never resubmit data here.
+    deadline=time.monotonic()+seconds
+    while time.monotonic()<deadline:
+        try:
+            if 'READY' in cli('datasets','status',dataset).upper():return
+        except RuntimeError:pass
+        time.sleep(20)
+    raise TimeoutError('Private input publication did not finish processing')
+
 def publish_from_existing_runtime(dataset,session_seconds=12*3600,final_check=False):
     from cloud.kaggle_benchmark_bridge import WORK,cli
     from .settings import keybase
@@ -73,10 +84,7 @@ def publish_from_existing_runtime(dataset,session_seconds=12*3600,final_check=Fa
         cli('datasets','version','-p',str(folder),'-m','Refresh private data lease','-r','zip','-t')
     else:cli('datasets','create','-p',str(folder),'-r','zip','-t')
     import time,os,tempfile
-    deadline=time.monotonic()+900
-    while 'READY' not in cli('datasets','status',dataset).upper():
-        if time.monotonic()>deadline:raise TimeoutError('Private input publication still processing')
-        time.sleep(20)
+    wait_private_ready(dataset,cli)
     from kaggle.api.kaggle_api_extended import KaggleApi
     api=KaggleApi();api.authenticate();row=next(r for r in api.dataset_list(mine=True,search=dataset.split('/')[1]) if r.ref==dataset)
     if not row.is_private:raise ValueError('Input publication must remain private')
