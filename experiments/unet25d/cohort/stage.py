@@ -3,7 +3,7 @@
 No workflow or credential changes. This module must run only in the existing
 publisher runtime which already has KAGGLE_API_TOKEN; never send it to a notebook.
 """
-import hashlib,json,time
+import hashlib,json,time,tempfile
 from pathlib import Path
 from cloud.storage import connect,verify
 
@@ -58,6 +58,24 @@ def wait_private_ready(dataset,cli,seconds=900):
         time.sleep(20)
     raise TimeoutError('Private input publication did not finish processing')
 
+def wait_published_version(dataset,folder,cli,api,seconds=900):
+    # Search/list results can lag a successful upload. Bind a version to the
+    # exact small publication receipt, never to an eventually-consistent number.
+    expected=(Path(folder)/'input-package.json').read_bytes();deadline=time.monotonic()+seconds
+    with tempfile.TemporaryDirectory(prefix='novo-private-version-') as d:
+        root=Path(d);root.chmod(0o700)
+        while time.monotonic()<deadline:
+            try:
+                row=next(r for r in api.dataset_list(mine=True,search=dataset.split('/')[1]) if r.ref==dataset)
+                if not row.is_private:raise ValueError('Input publication must remain private')
+                version=int(row.current_version_number)
+                cli('datasets','download','-d',dataset+'/'+str(version),'-f','input-package.json','-p',str(root),'--force','-q')
+                receipt=root/'input-package.json'
+                if receipt.exists() and receipt.read_bytes()==expected:return version
+            except (RuntimeError,StopIteration):pass
+            time.sleep(20)
+    raise TimeoutError('New private input version has not exposed the exact publication receipt')
+
 def publish_from_existing_runtime(dataset,session_seconds=12*3600,final_check=False):
     from cloud.kaggle_benchmark_bridge import WORK,cli
     from .settings import keybase
@@ -75,6 +93,9 @@ def publish_from_existing_runtime(dataset,session_seconds=12*3600,final_check=Fa
         with (folder/'resume.pt').open('wb') as f:verify(c,b,pointer['checkpoint']['key'],pointer['checkpoint']['sha256'],f)
     except c.exceptions.NoSuchKey:pass
     (folder/'dataset-metadata.json').write_text(json.dumps(dict(id=dataset,title='Novo full-cohort private training input',licenses=[{'name':'other'}],description='Private training references. Original TCIA usage terms apply. Never redistribute data leases publicly.')))
+    import uuid,os
+    package=dict(publication_id=uuid.uuid4().hex,source_sha=os.environ['NOVO_SOURCE_SHA'],files={name:hashlib.sha256((folder/name).read_bytes()).hexdigest() for name in ['catalogue.json','private-data-lease.json','training-config.json']})
+    (folder/'input-package.json').write_text(json.dumps(package,sort_keys=True))
     # metadata/status calls are control-plane only; no tokens/URLs are printed.
     import subprocess
     check=subprocess.run(['kaggle','datasets','metadata',dataset,'-p',str(WORK/'existing-cohort-metadata')],capture_output=True,text=True)
@@ -86,9 +107,7 @@ def publish_from_existing_runtime(dataset,session_seconds=12*3600,final_check=Fa
     import time,os,tempfile
     wait_private_ready(dataset,cli)
     from kaggle.api.kaggle_api_extended import KaggleApi
-    api=KaggleApi();api.authenticate();row=next(r for r in api.dataset_list(mine=True,search=dataset.split('/')[1]) if r.ref==dataset)
-    if not row.is_private:raise ValueError('Input publication must remain private')
-    version=int(row.current_version_number)
+    api=KaggleApi();api.authenticate();version=wait_published_version(dataset,folder,cli,api)
     from .settings import read_json_record
     key=keybase()+'/training-input-readiness/'+science_hash()+'.json'
     try:prior=read_json_record(c,b,key)
