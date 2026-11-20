@@ -78,7 +78,7 @@ def wait_published_version(dataset,folder,cli,api,seconds=900):
 
 def publish_from_existing_runtime(dataset,session_seconds=12*3600,final_check=False):
     from cloud.kaggle_benchmark_bridge import WORK,cli
-    from .settings import keybase
+    from .settings import keybase,read_json_record
     if dataset!='mathewzhou/novo-unet25d-full-cohort-input':raise ValueError('Unexpected private input target')
     c,b=connect(output=True);response=c.get_object(Bucket=b,Key=keybase()+'/ready.json');raw=response['Body'].read();response['Body'].close()
     if hashlib.sha256(raw).hexdigest()!=response['Metadata']['sha256']:raise ValueError('Prepared catalogue pointer identity mismatch')
@@ -91,7 +91,11 @@ def publish_from_existing_runtime(dataset,session_seconds=12*3600,final_check=Fa
         response=c.get_object(Bucket=b,Key=latest_key());pointer=json.loads(response['Body'].read());response['Body'].close()
         if pointer['state']['catalogue_sha256']!=ready['manifest']['sha256']:raise ValueError('Refuse to switch prepared inputs during an experiment')
         with (folder/'resume.pt').open('wb') as f:verify(c,b,pointer['checkpoint']['key'],pointer['checkpoint']['sha256'],f)
-    except c.exceptions.NoSuchKey:pass
+    except c.exceptions.NoSuchKey:
+        from .recovery import LEGACY_SCIENCE,CHECKPOINT_SHA,CHECKPOINT_STEP
+        pointer=read_json_record(c,b,'novo-nordisk/experiments/unet25d/full-runs/'+LEGACY_SCIENCE+'/latest.json')
+        if pointer['checkpoint']['sha256']!=CHECKPOINT_SHA or pointer['state']['step']!=CHECKPOINT_STEP or pointer['state']['catalogue_sha256']!=ready['manifest']['sha256']:raise ValueError('Wrong normalization-recovery checkpoint')
+        with (folder/'resume.pt').open('wb') as f:verify(c,b,pointer['checkpoint']['key'],CHECKPOINT_SHA,f)
     (folder/'dataset-metadata.json').write_text(json.dumps(dict(id=dataset,title='Novo full-cohort private training input',licenses=[{'name':'other'}],description='Private training references. Original TCIA usage terms apply. Never redistribute data leases publicly.')))
     import uuid,os
     package=dict(publication_id=uuid.uuid4().hex,source_sha=os.environ['NOVO_SOURCE_SHA'],files={name:hashlib.sha256((folder/name).read_bytes()).hexdigest() for name in ['catalogue.json','private-data-lease.json','training-config.json']})

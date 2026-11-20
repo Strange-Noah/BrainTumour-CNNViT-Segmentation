@@ -45,7 +45,7 @@
   "decoder_lr": 0.0003,
   "weight_decay": 0.0001,
   "loss": "0.5 BCE + 0.5 soft Dice",
-  "encoder_bn": "frozen-running-statistics-trainable-affine",
+  "encoder_bn": "train-per-rank-spatial-statistics-trainable-affine",
   "decoder_bn": "train",
   "checkpoint_every_minutes": 10,
   "formal_training_authorized": false,
@@ -102,5 +102,6 @@
     "fp_reduction": 0.5
   },
   "quota_safety_rate": 1.25,
-  "quota_reserve_seconds": 900
+  "quota_reserve_seconds": 900,
+  "normalization_recovery": "reset-bn-running-statistics-once-from-verified-checkpoint-v1"
 }

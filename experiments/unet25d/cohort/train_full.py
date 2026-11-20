@@ -9,6 +9,12 @@ from ..train import Model,loss_fn,fp32_step,RUNTIME_PRECISION
 from .settings import CONFIG,PROVIDER_SESSION_SECONDS,FINALIZATION_MARGIN_SECONDS
 from .stream import TrainingInput,SignedFetch
 from .loading import ShardCache
+from .recovery import reset_statistics,enable_encoder_statistics,require_migration
+
+class CohortModel(Model):
+    def train(self,mode=True):
+        super().train(mode)
+        return enable_encoder_statistics(self)
 
 def gpu_telemetry():
     import subprocess
@@ -31,7 +37,7 @@ def main():
     catalogue=json.loads(raw)
     if catalogue['summary']['patients']!={'train':210,'validation':45} or catalogue['summary']['test_included']:raise ValueError('Frozen research cohort mismatch')
     os.environ['HF_HOME']=str(a.input/'hf');os.environ['HF_HUB_OFFLINE']='1'
-    model=Model(encoder_name='resnet34',encoder_weights='imagenet',in_channels=12,classes=1,activation=None).float().cuda(local).train()
+    model=CohortModel(encoder_name='resnet34',encoder_weights='imagenet',in_channels=12,classes=1,activation=None).float().cuda(local).train()
     optimizer=torch.optim.AdamW([{'params':model.encoder.parameters(),'lr':config['encoder_lr']},{'params':list(model.decoder.parameters())+list(model.segmentation_head.parameters()),'lr':config['decoder_lr']}],weight_decay=config['weight_decay'])
     from .adaptive import Difficulty,initial_control,feedback,commit_update,validation_completed
     from .sampling import exhaustive_plan,adaptive_plan,plan_digest
@@ -43,8 +49,14 @@ def main():
     state=dict(data_mode='adaptive-two-phase-v1',catalogue_sha256=catalogue_sha,epoch=0,phase=1,phase1_unique=0,phase1_updates=0,exhaustive_sha256=exhaustive_sha,phase2_cycle=0,phase2_consumed=0,active_plan=None,category_consumed={},global_cursor=0,step=0,consumed_seconds=0.,pending_validation=False,validation_progress=[],best_dice=None,best_tradeoff=None,control=initial_control(),difficulty={},scientific_stop=None,training_source_sha=os.environ['NOVO_SOURCE_SHA'])
     if a.resume:
         old=torch.load(a.resume,map_location='cpu',weights_only=True)
-        if old['data_mode']!='adaptive-two-phase-v1' or old['catalogue_sha256']!=catalogue_sha or old['runtime_precision']!=RUNTIME_PRECISION or old['config']!=science:raise ValueError('Incompatible research checkpoint; diagnostic checkpoints are forbidden')
+        if old['data_mode']!='adaptive-two-phase-v1' or old['catalogue_sha256']!=catalogue_sha or old['runtime_precision']!=RUNTIME_PRECISION:raise ValueError('Incompatible research checkpoint')
+        migrate=old['config']!=science
+        if migrate:
+            with a.resume.open('rb') as f:checkpoint_sha=hashlib.file_digest(f,'sha256').hexdigest()
+            require_migration(old,science,checkpoint_sha)
         model.load_state_dict(old.pop('model'),strict=True);optimizer.load_state_dict(old.pop('optimizer'));rng=old.pop('rank_rng')[rank];torch.set_rng_state(rng['cpu']);torch.cuda.set_rng_state(rng['cuda'],local);random.setstate(rng['python']);state=old
+        if migrate:
+            reset_statistics(model);state['normalization_migration']=dict(checkpoint_sha256=checkpoint_sha,step=state['step'],reset='BN running statistics only')
     if state['exhaustive_sha256']!=exhaustive_sha or state['phase1_unique']!=state['phase1_updates']*world:raise ValueError('Exhaustive resume mismatch')
     memory_pool=Difficulty(train_visits,state['difficulty']);pending_scores=[]
     model=torch.nn.parallel.DistributedDataParallel(model,device_ids=[local]);a.output.mkdir(parents=True,exist_ok=True)
@@ -58,7 +70,10 @@ def main():
         rng=dict(cpu=torch.get_rng_state(),cuda=torch.cuda.get_rng_state(local),python=random.getstate());all_rng=[None]*world;dist.all_gather_object(all_rng,rng)
         tensors=list(model.module.state_dict().values())+[v for s in optimizer.state.values() for v in s.values() if torch.is_tensor(v)]
         valid=torch.tensor(int(all(bool(torch.isfinite(v).all()) for v in tensors)),device=local);dist.all_reduce(valid,op=dist.ReduceOp.MIN)
-        if not bool(valid):raise FloatingPointError('Invalid research checkpoint')
+        if not bool(valid):
+            bad=[k for k,v in model.module.state_dict().items() if not bool(torch.isfinite(v).all())]
+            print(json.dumps(dict(event='nonfinite_checkpoint_state',rank=rank,step=state['step'],model_tensor_names=bad,optimizer_nonfinite=any(not bool(torch.isfinite(v).all()) for s in optimizer.state.values() for v in s.values() if torch.is_tensor(v)))),flush=True)
+            raise FloatingPointError('Invalid research checkpoint')
         if optimizer.state and {float(s['step']) for s in optimizer.state.values()}!={float(state['step'])}:raise ValueError('Research optimizer step mismatch')
         if rank==0:
             record=dict(state,status='success',sampler=dict(seed=42,world_size=world,epoch=state['epoch'],global_cursor=state['global_cursor'],plan_sha256=state.get('plan_sha256')),git_sha=state['training_source_sha'],model=model.module.state_dict(),optimizer=optimizer.state_dict(),rank_rng=all_rng,config=science,runtime_precision=RUNTIME_PRECISION,consumed_seconds=prior+time.time()-started,source_sha=os.environ['NOVO_SOURCE_SHA'],approved_budget_seconds=a.approved_budget_seconds,framework=dict(torch=str(torch.__version__),cuda=torch.version.cuda,smp='0.5.0'))
@@ -109,6 +124,12 @@ def main():
                 pending_scores.extend(scores(logits,y,identity,state['step'],rank))
                 if state['step']%200==0:flush_mining()
                 if state['step']%100==0 or state['step']==1:
+                    variances=torch.stack([v.max() for k,v in model.module.state_dict().items() if k.endswith('running_var')])
+                    checked=list(model.module.state_dict().values())+[v for s in optimizer.state.values() for v in s.values() if torch.is_tensor(v)]
+                    cpu_ok=all(bool(torch.isfinite(v).all()) for v in checked if not v.is_cuda)
+                    finite_state=torch.stack([torch.isfinite(v).all() for v in checked if v.is_cuda]+[torch.tensor(cpu_ok,device=local)]).all().int()
+                    dist.all_reduce(finite_state,op=dist.ReduceOp.MIN)
+                    if not bool(finite_state):save() # Emits exact offending tensor names and stops; never writes bad state.
                     memory=psutil.virtual_memory()
                     pressure=torch.tensor(int(memory.available/memory.total<.15),device=local);dist.all_reduce(pressure,op=dist.ReduceOp.MAX)
                     if bool(pressure):raise MemoryError('Actual host RAM pressure')
@@ -116,6 +137,7 @@ def main():
                     event=dict(event='training_update',unix_time=time.time(),session_started_at=started,step=state['step'],epoch=state['epoch'],global_cursor=state['global_cursor'],phase=state['phase'],phase1_unique=state['phase1_unique'],phase1_total=len(exhaustive),phase2_consumed=state['phase2_consumed'],samples_per_second=window_samples/elapsed,optimizer_steps_per_second=window_samples/world/elapsed,loader_wait_fraction=wait/elapsed,loss=float(loss.detach()),loss_and_gradients_finite=True,host_ram_available_fraction=memory.available/memory.total,gpu_memory_allocated_bytes=torch.cuda.memory_allocated(local),gpu_peak_allocated_bytes=torch.cuda.max_memory_allocated(local))
                     with (a.output/f'rank-{rank}.jsonl').open('a') as log:log.write(json.dumps(event)+'\n')
                     if rank==0:
+                        event['bn_running_variance_max']=float(variances.max())
                         event['gpus']=gpu_telemetry();event['checkpoint_interval_seconds']=600;event['phase2_samples_per_validation']=config['phase2_samples_per_validation'];print(json.dumps(event),flush=True)
                     window_start=time.monotonic();wait=0.;window_samples=0
                 stop=torch.tensor([int(time.time()>deadline),int(time.time()-last_save>=600)],device=local);dist.all_reduce(stop,op=dist.ReduceOp.MAX)
