@@ -1,3 +1,7 @@
+## Normalization recovery — 2026-11-20
+
+[Verified checkpoint diagnostic and recovery policy](../../experiments/unet25d/cohort/NORMALIZATION_RECOVERY.md), [real CPU replay](../../experiments/unet25d/cohort/RECOVERY_CPU_REPLAY.json). PR #35 exact revision approved and merged; existing CPU run 44749604586 passed three real prepared samples. One continuation submitted in 44750099389 from the exact SHA-bound valid checkpoint; no MRI preparation or GPU benchmark. Old failed-run progress beyond that checkpoint is replayed. [617-second actual GPU continuation evidence](../../experiments/unet25d/cohort/RECOVERY_TEN_MINUTES.json): finite updates, full-state checks, RAM and BN state healthy; valid checkpoint saved and observer 44750099389 completed independently. Active monitoring ended. New complete-validation metrics and resumed terminal R2 readback remain pending.
+
 ## Adaptive formal training — 2026-11-20
 
 [Focused CPU acceptance](../../experiments/unet25d/cohort/ADAPTIVE_ACCEPTANCE.json): 29 checks passed; metadata-only exact 220,384-position plan / 110,192 updates, correct four-category 67,200 plan and concentration bounds. [Science/execution handoff](../../experiments/unet25d/cohort/ADAPTIVE_TRAINING.md). Reuses accepted CPU input read; no MRI re-preparation, GPU benchmark or test evaluation. GPU_TRAINING_STARTED=true; [completed initial observation and actual run evidence](../../experiments/unet25d/cohort/FORMAL_EXECUTION.md). Independent CPU observer 44578714815 succeeded; terminal R2 collection of this new checkpoint remains pending session completion.
