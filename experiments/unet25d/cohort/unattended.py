@@ -135,10 +135,19 @@ def launch(dataset,kernel):
     budget=authorization() # No GPU API call before actual owner authorization.
     if dataset!=DATASET:raise ValueError('Frozen private cohort input required')
     c,b=connect(output=True);old=read(c,b,ACTIVE_KEY)
-    if old and old['status'] not in ['budget_complete','training_complete']:raise RuntimeError('An active or blocked formal run already exists; recover it instead of duplicating training')
+    if old and old['status'] not in ['budget_complete','training_complete','failed']:raise RuntimeError('An active or blocked formal run already exists; recover it instead of duplicating training')
     record=dict(status='authorized',campaign_id=os.environ['GITHUB_RUN_ID'],kernel_base=kernel,dataset=dataset,source_sha=os.environ['NOVO_SOURCE_SHA'],science_sha256=science_hash(),approved_budget_seconds=budget,reserved_seconds=0,session_no=0,collections=[])
     if os.environ.get('FREE_RESOURCE_AUTHORIZED')=='true':record.update(free_resource_authorized=True,initial_quota=free_quota(),quota_safety_rate=json.loads(CONFIG.read_text())['quota_safety_rate'])
-    if old and old['status']=='budget_complete':
+    if old and old['status']=='failed':
+        from .recovery import LEGACY_SCIENCE,CHECKPOINT_SHA,CHECKPOINT_STEP
+        from .settings import read_json_record
+        if old['science_sha256']!=LEGACY_SCIENCE or old['source_sha']!='e818635a9e7df4d91792afaad7fc9ff3dd4b2a23':raise ValueError('Only the diagnosed campaign may resume')
+        pointer=read_json_record(c,b,'novo-nordisk/experiments/unet25d/full-runs/'+LEGACY_SCIENCE+'/latest.json')
+        if pointer['checkpoint']['sha256']!=CHECKPOINT_SHA or pointer['state']['step']!=CHECKPOINT_STEP:raise ValueError('Wrong recovered checkpoint')
+        record=old;record.update(status='authorized',source_sha=os.environ['NOVO_SOURCE_SHA'],science_sha256=science_hash(),initial_observation_complete=False,last_observed_step=-1,recovery_authorization_run=os.environ['GITHUB_RUN_ID'],legacy_science_sha256=LEGACY_SCIENCE)
+        # Preserve the original cumulative allowance and whole-session reservation;
+        # neither the failed session nor its resource charge is reset/refunded.
+    elif old and old['status']=='budget_complete':
         if old['science_sha256']!=science_hash() or budget<=old['reserved_seconds']:raise ValueError('Explicit increased cumulative budget is required to continue the same experiment')
         record=old;record['approved_budget_seconds']=budget
     elif old:raise ValueError('The maximum proposed training passes are already complete')
