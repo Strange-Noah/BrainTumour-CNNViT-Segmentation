@@ -1,6 +1,67 @@
 {
-  "status": "NOT_RUN",
-  "verified": null,
-  "actual_measurements": null,
-  "note": "Filled only from actual CPU/GPU execution evidence."
+  "status": "PASS",
+  "verified": true,
+  "loss_family": "BCE+SoftDice with redesigned internal weighting",
+  "top_level_coefficients": {
+    "BCE": 0.5,
+    "SoftDice": 0.5
+  },
+  "synthetic_tests_run": 18,
+  "real_training_examples": [
+    {
+      "positive": true,
+      "scale": 128,
+      "target_pixels": 3312,
+      "valid_pixels": 241424,
+      "loss": 0.8332175016403198,
+      "fallback": null
+    },
+    {
+      "positive": true,
+      "scale": 256,
+      "target_pixels": 72,
+      "valid_pixels": 98280,
+      "loss": 0.8458319902420044,
+      "fallback": null
+    },
+    {
+      "positive": true,
+      "scale": 512,
+      "target_pixels": 50,
+      "valid_pixels": 61097,
+      "loss": 0.8457402586936951,
+      "fallback": null
+    },
+    {
+      "positive": false,
+      "scale": 512,
+      "target_pixels": 0,
+      "valid_pixels": 262144,
+      "loss": 0.846569836139679,
+      "fallback": "uncertain_image_support"
+    },
+    {
+      "positive": false,
+      "scale": 512,
+      "target_pixels": 0,
+      "valid_pixels": 65536,
+      "loss": 0.8465583324432373,
+      "fallback": "uncertain_image_support"
+    }
+  ],
+  "zero_outside_mask_gradient": true,
+  "positive_gradient_negative": true,
+  "negative_tissue_gradient_positive": true,
+  "empty_target_learning_signal": true,
+  "real_gradient_assertions_passed": true,
+  "all_training_components_geometric_FOV_checked": 9739,
+  "support_preservation": "checked per-sample training fallback to FOV; no second full MRI pass",
+  "mask_audit": {
+    "planes": 5,
+    "fallbacks": 2,
+    "gt_excluded": 0
+  },
+  "test_accessed": false,
+  "source_sha": "54b34d139e5161be9be26e9e433fdd70cb65b95c",
+  "cpu_run_id": 44899144892
 }

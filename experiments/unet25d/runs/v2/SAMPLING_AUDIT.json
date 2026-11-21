@@ -1,6 +1,63 @@
 {
-  "status": "NOT_RUN",
-  "verified": null,
-  "actual_measurements": null,
-  "note": "Filled only from actual CPU/GPU execution evidence."
+  "mandatory_samples": 220384,
+  "mandatory_unique": 220384,
+  "supplementary_samples": 73462,
+  "total_samples": 293846,
+  "optimizer_updates": 146923,
+  "positive_samples": 110632,
+  "positive_fraction": 0.3764965321971373,
+  "negative_categories": {
+    "negative_enhancing": 165772,
+    "negative_empty": 17442
+  },
+  "update_composition": {
+    "both_negative": 36291,
+    "mixed": 110632,
+    "both_positive": 0
+  },
+  "negative_only_streak": {
+    "max": 1,
+    "median": 1.0,
+    "p95": 1.0
+  },
+  "patient_repeat_streak": {
+    "max": 1,
+    "median": 1.0,
+    "p95": 1.0
+  },
+  "exam_repeat_streak": {
+    "max": 1,
+    "median": 1.0,
+    "p95": 1.0
+  },
+  "rank_window_min_positive_fraction": [
+    0.375,
+    0.375
+  ],
+  "mandatory_SHA": "dffc8abf74a9709ea4a7abff85b7f8800ba3f2d7eb9307764888d73ff6658a95",
+  "plan_SHA": "359433d8d4e5c8bdfa1008b2db26dd85945ff9683e8638fc4d290e3430d9e2a3",
+  "foreground_pixel_density": "measured at loading, not inferred from positive sample category",
+  "replay_caps": {
+    "max_patient": 356,
+    "max_visit": 356,
+    "max_lesion": 128,
+    "selected_lesions": 6563,
+    "available_lesions": 9739,
+    "requested_scales": {
+      "512": 36732,
+      "256": 22038,
+      "128": 14692
+    }
+  },
+  "actual_replay_scales": {
+    "256": 22044,
+    "512": 36732,
+    "128": 14677,
+    "192": 9
+  },
+  "status": "PASS",
+  "cpu_run_id": 44899144892,
+  "patient_repeat_streak_unit": "number of consecutive identical-adjacency transitions; max=1 means two samples",
+  "max_consecutive_patient_samples": 2,
+  "max_consecutive_exam_samples": 2
 }
