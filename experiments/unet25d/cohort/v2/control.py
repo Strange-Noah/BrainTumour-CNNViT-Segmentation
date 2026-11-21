@@ -1,5 +1,5 @@
 """Existing Actions → private Kaggle → R2 path; v2-only campaign state."""
-import json,os,re,time,subprocess,threading,queue
+import json,os,re,time,subprocess,threading,queue,math
 from pathlib import Path
 from cloud.storage import connect
 from ..unattended import free_quota,free_seconds,require_integrated_source
@@ -70,6 +70,12 @@ def launch():
     if read(c,b,active_key()) is not None:raise RuntimeError('Existing v2 record; recover, never duplicate or reset allowance')
     ready=read(c,b,aux_key())
     if not ready or not ready['complete'] or ready['science_sha256']!=science_hash() or ready['source_sha'] not in (os.environ['NOVO_SOURCE_SHA'],ACCEPTED_CPU_PRODUCER):raise ValueError('Complete exact-source v2 CPU Gate0 first')
+    # Metadata-only whole-cohort bounds: do not discover an unsupported visit
+    # after consuming GPU allowance. No MRI/label pixel pass is repeated.
+    catalogue=read_json_record(c,b,ready['catalogue']['key']);limits=config()
+    for visit in catalogue['visits']:
+        if any(r['bytes']>limits['gpu_cache_bytes'] or r['decoded_bytes']>limits['decoded_cache_bytes_per_worker'] for r in visit['shards']):raise MemoryError('Prepared shard exceeds v2 bounded cache; no GPU submitted')
+        if visit['partition']=='train' and math.prod(visit['metadata']['shape'])*2>limits['component_cache_bytes']:raise MemoryError('Training component volume exceeds bounded cache; no GPU submitted')
     quota=free_quota();budget=free_seconds(quota,config()['quota_safety_rate'])
     if budget<2400:raise RuntimeError('Insufficient currently available free GPU allowance; no submission')
     record=dict(status='authorized',campaign_id=os.environ['GITHUB_RUN_ID'],source_sha=os.environ['NOVO_SOURCE_SHA'],science_sha256=science_hash(),initial_quota=quota,approved_budget_seconds=budget,reserved_seconds=0,quota_safety_rate=config()['quota_safety_rate'],session_no=0,collections=[],auto_continue=True)
