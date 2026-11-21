@@ -4,12 +4,28 @@ from pathlib import Path
 import subprocess
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 from cloud.resolve_workstream import resolve
 from cloud.workstream_route import route
 
 SHA=json.loads(Path('cloud/workstreams.json').read_text())['unet25d']['source_sha']
 
 class RoutingTests(unittest.TestCase):
+    def setUp(self):
+        # Exercise disabled policy independently from the currently approved run.
+        self.policy=json.loads(Path('cloud/workstreams.json').read_text())
+        self.policy['unet25d'].update(auto_recover=False,formal_enabled=False)
+        self.registry_patch=patch('cloud.workstream_route.Path', return_value=SimpleNamespace(read_text=lambda:json.dumps(self.policy)))
+        self.registry_patch.start();self.addCleanup(self.registry_patch.stop)
+
+    def test_explicit_v2_authorization_preserves_exact_source(self):
+        self.policy['unet25d'].update(auto_recover=True,formal_enabled=True)
+        with patch('cloud.resolve_workstream.subprocess.run'):
+            r=self.call(mode='formal')
+            self.assertEqual(r['source_sha'],SHA)
+            self.assertEqual(r['entrypoint'],'experiments.unet25d.cohort.v2.control')
+            with self.assertRaises(PermissionError):self.call(mode='formal',source='f'*40)
+
     def call(self, **kw):
         args=dict(name='unet25d',source='',actor='Strange-Noah',ref='refs/heads/main',event='workflow_dispatch',mode='collect')
         args.update(kw)
