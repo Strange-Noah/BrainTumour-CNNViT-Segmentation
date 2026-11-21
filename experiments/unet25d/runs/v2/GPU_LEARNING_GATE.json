@@ -1,6 +1,15 @@
 {
-  "status": "NOT_RUN",
+  "status": "WAITING_PROVIDER_QUEUE",
   "verified": null,
   "actual_measurements": null,
-  "note": "Filled only from actual CPU/GPU execution evidence."
+  "note": "One submitted job is queued. No CUDA learning gate or formal ten-minute health observation has occurred. Submission acknowledgement and Actions SUCCESS are not evidence of successful GPU learning. No duplicate submission, criteria change, or extra GPU campaign.",
+  "source_sha": "3ddc324e114d0a0cd740234b5ba26ec750238d2a",
+  "kernel": "mathewzhou/novo-unet25d-v2-44906471093-s1",
+  "provider_status": "QUEUED",
+  "provider_status_checked_utc": "2026-11-21T13:35:00Z",
+  "quota_checked_utc": "2026-11-21T13:36:21Z",
+  "reported_gpu_quota": {
+    "used_hours": 0.0,
+    "remaining_hours": 30.0
+  }
 }
