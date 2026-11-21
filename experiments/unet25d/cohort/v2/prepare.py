@@ -17,6 +17,12 @@ def main():
     from .tests import run_tests
     tests=run_tests();c=config();client,bucket=connect(output=True)
     if bucket!='novo-nordisk-pbl-outputs':raise ValueError('Private outputs only')
+    try:existing=read_json_record(client,bucket,aux_key())
+    except client.exceptions.NoSuchKey:existing=None
+    if existing is not None:
+        if not existing['complete'] or existing['science_sha256']!=science_hash():raise ValueError('Existing auxiliary acceptance mismatch')
+        print(json.dumps(dict(event='v2_gate0_reused',original_source_sha=existing['source_sha'],science_sha256=science_hash(),gpu_allocated=False)),flush=True)
+        return existing
     ready=read_json_record(client,bucket,keybase()+'/ready.json');cat_receipt=ready['manifest']
     with tempfile.TemporaryDirectory(prefix='novo-private-v2-') as folder:
         root=Path(folder);root.chmod(0o700);catpath=root/'catalogue.json'

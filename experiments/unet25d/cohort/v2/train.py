@@ -90,7 +90,7 @@ def learning_gate(model,optimizer,examples,c,local,rank,output,deadline):
 def mine(logits,y,m,identity,step):
     with torch.no_grad():
         prob=logits.detach().sigmoid();neg=prob[m.bool()&~y.bool()];top=float(neg.topk(min(256,neg.numel())).values.mean()) if neg.numel() else 0.;peak=float(neg.max()) if neg.numel() else 0.
-        return dict(exam=identity['exam'],patient=identity['patient'],z=identity['z'],origin=identity['origin'],scale=identity['scale'],selected_component=identity.get('component'),actual_positive=identity['actual_positive'],hard_negative_eligible=not identity['actual_positive'],negative_category=identity['negative_category'],peak_false_positive=peak,topk_false_positive=top,score=.5*peak+.5*top,step=step,training_only=True)
+        return dict(exam=identity['exam'],patient=identity['patient'],z=identity['z'],origin=identity['origin'],scale=identity['scale'],selected_component=identity.get('component'),actual_positive=identity['actual_positive'],hard_negative_eligible=not identity['actual_positive'],negative_category=identity['negative_category'],mask_fallback=identity['mask_fallback'],peak_false_positive=peak,topk_false_positive=top,score=.5*peak+.5*top,step=step,training_only=True)
 
 def early_validation(raw,catalogue,cache,fetch,output,deadline):
     """Frozen first two validation exams; same full-FOV inference, no GT localization."""
@@ -205,6 +205,8 @@ def main():
                     if row['kind']=='replay':key='selected_lesion:'+row['exam']+':'+str(row['component']);e[key]=e.get(key,0)+1
                 local_exposure['rank'+str(rank)+'_foreground_pixels']+=identity['foreground_pixels'];local_exposure['rank'+str(rank)+'_valid_pixels']+=identity['valid_pixels']
                 local_exposure['mask_fallbacks']+=int(identity['mask_fallback'] is not None)
+                if identity['mask_fallback'] is not None:
+                    local_exposure['mask_exception:'+identity['exam']+':'+str(identity['z'])+':'+identity['mask_fallback']]+=1
                 for label,lesion in identity['lesions'].items():
                     local_exposure['incident_lesion:'+identity['exam']+':'+label]+=1
                     size='lt100' if lesion['volume_mm3']<100 else '100to1000' if lesion['volume_mm3']<1000 else 'ge1000'

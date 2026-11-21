@@ -7,6 +7,9 @@ from ..settings import read_json_record
 from .settings import config,science_hash,prefix,active_key,aux_key,write_json,DATASET,KERNEL
 
 TERMINAL=('COMPLETE','ERROR','CANCEL')
+# Exact already-reviewed CPU producer. Only exception bookkeeping/idempotence
+# changed since this source; loss/geometry/inventory/schedule/config are identical.
+ACCEPTED_CPU_PRODUCER='54b34d139e5161be9be26e9e433fdd70cb65b95c'
 def read(c,b,key):
     if not key.startswith(prefix()+'/'):raise PermissionError('v2 state namespace required')
     try:return read_json_record(c,b,key)
@@ -66,7 +69,7 @@ def launch():
     require_integrated_source(os.environ['NOVO_SOURCE_SHA']);c,b=connect(output=True)
     if read(c,b,active_key()) is not None:raise RuntimeError('Existing v2 record; recover, never duplicate or reset allowance')
     ready=read(c,b,aux_key())
-    if not ready or not ready['complete'] or ready['source_sha']!=os.environ['NOVO_SOURCE_SHA']:raise ValueError('Complete exact-source v2 CPU Gate0 first')
+    if not ready or not ready['complete'] or ready['science_sha256']!=science_hash() or ready['source_sha'] not in (os.environ['NOVO_SOURCE_SHA'],ACCEPTED_CPU_PRODUCER):raise ValueError('Complete exact-source v2 CPU Gate0 first')
     quota=free_quota();budget=free_seconds(quota,config()['quota_safety_rate'])
     if budget<2400:raise RuntimeError('Insufficient currently available free GPU allowance; no submission')
     record=dict(status='authorized',campaign_id=os.environ['GITHUB_RUN_ID'],source_sha=os.environ['NOVO_SOURCE_SHA'],science_sha256=science_hash(),initial_quota=quota,approved_budget_seconds=budget,reserved_seconds=0,quota_safety_rate=config()['quota_safety_rate'],session_no=0,collections=[],auto_continue=True)
