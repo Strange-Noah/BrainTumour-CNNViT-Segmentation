@@ -1,0 +1,32 @@
+{
+  "catalogue_sha256": "04b59724c5cc6ac654f85d51ad19e8a8a0766944d8211ecfd03a3495a418de1e",
+  "draws_per_pass": 13440,
+  "optimizer_updates_per_pass": 6720,
+  "first_pass_plan_sha256": "1a52f3be1e18fd89832f79f36e6e0571e2fdddfc70eddad78520af1bc427f1e4",
+  "first_pass_ranks": [
+    {
+      "network_bytes": 13703364724,
+      "object_gets": 4429,
+      "decoded_bytes": 206753366016
+    },
+    {
+      "network_bytes": 13536068158,
+      "object_gets": 4391,
+      "decoded_bytes": 203979489280
+    }
+  ],
+  "first_pass_network_bytes": 27239432882,
+  "first_pass_decoded_bytes": 410732855296,
+  "first_pass_object_gets": 8820,
+  "validation_cold_bytes": 11650348444,
+  "compute_only_hours": {
+    "10": 2.4237702612045275,
+    "20": 4.847540522409055,
+    "30": 7.271310783613582
+  },
+  "basis": "Metadata-only simulation of the frozen first-pass sampler and actual cache bounds; no imaging read, training or GPU allocation. Later pass sampling and rates vary.",
+  "unique_prepared_objects": 26289,
+  "unique_shard_objects": 25384,
+  "unique_compressed_data_bytes": 66057921137,
+  "catalogue_bytes": 16609873
+}

@@ -1,0 +1,1 @@
+{"verified": true, "start_step": 5076, "final_step": 5080, "successful_updates": 4, "start_draw": 5076, "final_draw": 5080, "model_and_optimizer_restored": true, "rank_rng_restored": true, "next_sampler_draws_verified": true, "precision": {"dtype": "float32", "autocast": false, "grad_scaler": false, "tf32": false}}

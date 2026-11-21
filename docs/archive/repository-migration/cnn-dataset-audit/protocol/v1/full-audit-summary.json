@@ -1,0 +1,40 @@
+{
+  "patients_audited": 300,
+  "pending_patient_indices": [],
+  "examinations": 1065,
+  "unique_examinations": 1065,
+  "files": 11405,
+  "unique_files": 11405,
+  "file_status": {
+    "PASS": 11333,
+    "WARNING": 72
+  },
+  "exam_status": {
+    "PASS": 993,
+    "WARNING": 72
+  },
+  "unknown_spatial_unit_keys": [
+    "novo-nordisk/datasets/ucsd-bmets/v1/raw/BMETS0016_01/BMETS0016_01-seg.nii.gz",
+    "novo-nordisk/datasets/ucsd-bmets/v1/raw/BMETS0095_01/BMETS0095_01-seg.nii.gz"
+  ],
+  "quarantine_examinations": [],
+  "warning_reasons": {
+    "empty_mask": 70,
+    "mask_spatial_units_unknown_interpreted_mm_from_aligned_T1c": 2
+  },
+  "failure_reasons": {},
+  "mask_labels_seen": [
+    "0.0",
+    "1.0",
+    "2.0",
+    "3.0",
+    "4.0"
+  ],
+  "complete": true,
+  "empty_mask_count": 70,
+  "private_report_sha256": {
+    "summary.json": "99fbb4f676bd102f8eb8c15131ca2c8fd84178bb5c0da694f110615109fa4f58",
+    "index.json": "c138790c993dfbd223895e274f5999a72e1f54e818fa4ad15c286785b62d8217",
+    "examination-status.csv": "e27069f5d341931db62246f46d9f04d6a56226a28c990cfbc2bf30f89046ed8f"
+  }
+}

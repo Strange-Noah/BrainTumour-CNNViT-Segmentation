@@ -4,7 +4,7 @@ from pathlib import Path
 from .settings import CONFIG
 
 def render(sha,session,budget):
-    return '''import os,sys,time,io,urllib.request,zipfile,subprocess,shutil
+    return ('''import os,sys,time,io,urllib.request,zipfile,subprocess,shutil
 from pathlib import Path
 os.environ['NOVO_SESSION_STARTED_AT']=str(time.time())
 sha=__SHA_LITERAL__
@@ -23,7 +23,7 @@ command=[sys.executable,'-m','torch.distributed.run','--standalone','--nproc_per
 if (source/'resume.pt').exists():command+=['--resume',str(source/'resume.pt')]
 try:subprocess.run(command,cwd=root,check=True)
 finally:shutil.rmtree(out/'cache',ignore_errors=True)
-'''.replace('__SHA_LITERAL__',repr(sha)).replace('__BUDGET_LITERAL__',repr(str(budget))).replace('__SESSION_LITERAL__',repr(str(session)))
+'''.replace('__SHA_LITERAL__',repr(sha)).replace('__BUDGET_LITERAL__',repr(str(budget))).replace('__SESSION_LITERAL__',repr(str(session)))).replace('https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/archive/', __import__('cloud.repository', fromlist=['source_archive_prefix']).source_archive_prefix())
 
 def submit_one(dataset,kernel):
     from .unattended import launch

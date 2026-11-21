@@ -1,0 +1,317 @@
+{
+  "GPU_submitted": false,
+  "active_record": {
+    "approved_budget_seconds": 83433,
+    "initial_observation_complete": true,
+    "kernel": "mathewzhou/novo-unet25d-full-cohort-training-44576765413-s2",
+    "reserved_seconds": 83433,
+    "science_sha256": "14cf0e1591d6c120e5dbc072b7e90ca886f5010773f0c02ebcf57f5e351ad60c",
+    "session_no": 2,
+    "session_seconds": 40233,
+    "source_sha": "56fc2a7767e3f7895aab2dccba3a05a5001dab08",
+    "status": "running",
+    "submitted_at": 1795183610.8348703
+  },
+  "active_record_is_authoritative_for_provider_status": false,
+  "adaptive_controls": [
+    {
+      "last_adjustment": null,
+      "phase2_validations": 1,
+      "ratios": {
+        "baseline": 0.4,
+        "hard_negative": 0.2,
+        "hard_positive": 0.25,
+        "ordinary_negative": 0.15
+      },
+      "scientific_stop": null,
+      "stagnant": 1,
+      "target_streak": 0
+    }
+  ],
+  "checkpoints": [
+    {
+      "bytes": 302041423,
+      "durable_head_verified": true,
+      "independent_GET_readback_basis": "verified collection 44878438761",
+      "key": "novo-nordisk/experiments/unet25d/bridge/44878438761/outputs/novo-unet25d-full/checkpoint.pt",
+      "sha256": "e80dac6f547ca3809e24b3efee15e9e876a396f031c504cb1597651cdda8d971"
+    },
+    {
+      "bytes": 300416719,
+      "durable_head_verified": true,
+      "independent_GET_readback_basis": "verified collection 44878438761",
+      "key": "novo-nordisk/experiments/unet25d/bridge/44878438761/outputs/novo-unet25d-full/best-positive-dice.pt",
+      "sha256": "c22a8f4109a0d15b71d267c3899a25d6402cc3b7b31555c5f30015429625d2b4"
+    }
+  ],
+  "collection": {
+    "independent_readback": true,
+    "key": "novo-nordisk/experiments/unet25d/bridge/44878438761/collection.json",
+    "receipts": 963,
+    "sha256": "4fe1028e398817d1dd84597d120a9803ab31a5f7cac564275fe8cd6c2a804ccd"
+  },
+  "experiment_id": "unet25d-v1",
+  "final_state": {
+    "best_dice": 0.012689454650843122,
+    "best_tradeoff": null,
+    "catalogue_sha256": "04b59724c5cc6ac654f85d51ad19e8a8a0766944d8211ecfd03a3495a418de1e",
+    "consumed_seconds": 57713.576288461685,
+    "data_mode": "adaptive-two-phase-v1",
+    "epoch": 2,
+    "exhaustive_sha256": "1e396a03543c649a098a5431b589f4ffbf583cfdc663f35632c8d50112d0a91a",
+    "global_cursor": 44318,
+    "pending_validation": false,
+    "phase": 2,
+    "phase1_unique": 220384,
+    "phase1_updates": 110192,
+    "phase2_consumed": 111518,
+    "phase2_cycle": 1,
+    "science_sha256": "14cf0e1591d6c120e5dbc072b7e90ca886f5010773f0c02ebcf57f5e351ad60c",
+    "scientific_stop": null,
+    "step": 165951
+  },
+  "operations": [
+    "GET",
+    "HEAD"
+  ],
+  "pointers": {
+    "14cf0e1591d6c120e5dbc072b7e90ca886f5010773f0c02ebcf57f5e351ad60c": {
+      "best-positive-dice": {
+        "bytes": 300416719,
+        "key": "novo-nordisk/experiments/unet25d/bridge/44878438761/outputs/novo-unet25d-full/best-positive-dice.pt",
+        "sha256": "c22a8f4109a0d15b71d267c3899a25d6402cc3b7b31555c5f30015429625d2b4"
+      },
+      "checkpoint": {
+        "bytes": 302041423,
+        "key": "novo-nordisk/experiments/unet25d/bridge/44878438761/outputs/novo-unet25d-full/checkpoint.pt",
+        "sha256": "e80dac6f547ca3809e24b3efee15e9e876a396f031c504cb1597651cdda8d971"
+      },
+      "state": {
+        "best_dice": 0.012689454650843122,
+        "best_tradeoff": null,
+        "catalogue_sha256": "04b59724c5cc6ac654f85d51ad19e8a8a0766944d8211ecfd03a3495a418de1e",
+        "consumed_seconds": 57713.576288461685,
+        "data_mode": "adaptive-two-phase-v1",
+        "epoch": 2,
+        "exhaustive_sha256": "1e396a03543c649a098a5431b589f4ffbf583cfdc663f35632c8d50112d0a91a",
+        "global_cursor": 44318,
+        "pending_validation": false,
+        "phase": 2,
+        "phase1_unique": 220384,
+        "phase1_updates": 110192,
+        "phase2_consumed": 111518,
+        "phase2_cycle": 1,
+        "science_sha256": "14cf0e1591d6c120e5dbc072b7e90ca886f5010773f0c02ebcf57f5e351ad60c",
+        "scientific_stop": null,
+        "step": 165951
+      }
+    },
+    "c3a7a581affc95bb5ea8723c9d286c7f95376717de40bbecdb03e2887bf427b0": {
+      "checkpoint": {
+        "bytes": 298163087,
+        "key": "novo-nordisk/experiments/unet25d/bridge/44653762631/outputs/novo-unet25d-full/checkpoint.pt",
+        "sha256": "5db7514820877a5290e2dcb7ccb328298d96f0aa8b411011fef6de1182f99af4"
+      },
+      "state": {
+        "best_dice": null,
+        "best_tradeoff": null,
+        "catalogue_sha256": "04b59724c5cc6ac654f85d51ad19e8a8a0766944d8211ecfd03a3495a418de1e",
+        "consumed_seconds": 18077.110263347626,
+        "data_mode": "adaptive-two-phase-v1",
+        "epoch": 0,
+        "exhaustive_sha256": "1e396a03543c649a098a5431b589f4ffbf583cfdc663f35632c8d50112d0a91a",
+        "global_cursor": 148668,
+        "pending_validation": false,
+        "phase": 1,
+        "phase1_unique": 148668,
+        "phase1_updates": 74334,
+        "phase2_consumed": 0,
+        "phase2_cycle": 0,
+        "science_sha256": "c3a7a581affc95bb5ea8723c9d286c7f95376717de40bbecdb03e2887bf427b0",
+        "scientific_stop": null,
+        "step": 74334
+      }
+    }
+  },
+  "private_objects_modified": false,
+  "research_outcome": "FAILED_BASELINE",
+  "schema": "saved-campaign-read-only-audit-v1",
+  "validations": [
+    {
+      "complete": true,
+      "control": {
+        "complete": true,
+        "empty_patient_fp_per_scan": 0.0,
+        "loss_planes": 41566,
+        "patient_fp_per_scan": 0.0,
+        "patient_lesion_sensitivity": 0.0,
+        "positive_dice_defined_patients": 45,
+        "positive_patient_dice": 0.0,
+        "positive_patient_fp_per_scan": 0.0,
+        "sensitivity_defined_patients": 45,
+        "small_lesion_defined_patients": {
+          "100_to_lt1000_mm3": 38,
+          "ge1000_mm3": 23,
+          "lt100_mm3": 40
+        },
+        "small_lesion_sensitivity": {
+          "100_to_lt1000_mm3": 0.0,
+          "ge1000_mm3": 0.0,
+          "lt100_mm3": 0.0
+        },
+        "threshold_probability": 0.5,
+        "validation_loss": 0.3109466294498661
+      },
+      "examinations": 159,
+      "lesion_counts_at_0_5": {
+        "100_to_lt1000_mm3": {
+          "matched": 0,
+          "total": 168
+        },
+        "ge1000_mm3": {
+          "matched": 0,
+          "total": 78
+        },
+        "lt100_mm3": {
+          "matched": 0,
+          "total": 992
+        }
+      },
+      "patients": 45,
+      "secondary_threshold_grid": {
+        "0.3": {
+          "complete": true,
+          "empty_patient_fp_per_scan": 0.0,
+          "loss_planes": 41566,
+          "patient_fp_per_scan": 0.0,
+          "patient_lesion_sensitivity": 0.0,
+          "positive_dice_defined_patients": 45,
+          "positive_patient_dice": 0.0,
+          "positive_patient_fp_per_scan": 0.0,
+          "sensitivity_defined_patients": 45,
+          "threshold_probability": 0.3,
+          "validation_loss": 0.3109466294498661
+        },
+        "0.7": {
+          "complete": true,
+          "empty_patient_fp_per_scan": 0.0,
+          "loss_planes": 41566,
+          "patient_fp_per_scan": 0.0,
+          "patient_lesion_sensitivity": 0.0,
+          "positive_dice_defined_patients": 45,
+          "positive_patient_dice": 0.0,
+          "positive_patient_fp_per_scan": 0.0,
+          "sensitivity_defined_patients": 45,
+          "threshold_probability": 0.7,
+          "validation_loss": 0.3109466294498661
+        }
+      },
+      "test_evaluated": false,
+      "threshold_counts": {
+        "0.3": {
+          "matched_lesions": 0,
+          "predicted_components": 0,
+          "truth_lesions": 1238
+        },
+        "0.5": {
+          "matched_lesions": 0,
+          "predicted_components": 0,
+          "truth_lesions": 1238
+        },
+        "0.7": {
+          "matched_lesions": 0,
+          "predicted_components": 0,
+          "truth_lesions": 1238
+        }
+      }
+    },
+    {
+      "complete": true,
+      "control": {
+        "complete": true,
+        "empty_patient_fp_per_scan": 2.4833333333333334,
+        "loss_planes": 41566,
+        "patient_fp_per_scan": 3.2925925925925923,
+        "patient_lesion_sensitivity": 0.055053123602506325,
+        "positive_dice_defined_patients": 45,
+        "positive_patient_dice": 0.012689454650843122,
+        "positive_patient_fp_per_scan": 3.327777777777778,
+        "sensitivity_defined_patients": 45,
+        "small_lesion_defined_patients": {
+          "100_to_lt1000_mm3": 38,
+          "ge1000_mm3": 23,
+          "lt100_mm3": 40
+        },
+        "small_lesion_sensitivity": {
+          "100_to_lt1000_mm3": 0.01456748660696029,
+          "ge1000_mm3": 0.28902691511387163,
+          "lt100_mm3": 0.009299932881164336
+        },
+        "threshold_probability": 0.5,
+        "validation_loss": 0.09411808528312827
+      },
+      "examinations": 159,
+      "lesion_counts_at_0_5": {
+        "100_to_lt1000_mm3": {
+          "matched": 7,
+          "total": 168
+        },
+        "ge1000_mm3": {
+          "matched": 24,
+          "total": 78
+        },
+        "lt100_mm3": {
+          "matched": 8,
+          "total": 992
+        }
+      },
+      "patients": 45,
+      "secondary_threshold_grid": {
+        "0.3": {
+          "complete": true,
+          "empty_patient_fp_per_scan": 2.6833333333333336,
+          "loss_planes": 41566,
+          "patient_fp_per_scan": 3.3703703703703702,
+          "patient_lesion_sensitivity": 0.055053123602506325,
+          "positive_dice_defined_patients": 45,
+          "positive_patient_dice": 0.012819095357534163,
+          "positive_patient_fp_per_scan": 3.364814814814815,
+          "sensitivity_defined_patients": 45,
+          "threshold_probability": 0.3,
+          "validation_loss": 0.09411808528312827
+        },
+        "0.7": {
+          "complete": true,
+          "empty_patient_fp_per_scan": 2.35,
+          "loss_planes": 41566,
+          "patient_fp_per_scan": 3.22962962962963,
+          "patient_lesion_sensitivity": 0.055053123602506325,
+          "positive_dice_defined_patients": 45,
+          "positive_patient_dice": 0.012578483563871765,
+          "positive_patient_fp_per_scan": 3.2703703703703706,
+          "sensitivity_defined_patients": 45,
+          "threshold_probability": 0.7,
+          "validation_loss": 0.09411808528312827
+        }
+      },
+      "test_evaluated": false,
+      "threshold_counts": {
+        "0.3": {
+          "matched_lesions": 39,
+          "predicted_components": 576,
+          "truth_lesions": 1238
+        },
+        "0.5": {
+          "matched_lesions": 39,
+          "predicted_components": 565,
+          "truth_lesions": 1238
+        },
+        "0.7": {
+          "matched_lesions": 39,
+          "predicted_components": 554,
+          "truth_lesions": 1238
+        }
+      }
+    }
+  ]
+}

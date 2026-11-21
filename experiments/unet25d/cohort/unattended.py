@@ -46,7 +46,12 @@ def free_seconds(quota,rate=None):
 def require_integrated_source(sha):
     import subprocess
     if not re.fullmatch('[0-9a-f]{40}',sha):raise ValueError('Invalid pinned source')
-    subprocess.run(['git','merge-base','--is-ancestor',sha,'origin/main'],check=True,capture_output=True)
+    ref = os.environ.get('NOVO_APPROVED_WORKSTREAM_REF', 'origin/main')
+    if ref not in ('origin/main', 'origin/model/unet25d-kaggle'):
+        raise PermissionError('Unapproved workstream reference')
+    if ref != 'origin/main' and sha != os.environ.get('NOVO_SOURCE_SHA'):
+        raise PermissionError('Workstream source differs from approved execution pin')
+    subprocess.run(['git','merge-base','--is-ancestor',sha,ref],check=True,capture_output=True)
 
 def start_session(c,b,record):
     from cloud.kaggle_benchmark_bridge import WORK,cli

@@ -1,0 +1,140 @@
+[
+  {
+    "original_commit": "d066c8dea15b00e5434176d52aba0116af5867bb",
+    "original_path": "docs/longitudinal/figures/unet25d/integrated-fp32.svg",
+    "original_blob": "a8ba2db0c87c9f9cb69b485526d810f15fc56bcc",
+    "destination": "docs/archive/repository-migration/fp32-benchmark/docs/longitudinal/figures/unet25d/integrated-fp32.svg"
+  },
+  {
+    "original_commit": "d066c8dea15b00e5434176d52aba0116af5867bb",
+    "original_path": "docs/longitudinal/unet-benchmark-handoff.md",
+    "original_blob": "65a03760f58da4308aa36eb3a5df6f8f4bcc09b5",
+    "destination": "docs/archive/repository-migration/fp32-benchmark/docs/longitudinal/unet-benchmark-handoff.md"
+  },
+  {
+    "original_commit": "d066c8dea15b00e5434176d52aba0116af5867bb",
+    "original_path": "experiments/unet25d/INTEGRATED_RESULTS.md",
+    "original_blob": "e80949b5e74f324375f52ad667976e25ec87fa6d",
+    "destination": "docs/archive/repository-migration/fp32-benchmark/experiments/unet25d/INTEGRATED_RESULTS.md"
+  },
+  {
+    "original_commit": "d066c8dea15b00e5434176d52aba0116af5867bb",
+    "original_path": "experiments/unet25d/evidence/integrated-fp32/performance.json",
+    "original_blob": "a9f265d7dc9f7d73b731e7628b8c3a3882223f45",
+    "destination": "docs/archive/repository-migration/fp32-benchmark/experiments/unet25d/evidence/integrated-fp32/performance.json"
+  },
+  {
+    "original_commit": "d066c8dea15b00e5434176d52aba0116af5867bb",
+    "original_path": "experiments/unet25d/evidence/integrated-fp32/recovery.json",
+    "original_blob": "0f5a1b0a2df58508a0f35ad3c261475a97149bf8",
+    "destination": "docs/archive/repository-migration/fp32-benchmark/experiments/unet25d/evidence/integrated-fp32/recovery.json"
+  },
+  {
+    "original_commit": "d066c8dea15b00e5434176d52aba0116af5867bb",
+    "original_path": "experiments/unet25d/evidence/integrated-fp32/resume.json",
+    "original_blob": "af1b9cdad9f439207b54a94bebb4e71d4a778ad7",
+    "destination": "docs/archive/repository-migration/fp32-benchmark/experiments/unet25d/evidence/integrated-fp32/resume.json"
+  },
+  {
+    "original_commit": "d7e977239c67f585422d24adb983a4b8bc1c69a9",
+    "original_path": "TRAINING_READY.md",
+    "original_blob": "4c34f0aa1635c504260341b8f64b6edceac144be",
+    "destination": "docs/archive/repository-migration/training-ready/TRAINING_READY.md"
+  },
+  {
+    "original_commit": "d7e977239c67f585422d24adb983a4b8bc1c69a9",
+    "original_path": "docs/longitudinal/cpu-preparation-summary.json",
+    "original_blob": "55f9b82a243fbeb40a1d29bdbb16778f7ccaa458",
+    "destination": "docs/archive/repository-migration/training-ready/docs/longitudinal/cpu-preparation-summary.json"
+  },
+  {
+    "original_commit": "d7e977239c67f585422d24adb983a4b8bc1c69a9",
+    "original_path": "docs/longitudinal/training-budget.json",
+    "original_blob": "40e4564a9d197db6f6e43b90332ea7e03006a74c",
+    "destination": "docs/archive/repository-migration/training-ready/docs/longitudinal/training-budget.json"
+  },
+  {
+    "original_commit": "d7e977239c67f585422d24adb983a4b8bc1c69a9",
+    "original_path": "docs/longitudinal/training-ready-evidence.json",
+    "original_blob": "f1aceaf9ab2a9d52c1e11d1a2b46a58d4977e11c",
+    "destination": "docs/archive/repository-migration/training-ready/docs/longitudinal/training-ready-evidence.json"
+  },
+  {
+    "original_commit": "2d9153f160e84d40a395a7f6f24472b970c19d83",
+    "original_path": "docs/longitudinal/handoff.md",
+    "original_blob": "ac111a76fb18834bf84d0a2eee4b4ec9d896080e",
+    "destination": "docs/archive/repository-migration/continuation/docs/longitudinal/handoff.md"
+  },
+  {
+    "original_commit": "2d9153f160e84d40a395a7f6f24472b970c19d83",
+    "original_path": "docs/longitudinal/verification.md",
+    "original_blob": "1d90c18e90d7a114f1e573058aebfaa3dd5418f0",
+    "destination": "docs/archive/repository-migration/continuation/docs/longitudinal/verification.md"
+  },
+  {
+    "original_commit": "2d9153f160e84d40a395a7f6f24472b970c19d83",
+    "original_path": "experiments/unet25d/cohort/NORMALIZATION_RECOVERY.md",
+    "original_blob": "cd1b52fd4c881194d9c3532bb27a814ce0eb0011",
+    "destination": "docs/archive/repository-migration/continuation/experiments/unet25d/cohort/NORMALIZATION_RECOVERY.md"
+  },
+  {
+    "original_commit": "2d9153f160e84d40a395a7f6f24472b970c19d83",
+    "original_path": "experiments/unet25d/cohort/RECOVERY_CPU_REPLAY.json",
+    "original_blob": "13a78fa546408c706ed8f8e297b5fdf86ca25666",
+    "destination": "docs/archive/repository-migration/continuation/experiments/unet25d/cohort/RECOVERY_CPU_REPLAY.json"
+  },
+  {
+    "original_commit": "2d9153f160e84d40a395a7f6f24472b970c19d83",
+    "original_path": "experiments/unet25d/cohort/RECOVERY_TEN_MINUTES.json",
+    "original_blob": "29e28b30be7dc3e74fb3ca640300e4f5c7864e69",
+    "destination": "docs/archive/repository-migration/continuation/experiments/unet25d/cohort/RECOVERY_TEN_MINUTES.json"
+  },
+  {
+    "original_commit": "62a3edb9b8568ee9fb7313c9a8c6d9cdc3b5d5a3",
+    "original_path": "docs/longitudinal/cnn-output-verification.md",
+    "original_blob": "4b75a171fc733483f8c0db3137a621a761095b6f",
+    "destination": "docs/archive/repository-migration/cnn-dataset-audit/docs/longitudinal/cnn-output-verification.md"
+  },
+  {
+    "original_commit": "62a3edb9b8568ee9fb7313c9a8c6d9cdc3b5d5a3",
+    "original_path": "docs/longitudinal/full-dataset-audit.md",
+    "original_blob": "70298c11c4b9876ef335d0380666d2f98d6e7162",
+    "destination": "docs/archive/repository-migration/cnn-dataset-audit/docs/longitudinal/full-dataset-audit.md"
+  },
+  {
+    "original_commit": "62a3edb9b8568ee9fb7313c9a8c6d9cdc3b5d5a3",
+    "original_path": "docs/longitudinal/handoff.md",
+    "original_blob": "249fb2d0c2e8e0bdbd0dadbcff43c4443ceb3ed3",
+    "destination": "docs/archive/repository-migration/cnn-dataset-audit/docs/longitudinal/handoff.md"
+  },
+  {
+    "original_commit": "62a3edb9b8568ee9fb7313c9a8c6d9cdc3b5d5a3",
+    "original_path": "docs/longitudinal/team-data-status.md",
+    "original_blob": "391052ff273e59a894a0c4e7570dba57e604bcb7",
+    "destination": "docs/archive/repository-migration/cnn-dataset-audit/docs/longitudinal/team-data-status.md"
+  },
+  {
+    "original_commit": "62a3edb9b8568ee9fb7313c9a8c6d9cdc3b5d5a3",
+    "original_path": "docs/longitudinal/verification.md",
+    "original_blob": "38640736f1a9e76f256d75daa0416491e06282b0",
+    "destination": "docs/archive/repository-migration/cnn-dataset-audit/docs/longitudinal/verification.md"
+  },
+  {
+    "original_commit": "62a3edb9b8568ee9fb7313c9a8c6d9cdc3b5d5a3",
+    "original_path": "protocol/v1/cnn-cpu-persistence.json",
+    "original_blob": "de4cd3acf032bd240378d69389e85e4dcdb8777b",
+    "destination": "docs/archive/repository-migration/cnn-dataset-audit/protocol/v1/cnn-cpu-persistence.json"
+  },
+  {
+    "original_commit": "62a3edb9b8568ee9fb7313c9a8c6d9cdc3b5d5a3",
+    "original_path": "protocol/v1/full-audit-summary.json",
+    "original_blob": "2b16a65f11926cd564b43d1fb798e078074be60a",
+    "destination": "docs/archive/repository-migration/cnn-dataset-audit/protocol/v1/full-audit-summary.json"
+  },
+  {
+    "original_commit": "551932b816bab64990d61bdc45ed0b89d8023db4",
+    "original_path": ".github/workflows/tcia-pilot.yml",
+    "original_blob": "72b9dba105f3c5b2033b49944a37aeae6979aecc",
+    "destination": "docs/archive/repository-migration/initial-tcia-pilot/.github/workflows/tcia-pilot.yml"
+  }
+]

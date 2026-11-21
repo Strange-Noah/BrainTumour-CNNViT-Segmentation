@@ -1,0 +1,120 @@
+{
+  "experiment_id": "unet25d-v1",
+  "original_source_sha": "e818635a9e7df4d91792afaad7fc9ff3dd4b2a23",
+  "recovery_source_sha": "56fc2a7767e3f7895aab2dccba3a05a5001dab08",
+  "migration_base": "68bd4f1fcead6f82b68b79a36c5c9e206f73cce4",
+  "science_identities": [
+    "14cf0e1591d6c120e5dbc072b7e90ca886f5010773f0c02ebcf57f5e351ad60c",
+    "c3a7a581affc95bb5ea8723c9d286c7f95376717de40bbecdb03e2887bf427b0"
+  ],
+  "data_policy_sha256": "3bbb16ca8e4659d70c3dc3e5503150e2f10fa7be9da0d7291865484719d7318a",
+  "split_sha256": "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0",
+  "catalogue_sha256": "04b59724c5cc6ac654f85d51ad19e8a8a0766944d8211ecfd03a3495a418de1e",
+  "sessions": [
+    "https://www.kaggle.com/code/mathewzhou/novo-full-cohort-training",
+    "https://www.kaggle.com/code/mathewzhou/novo-unet25d-full-cohort-training-44576765413-s2"
+  ],
+  "initial_failure": "checkpoint finite-state guard; saved BN variance already 3.24e34; exact failing instantaneous tensor not retained",
+  "original_recovery_checkpoint_sha256": "5db7514820877a5290e2dcb7ccb328298d96f0aa8b411011fef6de1182f99af4",
+  "BN_migration": "enable encoder per-rank spatial batch statistics; reset only BN running statistics once; preserve weights/AdamW/RNG/cursor; explicit new science identity",
+  "BN_causality": "not proven to explain poor final validation",
+  "cpu_diagnostic_run": 44662335281,
+  "cpu_replay_run": 44749604586,
+  "resumed_training_run": 44750099389,
+  "read_only_audit_run": 44885318566,
+  "collection": {
+    "independent_readback": true,
+    "key": "novo-nordisk/experiments/unet25d/bridge/44878438761/collection.json",
+    "receipts": 963,
+    "sha256": "4fe1028e398817d1dd84597d120a9803ab31a5f7cac564275fe8cd6c2a804ccd"
+  },
+  "checkpoints": [
+    {
+      "bytes": 302041423,
+      "durable_head_verified": true,
+      "independent_GET_readback_basis": "verified collection 44878438761",
+      "key": "novo-nordisk/experiments/unet25d/bridge/44878438761/outputs/novo-unet25d-full/checkpoint.pt",
+      "sha256": "e80dac6f547ca3809e24b3efee15e9e876a396f031c504cb1597651cdda8d971"
+    },
+    {
+      "bytes": 300416719,
+      "durable_head_verified": true,
+      "independent_GET_readback_basis": "verified collection 44878438761",
+      "key": "novo-nordisk/experiments/unet25d/bridge/44878438761/outputs/novo-unet25d-full/best-positive-dice.pt",
+      "sha256": "c22a8f4109a0d15b71d267c3899a25d6402cc3b7b31555c5f30015429625d2b4"
+    }
+  ],
+  "pointers": {
+    "14cf0e1591d6c120e5dbc072b7e90ca886f5010773f0c02ebcf57f5e351ad60c": {
+      "best-positive-dice": {
+        "bytes": 300416719,
+        "key": "novo-nordisk/experiments/unet25d/bridge/44878438761/outputs/novo-unet25d-full/best-positive-dice.pt",
+        "sha256": "c22a8f4109a0d15b71d267c3899a25d6402cc3b7b31555c5f30015429625d2b4"
+      },
+      "checkpoint": {
+        "bytes": 302041423,
+        "key": "novo-nordisk/experiments/unet25d/bridge/44878438761/outputs/novo-unet25d-full/checkpoint.pt",
+        "sha256": "e80dac6f547ca3809e24b3efee15e9e876a396f031c504cb1597651cdda8d971"
+      },
+      "state": {
+        "best_dice": 0.012689454650843122,
+        "best_tradeoff": null,
+        "catalogue_sha256": "04b59724c5cc6ac654f85d51ad19e8a8a0766944d8211ecfd03a3495a418de1e",
+        "consumed_seconds": 57713.576288461685,
+        "data_mode": "adaptive-two-phase-v1",
+        "epoch": 2,
+        "exhaustive_sha256": "1e396a03543c649a098a5431b589f4ffbf583cfdc663f35632c8d50112d0a91a",
+        "global_cursor": 44318,
+        "pending_validation": false,
+        "phase": 2,
+        "phase1_unique": 220384,
+        "phase1_updates": 110192,
+        "phase2_consumed": 111518,
+        "phase2_cycle": 1,
+        "science_sha256": "14cf0e1591d6c120e5dbc072b7e90ca886f5010773f0c02ebcf57f5e351ad60c",
+        "scientific_stop": null,
+        "step": 165951
+      }
+    },
+    "c3a7a581affc95bb5ea8723c9d286c7f95376717de40bbecdb03e2887bf427b0": {
+      "checkpoint": {
+        "bytes": 298163087,
+        "key": "novo-nordisk/experiments/unet25d/bridge/44653762631/outputs/novo-unet25d-full/checkpoint.pt",
+        "sha256": "5db7514820877a5290e2dcb7ccb328298d96f0aa8b411011fef6de1182f99af4"
+      },
+      "state": {
+        "best_dice": null,
+        "best_tradeoff": null,
+        "catalogue_sha256": "04b59724c5cc6ac654f85d51ad19e8a8a0766944d8211ecfd03a3495a418de1e",
+        "consumed_seconds": 18077.110263347626,
+        "data_mode": "adaptive-two-phase-v1",
+        "epoch": 0,
+        "exhaustive_sha256": "1e396a03543c649a098a5431b589f4ffbf583cfdc663f35632c8d50112d0a91a",
+        "global_cursor": 148668,
+        "pending_validation": false,
+        "phase": 1,
+        "phase1_unique": 148668,
+        "phase1_updates": 74334,
+        "phase2_consumed": 0,
+        "phase2_cycle": 0,
+        "science_sha256": "c3a7a581affc95bb5ea8723c9d286c7f95376717de40bbecdb03e2887bf427b0",
+        "scientific_stop": null,
+        "step": 74334
+      }
+    }
+  },
+  "active_record": {
+    "approved_budget_seconds": 83433,
+    "initial_observation_complete": true,
+    "kernel": "mathewzhou/novo-unet25d-full-cohort-training-44576765413-s2",
+    "reserved_seconds": 83433,
+    "science_sha256": "14cf0e1591d6c120e5dbc072b7e90ca886f5010773f0c02ebcf57f5e351ad60c",
+    "session_no": 2,
+    "session_seconds": 40233,
+    "source_sha": "56fc2a7767e3f7895aab2dccba3a05a5001dab08",
+    "status": "running",
+    "submitted_at": 1795183610.8348703
+  },
+  "active_record_discrepancy": "historically stale running record; provider COMPLETE, reserved=approved, collector disabled; left unchanged",
+  "private_objects_modified": false
+}

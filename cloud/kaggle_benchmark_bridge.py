@@ -88,7 +88,7 @@ def prepare(dataset):
  print(json.dumps(dict(publication=publish_result('publication.json',ready))))
 
 def kernel_code(mode,sha):
- return '''import os,sys,subprocess,urllib.request,zipfile,io,json,time
+ return ('''import os,sys,subprocess,urllib.request,zipfile,io,json,time
 os.environ['NOVO_SESSION_STARTED_AT']=str(time.time())
 from pathlib import Path
 sha=__SOURCE_LITERAL__
@@ -114,7 +114,7 @@ else:
  finally:
   link=Path('/kaggle/working/novo-unet25d/prepared')
   if link.is_symlink():link.unlink()
-'''.replace('__SOURCE_LITERAL__',repr(sha)).replace('__MODE_LITERAL__',repr(mode)).replace('__BUDGET_LITERAL__',repr(os.environ.get('GPU_SESSION_SECONDS','3600')))
+'''.replace('__SOURCE_LITERAL__',repr(sha)).replace('__MODE_LITERAL__',repr(mode)).replace('__BUDGET_LITERAL__',repr(os.environ.get('GPU_SESSION_SECONDS','3600')))).replace('https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/archive/', __import__('cloud.repository', fromlist=['source_archive_prefix']).source_archive_prefix())
 
 def submit(dataset,kernel,mode):
  if dataset=='mathewzhou/novo-unet25d-full-cohort-input':

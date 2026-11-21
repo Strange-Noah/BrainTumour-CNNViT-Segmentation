@@ -1,25 +1,39 @@
-# Novo Nordisk Longitudinal MRI Research
+# Novo Nordisk — U-Net 2.5D Workstream
 
-Infrastructure for patient-level, multi-visit brain metastases research using UCSD-BMETS-Longitudinal v1. The viewer accepts a 3D MRI and an optional aligned mask from any segmentation pipeline. A synthetic visit is available in the UI.
+This is the owner's long-lived model-development branch for
+longitudinal brain metastasis segmentation on UCSD-BMETS.
 
-- [Active experiments and protocol](docs/longitudinal/active-experiments.md)
-- [Team onboarding](TEAM_ONBOARDING.md)
-- [Promotion plan and acceptance review](docs/longitudinal/promotion.md)
-- [Architecture and access](docs/longitudinal/architecture.md)
-- [TCIA metadata audit and acquisition](docs/longitudinal/tcia.md)
-- [Manifest and evaluation conventions](docs/longitudinal/manifest.md)
-- [Verification and migration report](docs/longitudinal/verification.md)
-- [Recovery and team handoff](docs/longitudinal/handoff.md)
+The project-wide dataset, shared interfaces and public project entry
+are maintained on [main](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/tree/main).
 
-## Local viewer
+## Workstream
 
-Use Python 3.12 in a virtual environment.
+- Model acquisition and SMP audit: [experiments/smp_audit](experiments/smp_audit/)
+- U-Net implementation: [experiments/unet25d](experiments/unet25d/)
+- Full-cohort training: [cohort](experiments/unet25d/cohort/)
+- Experiment versions: [run index](experiments/unet25d/runs/README.md)
+- Failed baseline v1: [results](experiments/unet25d/runs/v1/README.md)
+- Historical migration evidence: [archive](docs/archive/repository-migration/)
 
-```sh
-python -m pip install gradio==6.1.0 -r deployment/longitudinal_viewer/requirements.txt
-python deployment/longitudinal_viewer/app.py
-```
+The v1 training campaign is preserved as a failed research baseline,
+not an accepted segmentation model or longitudinal deployment.
 
-Review one visit at a time with the orthogonal slices and mask volumetry. Use approved de-identified uploads. This release implements mask review and synthetic visualization. The complete summer project is preserved on [summer-archive](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/tree/summer-archive).
+## Development policy
 
-Work on independent branches, request review through pull requests, and keep main stable. See [AGENTS.md](AGENTS.md).
+Continue all related model development on this branch.
+Use commits, scientific configuration hashes, run directories and
+immutable source tags to distinguish experiment versions.
+
+Do not create permanent branches for individual tasks or experiments.
+Do not merge the complete workstream into main.
+
+## Data and execution
+
+Use the frozen project dataset and patient split.
+Keep medical images, checkpoints and per-patient results in private R2.
+GPU authorization is explicit and separate from repository changes.
+
+Credential-bearing automated execution is dispatched from the trusted
+main workflow using an explicitly approved immutable workstream source.
+
+See [AGENTS.md](AGENTS.md) for repository governance.

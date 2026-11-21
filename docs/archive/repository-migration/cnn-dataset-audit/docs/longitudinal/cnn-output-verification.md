@@ -1,0 +1,15 @@
+# CNN CPU output persistence verification
+
+[Run 43810710239](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43810710239) passed on 2026-11-16 at source commit `ef1933f0c5c1744209c02c0b9e15deb57ec6b361`. It used existing free CPU resources and `tcia-verification`. Both output secret names are present and wired to `R2_OUTPUT_*`; dataset reader secrets were unchanged. No credential values were retrieved or published.
+
+The actual run reported `persistence_status: persisted`. Code reaches this result after create-once writes and SHA-256 GET verification for the full checkpoint, full validation prediction NIfTI, prediction metadata and report in private `novo-nordisk-pbl-outputs`. Prefix: `novo-nordisk/experiments/cnn-vit/ucsd-head-pilot-43810710239/`. Artifact keys, byte counts and digests are in private `report.json`; checkpoint filename is `ucsd-enhancing-head-pilot.pt`. This confirms persistent upload and same-process integrity readback.
+
+Fresh-session recovery **passed** in [run 43811539630](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43811539630). After the owner approved the exact PR #16 revision, it merged as [`b7fd309`](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/commit/b7fd309102b338185d477f979f2b18753f3bd48f). A new free CPU runner downloaded the private report and all three artifacts, checking report/artifact SHA-256, byte counts, binary mask values and T1c shape/affine. It reported `verified: true`.
+
+The recovered checkpoint has 405,913,387 bytes and SHA-256 `626d6f9810ed88d70ed1272c6f8473fc2d175f3a73a228c0d5f579abdfe5e678`. The private report SHA-256 is `cd912c7b1e84c9edb6946a20e64061126cfa9de9ff1b7b405ab15d51fafafad0`. The verifier uses only GET operations; it currently receives the existing output-bucket credentials, whose scope includes write, rather than a separately provisioned output reader. Dataset credentials and environment restrictions were unchanged.
+
+This run did **not** recover summer trained weights: safe `weights_only` loading returned `UnpicklingError`. It used official pretrained backbone revision `f8a432f48978c1a676f62d61c1f5a4f9eef52d08` with a fresh decoder/head. Four head-only training steps and complete held-out-visit inference demonstrate execution, not an accepted segmentation model. The test partition was not evaluated. Summer trained-model recovery remains open; unsafe pickle loading was not enabled.
+
+CPU training took 1.085 seconds for four selected slices; one-slice forward took 0.266 seconds. Peak RSS was 6,347,852 KiB (about 6.05 GiB). Validation Dice was 0.00001444, HD95 136.13 mm, lesion sensitivity 0.4 and 1,183 false-positive components. These poor pilot results must not be presented as model acceptance. [Machine-readable aggregate](../../protocol/v1/cnn-cpu-persistence.json).
+
+GitHub output persistence does not establish a Kaggle-originated Gate D write/recovery cycle. That gate and hosted deployment remain open. No paid compute or full training was started.

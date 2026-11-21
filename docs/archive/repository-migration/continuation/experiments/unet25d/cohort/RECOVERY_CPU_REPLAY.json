@@ -1,0 +1,65 @@
+{
+  "source_sha": "56fc2a7767e3f7895aab2dccba3a05a5001dab08",
+  "run": "https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/44749604586",
+  "events": [
+    {
+      "event": "cpu_recovery_replay",
+      "position": 148668,
+      "input_max_abs": 9.780338287353516,
+      "legacy": {
+        "loss": 0.47804632782936096,
+        "gradients_finite": true,
+        "state_finite": true,
+        "largest_running_variance": 3.205793541770183e+34
+      },
+      "recovered": {
+        "loss": 0.47811397910118103,
+        "gradients_finite": true,
+        "state_finite": true,
+        "largest_running_variance": 747.8075561523438
+      }
+    },
+    {
+      "event": "cpu_recovery_replay",
+      "position": 148669,
+      "input_max_abs": 9.944792747497559,
+      "legacy": {
+        "loss": 0.482418417930603,
+        "gradients_finite": true,
+        "state_finite": true,
+        "largest_running_variance": 3.2009626045608756e+34
+      },
+      "recovered": {
+        "loss": 0.48255160450935364,
+        "gradients_finite": true,
+        "state_finite": true,
+        "largest_running_variance": 745.4954223632812
+      }
+    },
+    {
+      "event": "cpu_recovery_replay",
+      "position": 154400,
+      "input_max_abs": 3.026524305343628,
+      "legacy": {
+        "loss": 1.4126300811767578e-05,
+        "gradients_finite": true,
+        "state_finite": true,
+        "largest_running_variance": 3.2969933272283604e+34
+      },
+      "recovered": {
+        "loss": 1.3828277587890625e-05,
+        "gradients_finite": true,
+        "state_finite": true,
+        "largest_running_variance": 861.6536254882812
+      }
+    },
+    {
+      "event": "cpu_recovery_complete",
+      "verified": true,
+      "real_training_positions": 3,
+      "plan_sha256": "1e396a03543c649a098a5431b589f4ffbf583cfdc663f35632c8d50112d0a91a",
+      "cursor_advanced": false,
+      "gpu_allocated": false
+    }
+  ]
+}

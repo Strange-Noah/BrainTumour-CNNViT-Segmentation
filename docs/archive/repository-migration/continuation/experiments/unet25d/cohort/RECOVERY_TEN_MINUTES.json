@@ -1,0 +1,43 @@
+{
+  "GPU_TRAINING_RESUMED": true,
+  "source_sha": "56fc2a7767e3f7895aab2dccba3a05a5001dab08",
+  "workflow_run": 44750099389,
+  "observer_success": true,
+  "unattended": true,
+  "original_checkpoint_step": 74334,
+  "original_unique": 148668,
+  "last_step": 76800,
+  "phase1_unique": 153600,
+  "phase1_total": 220384,
+  "resumed_updates": 2466,
+  "resumed_unique": 4932,
+  "observed_seconds": 617.3715767860413,
+  "sustained_global_samples_per_second": 7.774896319309347,
+  "optimizer_updates_per_second": 3.8874481596546735,
+  "median_loader_wait_fraction": 0.4064619901714484,
+  "minimum_available_host_ram_fraction": 0.7758103489651862,
+  "peak_cuda_allocated_bytes_per_rank": 894491648,
+  "maximum_reported_bn_running_variance": 12980.6982421875,
+  "last_reported_bn_running_variance": 12917.5751953125,
+  "all_reported_loss_and_gradients_finite": true,
+  "gpu_utilization_mean_percent": [
+    57.68,
+    61.44
+  ],
+  "latest_checkpoint": {
+    "event": "checkpoint_saved",
+    "step": 76544,
+    "phase": 1,
+    "phase1_unique": 153088,
+    "pending_validation": false,
+    "scientific_stop": null,
+    "checkpoint_bytes": 298283791
+  },
+  "original_budget_seconds": 83433,
+  "first_session_reserved_seconds": 43200,
+  "continued_session_max_seconds": 40233,
+  "quota_safety_rate": 1.25,
+  "independent_terminal_R2_collection": "pending session completion",
+  "validation": "pending exhaustive coverage",
+  "test_evaluated": false
+}

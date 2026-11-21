@@ -1,0 +1,97 @@
+{
+  "schema": "novo-training-readiness-v1",
+  "TRAINING_READY": true,
+  "report_date": "2026-11-19",
+  "reviewed_integrated_source_sha": "c4b70a933ce5f36d41798f9051b3db197185b162",
+  "preparation_source_sha": "b35e75dabc8dde693e6cc1991168e909c5a60f58",
+  "catalogue_source_sha": "800527fdc65421b1e40ac8e27a823641114f9b75",
+  "dataset": {
+    "data_policy_sha256": "3bbb16ca8e4659d70c3dc3e5503150e2f10fa7be9da0d7291865484719d7318a",
+    "complete": true,
+    "missing_visits": 0,
+    "prepared_visits": 905,
+    "patients": {
+      "train": 210,
+      "validation": 45
+    },
+    "compressed_shard_bytes": 67157330101,
+    "test_included": false,
+    "reused_normalized_visits": 9,
+    "visits": {
+      "train": 746,
+      "validation": 159
+    },
+    "shard_count": 32308,
+    "native_label_objects": 905,
+    "compressed_native_label_bytes": 227786100,
+    "unique_prepared_objects": 26289,
+    "oversized_visits": 4,
+    "oblique_visits": 51,
+    "duplicate_visits": 0,
+    "incomplete_ranges": 0,
+    "conflicting_objects": 0,
+    "integrity_basis": "SHA-verified immutable preparation receipts; each referenced data object GET-verified at preparation, no routine full data rehash",
+    "compressed_prepared_bytes": 67385116201,
+    "manifest": {
+      "sha256": "04b59724c5cc6ac654f85d51ad19e8a8a0766944d8211ecfd03a3495a418de1e",
+      "bytes": 16609873
+    }
+  },
+  "actual_distinct_compressed_data_bytes": 66057921137,
+  "distinct_shard_objects": 25384,
+  "input_readiness": {
+    "verified": true,
+    "cpu_only": true,
+    "new_inference": false,
+    "catalogue_sha256": "04b59724c5cc6ac654f85d51ad19e8a8a0766944d8211ecfd03a3495a418de1e",
+    "input_shape": [
+      1,
+      12,
+      512,
+      512
+    ],
+    "target_shape": [
+      1,
+      1,
+      512,
+      512
+    ],
+    "science_sha256": "1db818f21ca0b2e90d2d6a9fae1ce58c0bcf5e385ea28349c88adc0d2a68e5b2",
+    "version": 3,
+    "source_sha": "c4b70a933ce5f36d41798f9051b3db197185b162",
+    "encoder_sha256": "6549ccd46a2d20a0a74fca866cfc5c6f9b3672d468b0a92aa94a58545a61103e",
+    "receipt": {
+      "sha256": "cc203c0490b92ca8c1b58038012d989744a6651ae16e6fb960627bfaccfb3e30",
+      "bytes": 606
+    }
+  },
+  "execution": {
+    "provider_session_max_seconds": 43200,
+    "finalization_margin_seconds": 600,
+    "initial_actual_gpu_observation_seconds": 600,
+    "collector_cron_utc": "17,47 * * * *",
+    "workflow_state": "active",
+    "checkpoint_interval_seconds": 600,
+    "full_validation_every_coverage_passes": 5,
+    "maximum_coverage_passes": 30,
+    "live_gpu_test_performed": false
+  },
+  "authorization": {
+    "formal_training_authorized": false,
+    "approved_budget_seconds": 0,
+    "gpu_allocated": false
+  },
+  "quota": {
+    "verified_privately": true,
+    "reported_units_separate_from_physical_device_hours": true
+  },
+  "evidence": {
+    "preparation_runs": 70,
+    "failed_preparation_runs": 0,
+    "catalogue_run": 44547458632,
+    "successful_input_publication_run": 44556878634,
+    "cpu_tests": 26,
+    "ci_run": 44556158115
+  },
+  "remaining_required_decision": "owner total GPU budget authorization only"
+}

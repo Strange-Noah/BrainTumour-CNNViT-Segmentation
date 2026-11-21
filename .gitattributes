@@ -1,0 +1,3 @@
+# Byte-exact historical snapshots: preserve inherited formatting; verified by blob ledger.
+docs/archive/repository-migration/** -whitespace
+docs/longitudinal/figures/unet25d/integrated-fp32.svg -whitespace

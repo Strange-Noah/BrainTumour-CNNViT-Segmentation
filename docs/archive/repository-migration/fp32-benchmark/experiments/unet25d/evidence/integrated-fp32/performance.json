@@ -1,0 +1,86 @@
+[
+  {
+    "configuration": "A-sustained",
+    "local_batch": 1,
+    "world_size": 1,
+    "samples_per_second": 8.438930094798163,
+    "steady_seconds": 647.830938115,
+    "peak_vram_allocated_per_rank": [
+      799341568
+    ],
+    "peak_vram_reserved_per_rank": [
+      872415232
+    ],
+    "peak_rss": 6067605504,
+    "early_rank0_throughput": 8.50915375788228,
+    "late_rank0_throughput": 8.412977876352109,
+    "data_wait_fraction": 0.003425027795755327,
+    "sustained_accepted": true,
+    "rss_plateau": true,
+    "late_to_middle_rss_ratio": 0.9958009475835359,
+    "sync_overhead": "backward includes DDP synchronization; cannot isolate overlap from this timer",
+    "rss_limitation": "sum RSS double-counts shared mmap pages; available RAM and page faults must also be reviewed",
+    "precision": "float32",
+    "min_available_ram_fraction": 0.8863789476963547,
+    "swap_in_delta_bytes": 0,
+    "cache_hit_fraction": 0.8767573489136389,
+    "mmap_visit_opens_per_rank": [
+      675
+    ],
+    "peak_mapped_bytes_per_rank": [
+      3137339904
+    ],
+    "time_fraction": {
+      "data_wait_seconds": 0.003425027795755327,
+      "h2d_seconds": 0.010543769488485063,
+      "forward_seconds": 0.32897869811084196,
+      "backward_including_sync_seconds": 0.560800740889452,
+      "optimizer_seconds": 0.08207252814708763
+    },
+    "speedup_vs_A_sustained": 1.0
+  },
+  {
+    "configuration": "B-sustained",
+    "local_batch": 1,
+    "world_size": 2,
+    "samples_per_second": 15.403310454176504,
+    "steady_seconds": 657.78067839,
+    "peak_vram_allocated_per_rank": [
+      898641920,
+      898641920
+    ],
+    "peak_vram_reserved_per_rank": [
+      970981376,
+      970981376
+    ],
+    "peak_rss": 12166549504,
+    "early_rank0_throughput": 7.718095070650439,
+    "late_rank0_throughput": 7.6994889940435565,
+    "data_wait_fraction": 0.007994739414348364,
+    "sustained_accepted": true,
+    "rss_plateau": true,
+    "late_to_middle_rss_ratio": 0.9909097436465761,
+    "sync_overhead": "backward includes DDP synchronization; cannot isolate overlap from this timer",
+    "rss_limitation": "sum RSS double-counts shared mmap pages; available RAM and page faults must also be reviewed",
+    "precision": "float32",
+    "min_available_ram_fraction": 0.8250530221273982,
+    "swap_in_delta_bytes": 0,
+    "cache_hit_fraction": 0.8765760441292356,
+    "mmap_visit_opens_per_rank": [
+      627,
+      626
+    ],
+    "peak_mapped_bytes_per_rank": [
+      3137339904,
+      3137339904
+    ],
+    "time_fraction": {
+      "data_wait_seconds": 0.007994739414348364,
+      "h2d_seconds": 0.00984295327941489,
+      "forward_seconds": 0.31570813792842367,
+      "backward_including_sync_seconds": 0.5684451908733511,
+      "optimizer_seconds": 0.0772792328105852
+    },
+    "speedup_vs_A_sustained": 1.825268165649488
+  }
+]
