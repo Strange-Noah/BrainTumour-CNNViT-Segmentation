@@ -40,8 +40,9 @@ def replays(inventories,total,c,rng):
     return rows,dict(max_patient=max(pc.values()),max_visit=max(vc.values()),max_lesion=max(lc.values()),selected_lesions=len(lc),available_lesions=sum(len(cs) for vs in groups.values() for cs in vs.values()),requested_scales=dict(Counter(r['scale'] for r in rows)))
 
 class Pool:
-    def __init__(self,rows,rng):
+    def __init__(self,rows,rng,locality=8):
         self.rows=defaultdict(lambda:defaultdict(deque));self.total=Counter();self.used=Counter();self.visit_total=Counter();self.visit_used=Counter()
+        self.locality=locality;self.current={};self.block_used=Counter()
         shuffled=list(rows);rng.shuffle(shuffled)
         for r in shuffled:self.rows[r['patient']][r['exam']].append(r);self.total[r['patient']]+=1;self.visit_total[r['exam']]+=1
         # Shard-local ordering occurs ONLY inside visit queues, never as a final
@@ -53,7 +54,10 @@ class Pool:
         if not patients:raise ValueError('Exhausted class pool')
         candidates=[p for p in patients if p in active and p not in avoid] or [p for p in patients if p not in avoid] or patients
         p=min(candidates,key=lambda p:((self.used[p]+1)/self.total[p],p));vs=self.rows[p]
-        e=preferred if preferred in vs else min(vs,key=lambda e:((self.visit_used[e]+1)/self.visit_total[e],e))
+        e=self.current.get(p)
+        if e not in vs or self.block_used[p]>=self.locality:
+            e=min(vs,key=lambda e:((self.visit_used[e]+1)/self.visit_total[e],e));self.current[p]=e;self.block_used[p]=0
+        self.block_used[p]+=1
         row=vs[e].popleft();self.used[p]+=1;self.visit_used[e]+=1
         if not vs[e]:del vs[e]
         return row
@@ -64,7 +68,7 @@ def build_plan(visits,inventories,c):
     rng=np.random.default_rng(c['seed']);nr=int(np.ceil(n/c['replay_divisor']));nr+= (n+nr)%2
     extra,account=replays(inventories,nr,c,rng)
     mp=[r for r in original if r['positive']];ng=[r for r in original if not r['positive']]
-    pools={'mandatory':Pool(mp,rng),'replay':Pool(extra,rng),'negative':Pool(ng,rng)}
+    pools={'mandatory':Pool(mp,rng,c['visit_block_samples']),'replay':Pool(extra,rng,c['visit_block_samples']),'negative':Pool(ng,rng,c['visit_block_samples'])}
     positive=len(mp)+nr;updates=(n+nr)//2
     if positive>updates:raise ValueError('Pairing policy requires at most one positive per update')
     patient_total=Counter(r['patient'] for r in original+extra);used=Counter();visit_last={};previous=[None,None];order=[];pos_seen=0;replay_seen=0;active=[]

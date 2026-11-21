@@ -92,5 +92,6 @@
   "phase2_authorized": false,
   "test_access": false,
   "capacity_fullscale_min_component_plane_pixels": 16,
-  "capacity_small_lesion_max_mm3": 100.0
+  "capacity_small_lesion_max_mm3": 100.0,
+  "visit_block_samples": 8
 }
