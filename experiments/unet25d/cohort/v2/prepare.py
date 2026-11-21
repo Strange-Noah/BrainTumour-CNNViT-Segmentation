@@ -15,7 +15,13 @@ def main():
     import torch
     if torch.cuda.is_available():raise RuntimeError('Auxiliary preparation is CPU only')
     from .tests import run_tests
-    tests=run_tests();c=config();client,bucket=connect(output=True)
+    tests=run_tests()
+    import unittest
+    suite=unittest.TestSuite(unittest.defaultTestLoader.loadTestsFromName('experiments.unet25d.cohort.v2.'+name) for name in ('test_corrected_gate','test_persistence','test_zoom128_audit'))
+    result=unittest.TextTestRunner().run(suite)
+    if not result.wasSuccessful():raise ValueError('Corrected release CPU regressions failed')
+    tests['corrected_release_tests']=result.testsRun
+    c=config();client,bucket=connect(output=True)
     if bucket!='novo-nordisk-pbl-outputs':raise ValueError('Private outputs only')
     try:existing=read_json_record(client,bucket,aux_key())
     except client.exceptions.NoSuchKey:existing=None
@@ -23,6 +29,20 @@ def main():
         if not existing['complete'] or existing['science_sha256']!=science_hash():raise ValueError('Existing auxiliary acceptance mismatch')
         print(json.dumps(dict(event='v2_gate0_reused',original_source_sha=existing['source_sha'],science_sha256=science_hash(),gpu_allocated=False)),flush=True)
         return existing
+    # Corrected Gate1 reuses the immutable accepted MRI/lesion/plan objects.
+    # Only explicitly enumerated Gate1/transport keys may differ from old science.
+    import subprocess
+    old_config=json.loads(subprocess.check_output(['git','show','3ddc324e114d0a0cd740234b5ba26ec750238d2a:experiments/unet25d/runs/v2/config.json'],text=True))
+    allowed={'learning_gate_max_steps','learning_gate_revision','learning_gate_measure_every','learning_gate_selected_recall_min','checkpoint_transport'}
+    if {k:v for k,v in c.items() if k not in allowed}!={k:v for k,v in old_config.items() if k not in allowed}:raise ValueError('Data recipe changed; cannot reuse accepted auxiliary preparation')
+    old_key='novo-nordisk/experiments/unet25d/v2/1d6fa16a689916e4225d561b7f2217e61f0ec423cddb9894b5ac3f8636ee8110/aux/ready.json'
+    old=read_json_record(client,bucket,old_key)
+    if not old['complete']:raise ValueError('Original data acceptance required')
+    migrated=dict(old,science_sha256=science_hash(),source_sha=os.environ['NOVO_SOURCE_SHA'],accepted_data_science_sha256=old['science_sha256'],reuse_reason='Gate1 and persistence only; frozen data and full plan unchanged',tests=tests)
+    path=Path(tempfile.gettempdir())/'novo-corrected-ready.json';path.write_text(json.dumps(migrated,sort_keys=True));put_once(client,bucket,aux_key(),path)
+    print(json.dumps(dict(event='v2_corrected_aux_reused',source_sha=os.environ['NOVO_SOURCE_SHA'],science_sha256=science_hash(),original_preparation_repeated=False)),flush=True)
+    return migrated
+
     ready=read_json_record(client,bucket,keybase()+'/ready.json');cat_receipt=ready['manifest']
     with tempfile.TemporaryDirectory(prefix='novo-private-v2-') as folder:
         root=Path(folder);root.chmod(0o700);catpath=root/'catalogue.json'

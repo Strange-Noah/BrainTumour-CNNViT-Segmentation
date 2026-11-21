@@ -80,7 +80,7 @@
   "workers_per_rank": 1,
   "prefetch_batches": 2,
   "checkpoint_seconds": 600,
-  "learning_gate_max_steps": 400,
+  "learning_gate_max_steps": 4000,
   "learning_gate_seconds": 600,
   "learning_gate_positive_probability": 0.6,
   "learning_gate_dice": 0.1,
@@ -93,5 +93,9 @@
   "test_access": false,
   "capacity_fullscale_min_component_plane_pixels": 16,
   "capacity_small_lesion_max_mm3": 100.0,
-  "visit_block_samples": 8
+  "visit_block_samples": 8,
+  "learning_gate_revision": "isolated-tiny-or-selected-component-v3",
+  "learning_gate_measure_every": 50,
+  "learning_gate_selected_recall_min": 0.1,
+  "checkpoint_transport": "private-presigned-put-get-sha256-v1"
 }

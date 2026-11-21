@@ -4,7 +4,7 @@ from pathlib import Path
 from cloud.storage import connect
 from ..unattended import free_quota,free_seconds,require_integrated_source
 from ..settings import read_json_record
-from .settings import config,science_hash,prefix,active_key,aux_key,write_json,DATASET,KERNEL
+from .settings import config,science_hash,prefix,active_key,aux_key,latest_key,write_json,DATASET,KERNEL
 
 TERMINAL=('COMPLETE','ERROR','CANCEL')
 # Exact already-reviewed CPU producer. Only exception bookkeeping/idempotence
@@ -50,22 +50,25 @@ def start(c,b,record):
     remaining=record['approved_budget_seconds']-record['reserved_seconds'];seconds=min(43200,remaining,free_seconds(quota,record['quota_safety_rate']))
     if seconds<1200:record.update(status='paused_resource_limit',auto_continue=False,pause_reason='Current free allowance exhausted');write_json(c,b,active_key(),record);return
     record.update(status='preparing',session_seconds=seconds,quota_before_session=quota);write_json(c,b,active_key(),record)
-    published=publish(seconds);record['session_no']+=1;record['kernel']=KERNEL+'-'+str(record['campaign_id'])+'-s'+str(record['session_no']);record['input_version']=published['version'];record['catalogue_sha256']=published['catalogue_sha256']
+    published=publish(seconds);record['live_prefix']=published['output_live_prefix'];record['session_no']+=1;record['kernel']=KERNEL+'-'+str(record['campaign_id'])+'-s'+str(record['session_no']);record['input_version']=published['version'];record['catalogue_sha256']=published['catalogue_sha256']
     if len(record['kernel'].split('/')[1])>64:raise ValueError('Provider slug length')
-    folder=WORK/'v2-kernel';folder.mkdir(exist_ok=True);(folder/'run.py').write_text(render(record['source_sha'],seconds,record['approved_budget_seconds']))
-    (folder/'kernel-metadata.json').write_text(json.dumps(dict(id=record['kernel'],title=record['kernel'].split('/')[1],code_file='run.py',language='python',kernel_type='script',is_private=True,enable_gpu=True,enable_internet=True,dataset_sources=[DATASET+'/'+str(published['version'])],competition_sources=[],kernel_sources=[],machine_shape='NvidiaTeslaT4')))
+    folder=WORK/'v2-kernel';folder.mkdir(exist_ok=True);launcher=render(record['source_sha'],seconds,record['approved_budget_seconds']);(folder/'run.ipynb').write_text(json.dumps(dict(nbformat=4,nbformat_minor=5,metadata=dict(kernelspec=dict(display_name='Python 3',language='python',name='python3')),cells=[dict(cell_type='code',metadata={},execution_count=None,outputs=[],source=launcher.splitlines(keepends=True))])))
+    (folder/'kernel-metadata.json').write_text(json.dumps(dict(id=record['kernel'],title=record['kernel'].split('/')[1],code_file='run.ipynb',language='python',kernel_type='notebook',is_private=True,enable_gpu=True,enable_internet=True,dataset_sources=[DATASET+'/'+str(published['version'])],competition_sources=[],kernel_sources=[],machine_shape='NvidiaTeslaT4')))
     record['reserved_seconds']+=seconds;record.update(status='submitting',submitted_at=time.time());write_json(c,b,active_key(),record)
     # Ambiguous submission is never retried automatically.
     result=cli('kernels','push','-p',str(folder),'-t',str(seconds),'--accelerator','NvidiaTeslaT4')
     version=re.search(r'[Vv]ersion\s+(\d+)',result);returned=re.search(r'https://www\.kaggle\.com/code/(mathewzhou/[a-z0-9-]+)',result)
     if version is None:raise RuntimeError('Ambiguous v2 submission; inspect exact unique provider job before any retry')
     if returned:record['requested_kernel']=record['kernel'];record['kernel']=returned[1]
-    record.update(status='running',version=int(version[1]),initial_observation_complete=False);write_json(c,b,active_key(),record)
-    print(json.dumps(dict(event='V2_GPU_STARTED',source_sha=record['source_sha'],science_sha256=science_hash(),kernel=record['kernel'],url='https://www.kaggle.com/code/'+record['kernel'],session_seconds=seconds,cumulative_budget_seconds=record['approved_budget_seconds'],quota_before=quota,campaign_key=active_key())),flush=True)
+    record.update(status='running',execution_state='SUBMITTED',gpu_allocation_confirmed=False,version=int(version[1]),initial_observation_complete=False);write_json(c,b,active_key(),record)
+    print(json.dumps(dict(event='V2_JOB_SUBMITTED',source_sha=record['source_sha'],science_sha256=science_hash(),kernel=record['kernel'],url='https://www.kaggle.com/code/'+record['kernel'],session_seconds=seconds,cumulative_budget_seconds=record['approved_budget_seconds'],quota_before=quota,campaign_key=active_key())),flush=True)
 
 def launch():
     if os.environ.get('GITHUB_ACTOR')!='Strange-Noah' or os.environ.get('FORMAL_TRAINING_AUTHORIZED')!='true' or os.environ.get('FREE_RESOURCE_AUTHORIZED')!='true':raise PermissionError('Actual owner and explicit free v2 training authorization required')
     if os.environ.get('DATASET')!=DATASET or os.environ.get('KERNEL')!=KERNEL:raise PermissionError('Registered isolated resources only')
+    from cloud.kaggle_benchmark_bridge import cli
+    for old_slug in ('mathewzhou/novo-unet25d-v2-44906471093-s1','mathewzhou/novo-unet25d-v2-44906471093-s2'):
+        if 'CANCEL' not in cli('kernels','status',old_slug).upper():raise PermissionError('Old execution not confirmed terminated')
     require_integrated_source(os.environ['NOVO_SOURCE_SHA']);c,b=connect(output=True)
     if read(c,b,active_key()) is not None:raise RuntimeError('Existing v2 record; recover, never duplicate or reset allowance')
     ready=read(c,b,aux_key())
@@ -77,8 +80,14 @@ def launch():
         if any(r['bytes']>limits['gpu_cache_bytes'] or r['decoded_bytes']>limits['decoded_cache_bytes_per_worker'] for r in visit['shards']):raise MemoryError('Prepared shard exceeds v2 bounded cache; no GPU submitted')
         if visit['partition']=='train' and math.prod(visit['metadata']['shape'])*2>limits['component_cache_bytes']:raise MemoryError('Training component volume exceeds bounded cache; no GPU submitted')
     quota=free_quota();budget=free_seconds(quota,config()['quota_safety_rate'])
+    old_key='novo-nordisk/experiments/unet25d/v2/1d6fa16a689916e4225d561b7f2217e61f0ec423cddb9894b5ac3f8636ee8110/active.json'
+    old=read_json_record(c,b,old_key)
+    if old['initial_quota']['refresh_at']!=quota['refresh_at']:raise PermissionError('Original weekly boundary remains binding')
+    prior_used=max(0.,quota['used_seconds']-old['initial_quota']['used_seconds'])
+    budget=min(budget,int(old['approved_budget_seconds']-prior_used))
+
     if budget<2400:raise RuntimeError('Insufficient currently available free GPU allowance; no submission')
-    record=dict(status='authorized',campaign_id=os.environ['GITHUB_RUN_ID'],source_sha=os.environ['NOVO_SOURCE_SHA'],science_sha256=science_hash(),initial_quota=quota,approved_budget_seconds=budget,reserved_seconds=0,quota_safety_rate=config()['quota_safety_rate'],session_no=0,collections=[],auto_continue=True)
+    record=dict(prior_campaign_key=old_key,prior_quota_used_seconds=prior_used,original_budget_seconds=old['approved_budget_seconds'],status='authorized',campaign_id=os.environ['GITHUB_RUN_ID'],source_sha=os.environ['NOVO_SOURCE_SHA'],science_sha256=science_hash(),initial_quota=quota,approved_budget_seconds=budget,reserved_seconds=0,quota_safety_rate=config()['quota_safety_rate'],session_no=0,collections=[],auto_continue=True)
     write_json(c,b,active_key(),record);start(c,b,record)
     if record['status']=='running':observe(c,b,record)
 
@@ -102,14 +111,24 @@ def observe(c,b,record):
             try:event=json.loads(line[marker:])
             except json.JSONDecodeError:continue
             kind=event.get('event')
-            if kind not in ('training_update','checkpoint_saved','v2_learning_gate','v2_gate1_complete','v2_gate1_failed'):continue
+            if kind not in ('v2_gpu_allocated','v2_private_snapshot','training_update','checkpoint_saved','v2_learning_gate','v2_gate1_complete','v2_gate1_failed'):continue
             print(json.dumps(event),flush=True)
+            if kind=='v2_gpu_allocated':record.update(execution_state='GPU_ALLOCATED',gpu_allocation_confirmed=True)
+            if kind=='v2_learning_gate':record['execution_state']='GATE1'
+            if kind=='v2_private_snapshot':
+                from cloud.storage import verify
+                if not event['key'].startswith(prefix()+'/live/'):raise ValueError('Foreign snapshot namespace')
+                from .persistence import recover_snapshot
+                durable=recover_snapshot(c,b,event)
+                record['last_verified_snapshot']=event;record['checkpoint_r2_verified']=durable
+                print(json.dumps(dict(event='v2_snapshot_independently_verified',kind=event['kind'],sha256=event['sha256'])),flush=True)
+            if kind=='training_update':record['execution_state']='FORMAL_TRAINING'
             if kind in ('v2_learning_gate','v2_gate1_complete'):record['last_learning_gate']=event
             if kind=='checkpoint_saved':record['last_checkpoint']=event
             if kind!='training_update':continue
             if first is None:first=event['unix_time']
-            if event['unix_time']-first>=600:
-                record.update(initial_observation_complete=True,initial_health=event,quota_after_observation=free_quota());write_json(c,b,active_key(),record)
+            if event['unix_time']-first>=600 and record.get('checkpoint_r2_verified'):
+                record.update(execution_state='PHASE1_UNATTENDED_ACTIVE',initial_observation_complete=True,initial_health=event,quota_after_observation=free_quota());write_json(c,b,active_key(),record)
                 print(json.dumps(dict(event='v2_ten_minute_observation_complete',kernel=record['kernel'],health=event,unattended_recovery='existing trusted main half-hourly collector',quota=record['quota_after_observation'])),flush=True);return
         record['observation_pending']=True;write_json(c,b,active_key(),record)
         print(json.dumps(dict(initial_observation_pending=True,kernel=record['kernel'])),flush=True)
@@ -133,8 +152,19 @@ def recover(c=None,b=None,record=None,status=None):
         start(c,b,record)
         if record['status']=='running':observe(c,b,record)
         return
+    if record.get('live_prefix'):
+        from .persistence import recover_snapshot
+        listing=c.list_objects_v2(Bucket=b,Prefix=record['live_prefix']+'/')
+        for item in sorted(listing.get('Contents',[]),key=lambda x:x['LastModified']):
+            if not item['Key'].endswith('.tar.json'):continue
+            event=read_json_record(c,b,item['Key'])
+            if event['key'] in record.get('verified_live_keys',[]):continue
+            durable=recover_snapshot(c,b,event)
+            record.setdefault('verified_live_keys',[]).append(event['key']);record['last_live_snapshot']=event;record['checkpoint_r2_verified']=durable or record.get('checkpoint_r2_verified',False)
+        write_json(c,b,active_key(),record)
     status=status or cli('kernels','status',record['kernel']).upper()
     if not any(s in status for s in TERMINAL):
+        if 'QUEUED' in status:record['execution_state']='QUEUED';write_json(c,b,active_key(),record)
         if time.time()-record['submitted_at']>18*3600:record.update(status='blocked',auto_continue=False);write_json(c,b,active_key(),record);raise TimeoutError('Provider did not terminate within hard session expectation')
         if not record.get('initial_observation_complete'):observe(c,b,record)
         else:print(json.dumps(dict(v2_running=True,kernel=record['kernel'],gpu_submitted=False)))
@@ -145,6 +175,10 @@ def recover(c=None,b=None,record=None,status=None):
         if record['collection_errors']>=2:record.update(status='blocked',auto_continue=False)
         write_json(c,b,active_key(),record);raise
     record['collections'].append(receipt);record['quota_after_session']=free_quota()
+    if pointer is None and 'COMPLETE' in status:
+        candidate=read_json_record(c,b,latest_key()) if record.get('checkpoint_r2_verified') else None
+        if candidate and candidate['checkpoint']['key'].startswith(record.get('live_prefix','INVALID')+'/'):pointer=candidate
+    record['execution_state']='COLLECTED'
     if 'COMPLETE' not in status or pointer is None:record.update(status='failed',auto_continue=False);write_json(c,b,active_key(),record);raise RuntimeError('v2 correctness failure; outputs preserved, no speculative GPU retry')
     stop=pointer['state']['scientific_stop']
     if stop or not pointer['state']['learning_gate_passed']:
@@ -158,7 +192,9 @@ def main():
     if mode=='prepare':
         from .prepare import main as prepare
         from .stage import publish
-        prepare();result=publish(43200);print(json.dumps(dict(event='v2_CPU_input_ready',**result)),flush=True)
+        prepare();
+        from .cpu_transport import run
+        run();result=publish(43200);print(json.dumps(dict(event='v2_CPU_input_ready',**result)),flush=True)
     elif mode=='formal':launch()
     elif mode in ('recover','collect'):recover()
     else:raise ValueError('v2 exposes only preparation, formal, recovery; no extra benchmark')

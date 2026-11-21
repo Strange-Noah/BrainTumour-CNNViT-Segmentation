@@ -24,6 +24,14 @@ def publish(session_seconds):
     for row in inventory.values():objects[row['labels']['key']]=row['labels']
     lease={'catalogue_sha256':ready['catalogue']['sha256'],'expires_at':__import__('time').time()+lifetime,'objects':{key:dict(sha256=r['sha256'],url=client.generate_presigned_url('get_object',Params={'Bucket':b,'Key':key},ExpiresIn=lifetime,HttpMethod='GET')) for key,r in objects.items()}}
     (folder/'private-data-lease.json').write_text(json.dumps(lease));restore_encoder(folder,client)
+    output_base=prefix()+'/live/'+uuid.uuid4().hex
+    slots=[]
+    for i in range(80):
+        key=output_base+'/'+str(i)+'.tar'
+        def signed(k,method):return client.generate_presigned_url(method,Params=dict(Bucket=b,Key=k,**({'IfNoneMatch':'*'} if method=='put_object' else {})),ExpiresIn=lifetime)
+        slots.append(dict(key=key,put=signed(key,'put_object'),get=signed(key,'get_object'),receipt_put=signed(key+'.json','put_object')))
+    (folder/'private-output-lease.json').write_text(json.dumps(dict(expires_at=lease['expires_at'],slots=slots)))
+
     from .settings import CONFIG
     (folder/'training-config.json').write_bytes(CONFIG.read_bytes());(folder/'resume.pt').unlink(missing_ok=True)
     try:pointer=read_json_record(client,b,latest_key())
@@ -31,6 +39,8 @@ def publish(session_seconds):
     if pointer:
         if pointer['state']['science_sha256']!=science_hash():raise ValueError('Refuse foreign/v1 checkpoint')
         with (folder/'resume.pt').open('wb') as f:verify(client,b,pointer['checkpoint']['key'],pointer['checkpoint']['sha256'],f)
+    from .cpu_gate_acceptance import run as real_cpu_acceptance
+    real_cpu_acceptance(folder)
     (folder/'dataset-metadata.json').write_text(json.dumps(dict(id=DATASET,title='Novo U-Net25D v2 private input',licenses=[{'name':'other'}],description='Private training data references and auxiliary inventory. TCIA terms apply. Never redistribute.')))
     files=[p for p in folder.iterdir() if p.is_file() and p.name not in ('dataset-metadata.json','input-package.json')]
     package={'publication_id':uuid.uuid4().hex,'source_sha':os.environ['NOVO_SOURCE_SHA'],'science_sha256':science_hash(),'files':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
@@ -50,7 +60,7 @@ def publish(session_seconds):
                 import zipfile
                 with zipfile.ZipFile(dest/(name+'.zip')) as z:(dest/name).write_bytes(z.read(name))
             if (dest/name).read_bytes()!=(folder/name).read_bytes():raise ValueError('Independent published v2 input differs')
-    return dict(dataset=DATASET,version=version,catalogue_sha256=ready['catalogue']['sha256'],private_input_verified=True,science_sha256=science_hash())
+    return dict(output_live_prefix=output_base,dataset=DATASET,version=version,catalogue_sha256=ready['catalogue']['sha256'],private_input_verified=True,science_sha256=science_hash())
 
 def collect(kernel):
     from cloud.kaggle_benchmark_bridge import WORK,cli

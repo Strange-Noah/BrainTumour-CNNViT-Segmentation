@@ -76,6 +76,8 @@ class Cache(ShardCache):
             if bool(y.any()):weights[y.bool()]*=float(y.sum())/float(weights[y.bool()].sum())
         identity=dict(row,actual_positive=bool(y.any()),valid_pixels=int(mask.sum()),foreground_pixels=int(y.sum()),source_size=size,zoom_scale=512/size,mask_fallback=reason,lesions=exposure)
         if training and row['kind']=='replay':identity.update(component_exposure(ids,y,weights,row['component']))
+        if row.get('gate_role'):
+            identity['gate_component_masks']={label:(ids==label) for label in torch.unique(ids).int().tolist() if label} if ids is not None else {}
         if x.shape!=(12,512,512) or y.shape!=(1,512,512) or not torch.isfinite(x).all():raise ValueError('Frozen input shape/finiteness')
         return x,y,mask,weights,identity
     def sample(self,visit,tile,z):

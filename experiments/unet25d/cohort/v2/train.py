@@ -36,21 +36,37 @@ def health(model,optimizer,c,local):
     if not bool(good):raise FloatingPointError('Nonfinite model/optimizer or unsafe BN variance; retain prior checkpoint')
     memory=psutil.virtual_memory();pressure=torch.tensor(int(memory.available/memory.total<.15),device=local);dist.all_reduce(pressure,op=dist.ReduceOp.MAX)
     if bool(pressure):raise MemoryError('Actual host RAM pressure')
-    return dict(BN_running_variance_max=max(variances,default=0),BN_running_mean_abs_max=max(means,default=0),host_ram_available_fraction=memory.available/memory.total)
+    devices=None
+    if dist.get_rank()==0:
+        import subprocess
+        try:
+            result=subprocess.run(['nvidia-smi','--query-gpu=index,utilization.gpu,memory.used,memory.total','--format=csv,noheader,nounits'],capture_output=True,text=True,timeout=3)
+            if result.returncode==0:devices=[[int(v.strip()) for v in line.split(',')] for line in result.stdout.strip().splitlines()]
+        except (OSError,ValueError,subprocess.TimeoutExpired):pass
+    return dict(gpu_utilization_memory=devices,BN_running_variance_max=max(variances,default=0),BN_running_mean_abs_max=max(means,default=0),host_ram_available_fraction=memory.available/memory.total)
 
 def fixed_rows(plan,inventory,c):
     rows=[]
     for scale in (512,128):
         candidates=[r for r in plan if r['kind']=='replay' and r['scale']==scale]
-        selected=None
+        eligible=[]
         for r in candidates:
-            component=next(x for x in inventory[r['exam']]['components'] if x['id']==r['component'])
-            if scale==512 and component['planes'][str(r['z'])]['voxels']<c['capacity_fullscale_min_component_plane_pixels']:continue
-            if scale==128 and component['volume_mm3']>=c['capacity_small_lesion_max_mm3']:continue
-            selected=r;break
-        if selected is None:raise ValueError('Missing representative full-scale/tiny-lesion capacity examples')
-        rows.append(selected)
-    for kind in ('negative_enhancing','negative_empty'):rows.append(next(r for r in plan if r['negative_category']==kind))
+            comp=next(x for x in inventory[r['exam']]['components'] if x['id']==r['component'])
+            if scale==512 and comp['planes'][str(r['z'])]['voxels']<c['capacity_fullscale_min_component_plane_pixels']:continue
+            if scale==128 and comp['volume_mm3']>=c['capacity_small_lesion_max_mm3']:continue
+            eligible.append(r)
+            if scale==512:break
+        if not eligible:raise ValueError('Missing real capacity example')
+        chosen=eligible[0]
+        if scale==128:
+            stress=dict(chosen,gate_role='stress_composite')
+            for r in eligible:
+                lo=np.asarray(r['origin']);hi=lo+128
+                others=[x for x in inventory[r['exam']]['components'] if x['id']!=r['component'] and str(r['z']) in x['planes']]
+                if not any(np.all(np.asarray(x['planes'][str(r['z'])]['lo'])<hi) and np.all(np.asarray(x['planes'][str(r['z'])]['hi'])>lo) for x in others):chosen=r;break
+        rows.append(dict(chosen,gate_role='native_capacity' if scale==512 else 'tiny_capacity'))
+    for kind in ('negative_enhancing','negative_empty'):rows.append(dict(next(r for r in plan if r['negative_category']==kind),gate_role=kind))
+    rows.append(stress)
     return rows
 
 def measure(raw,examples,device,c):
@@ -58,31 +74,43 @@ def measure(raw,examples,device,c):
     with torch.no_grad():
         for x,y,m,w,identity in examples:
             x,y,m,w=[v[None].to(device) for v in (x,y,m,w)];logits=raw(x);loss,parts=balanced_loss(logits,y,m,w,True);p=logits.sigmoid();positive=y.bool();negative=m.bool()&~positive;pred=(p>=.5)&m.bool();intersection=(pred&positive).sum()
-            results.append(dict(target_scope='all enhancing components in crop',selected_component_foreground_pixels=identity.get('selected_component_foreground_pixels'),incidental_foreground_pixels=identity.get('incidental_foreground_pixels'),selected_component_BCE_share=identity.get('selected_component_BCE_share'),positive=bool(positive.any()),scale=identity['scale'],loss=float(loss),positive_bce=float(parts['positive_bce']),negative_bce=float(parts['negative_bce']),positive_probability=float(p[positive].mean()) if positive.any() else None,negative_probability=float(p[negative].mean()) if negative.any() else None,foreground_dice=float(2*intersection/(pred.sum()+positive.sum()).clamp_min(1)) if positive.any() else None,predicted_positive_pixels=int(pred.sum()),target_pixels=int(positive.sum()),valid_pixels=int(m.sum()),negative_predicted_fraction=float(pred.sum()/m.sum()) if not positive.any() else None))
+            component_metrics=[]
+            for component,cm in identity.get('gate_component_masks',{}).items():
+                cm=cm[None].to(device).bool();tp=(pred&cm).sum();other=positive&~cm;component_prediction=pred&~other
+                component_metrics.append(dict(selected=component==identity.get('component'),target_pixels=int(cm.sum()),probability=float(p[cm].mean()),recall=float(tp/cm.sum()),dice=float(2*tp/(component_prediction.sum()+cm.sum()).clamp_min(1))))
+            results.append(dict(gate_role=identity.get('gate_role'),components=component_metrics,target_scope='all enhancing components in crop',selected_component_foreground_pixels=identity.get('selected_component_foreground_pixels'),incidental_foreground_pixels=identity.get('incidental_foreground_pixels'),selected_component_BCE_share=identity.get('selected_component_BCE_share'),positive=bool(positive.any()),scale=identity['scale'],loss=float(loss),positive_bce=float(parts['positive_bce']),negative_bce=float(parts['negative_bce']),positive_probability=float(p[positive].mean()) if positive.any() else None,negative_probability=float(p[negative].mean()) if negative.any() else None,foreground_dice=float(2*intersection/(pred.sum()+positive.sum()).clamp_min(1)) if positive.any() else None,predicted_positive_pixels=int(pred.sum()),target_pixels=int(positive.sum()),valid_pixels=int(m.sum()),negative_predicted_fraction=float(pred.sum()/m.sum()) if not positive.any() else None))
     raw.train(was)
-    pos=[r for r in results if r['positive']];neg=[r for r in results if not r['positive']]
-    passed=all(r['positive_probability']>=c['learning_gate_positive_probability'] and r['foreground_dice']>=c['learning_gate_dice'] and r['predicted_positive_pixels']>0 for r in pos) and all(r['negative_probability']<=c['learning_gate_negative_probability_max'] and r['negative_predicted_fraction']<=c['learning_gate_negative_predicted_fraction_max'] for r in neg)
+    pos=[r for r in results if r['positive'] and r['gate_role']!='stress_composite'];neg=[r for r in results if not r['positive']]
+    for r in pos:
+        if r['gate_role']=='tiny_capacity':
+            selected=next(x for x in r['components'] if x['selected']);r['capacity_probability']=selected['probability'];r['capacity_dice']=selected['dice'];r['capacity_recall']=selected['recall']
+        else:r['capacity_probability']=r['positive_probability'];r['capacity_dice']=r['foreground_dice'];r['capacity_recall']=1.
+    passed=all(r['capacity_probability']>=c['learning_gate_positive_probability'] and r['capacity_dice']>=c['learning_gate_dice'] and r['capacity_recall']>=c['learning_gate_selected_recall_min'] and r['predicted_positive_pixels']>0 for r in pos) and all(r['negative_probability']<=c['learning_gate_negative_probability_max'] and r['negative_predicted_fraction']<=c['learning_gate_negative_predicted_fraction_max'] for r in neg)
     return dict(passed=passed,examples=results,positive_learning=any(r['positive_probability']>=.5 and r['foreground_dice']>=.01 for r in pos) and all(r['negative_predicted_fraction']<.5 for r in neg),not_just_total_loss=True)
 
 def learning_gate(model,optimizer,examples,c,local,rank,output,deadline):
-    first=measure(model.module,examples,local,c);started=time.time();step=0;latest=first
+    first=measure(model.module,examples,local,c);started=time.time();step=0;latest=first;rank_history=[]
     for step in range(c['learning_gate_max_steps']):
         # Paired positive/negative updates expose both ranks to both classes.
-        sample=examples[((step//2)*2+rank+step%2)%len(examples)];x,y,m,w,_=sample;x,y,m,w=[v[None].to(local) for v in (x,y,m,w)]
+        sample=examples[((step//2)*2+rank+step%2)%4];x,y,m,w,_=sample;x,y,m,w=[v[None].to(local) for v in (x,y,m,w)]
         optimizer.zero_grad(set_to_none=True);logits=model(x);loss=balanced_loss(logits,y,m,w);loss.backward();flags=torch.tensor(int(bool(torch.isfinite(loss)) and all(bool(torch.isfinite(p.grad).all()) for p in model.parameters() if p.grad is not None)),device=local);dist.all_reduce(flags,op=dist.ReduceOp.MIN);fp32_step(optimizer,bool(flags),bool(flags))
-        if (step+1)%50==0:
-            status=health(model.module,optimizer,c,local);latest=measure(model.module,examples,local,c)
+        if (step+1)%c['learning_gate_measure_every']==0:
+            status=health(model.module,optimizer,c,local)
+            for buffer in model.module.buffers():dist.broadcast(buffer,0)
+            latest=measure(model.module,examples,local,c)
             passed=torch.tensor(int(latest['passed']),device=local);dist.all_reduce(passed,op=dist.ReduceOp.MIN)
-            if rank==0:print(json.dumps(dict(event='v2_learning_gate',diagnostic_step=step+1,metrics=latest,health=status)),flush=True)
+            rank_metrics=[None,None];dist.all_gather_object(rank_metrics,dict(rank=rank,metrics=latest,health=status));rank_history.append(dict(step=step+1,ranks=rank_metrics))
+            if rank==0:print(json.dumps(dict(event='v2_learning_gate',diagnostic_step=step+1,metrics=latest,health=status,ranks=rank_metrics)),flush=True)
             if bool(passed):break
         stop=torch.tensor(int(time.time()-started>=c['learning_gate_seconds'] or time.time()>=deadline),device=local);dist.all_reduce(stop,op=dist.ReduceOp.MAX)
         if bool(stop):break
     # Validation uses rank-0 running buffers, exactly as formal native validation.
     for buffer in model.module.buffers():dist.broadcast(buffer,0)
     latest=measure(model.module,examples,local,c);accepted=torch.tensor(int(latest['passed']),device=local);dist.all_reduce(accepted,op=dist.ReduceOp.MIN)
-    result=dict(initial=first,final=latest,passed=bool(accepted),diagnostic_updates=step+1,elapsed_seconds=time.time()-started,formal_updates_carried_over=0,source_sha=os.environ['NOVO_SOURCE_SHA'],science_sha256=science_hash(),framework=dict(torch=str(torch.__version__),cuda=torch.version.cuda,smp=str(smp.__version__)))
+    result=dict(initial=first,final=latest,rank_history=rank_history,bn_evaluation_policy='rank0 buffers broadcast before every capacity measurement on both ranks',passed=bool(accepted),diagnostic_updates=step+1,elapsed_seconds=time.time()-started,formal_updates_carried_over=0,source_sha=os.environ['NOVO_SOURCE_SHA'],science_sha256=science_hash(),framework=dict(torch=str(torch.__version__),cuda=torch.version.cuda,smp=str(smp.__version__)))
+    rank_rng=[None,None];dist.all_gather_object(rank_rng,dict(cpu=torch.get_rng_state(),cuda=torch.cuda.get_rng_state(local),python=random.getstate()))
     if rank==0:
-        (output/'GPU_LEARNING_GATE.json').write_text(json.dumps(result));torch.save(dict(diagnostic_only=True,science_sha256=science_hash(),model=model.module.state_dict(),optimizer=optimizer.state_dict()),output/'learning-diagnostic.pt')
+        (output/'GPU_LEARNING_GATE.json').write_text(json.dumps(result));torch.save(dict(diagnostic_only=True,source_sha=os.environ['NOVO_SOURCE_SHA'],config=c,rank_rng=rank_rng,gate_result=result,science_sha256=science_hash(),model=model.module.state_dict(),optimizer=optimizer.state_dict()),output/'learning-diagnostic.pt')
     if rank==0:print(json.dumps(dict(event='v2_gate1_complete',result=result)),flush=True)
     dist.barrier()
     return result
@@ -129,7 +157,14 @@ def main():
         with (a.input/name).open('rb') as f:
             if hashlib.file_digest(f,'sha256').hexdigest()!=sha:raise ValueError('Private input integrity')
     catalogue=json.loads((a.input/'catalogue.json').read_text());validate_catalogue(catalogue);inventory=json.loads((a.input/'inventory.json').read_text());plan=json.loads((a.input/'plan.json').read_text());plan_sha=digest(plan);cat_sha=package['files']['catalogue.json'];inv_sha=package['files']['inventory.json'];lease=json.loads((a.input/'private-data-lease.json').read_text())
+    if lease['expires_at']-time.time()<a.session_seconds+300:raise ValueError('Input lease cannot cover session plus margin')
     if lease['catalogue_sha256']!=cat_sha:raise ValueError('Catalogue/lease mismatch')
+    if rank==0:
+        startup=dict(event='v2_gpu_allocated',source_sha=os.environ['NOVO_SOURCE_SHA'],science_sha256=science_hash(),world_size=world,devices=[torch.cuda.get_device_name(i) for i in range(2)],catalogue_sha256=cat_sha,plan_sha256=plan_sha)
+        (output/'startup.json').write_text(json.dumps(startup));print(json.dumps(startup),flush=True)
+        from .persistence import snapshot
+        snapshot(output,a.input,'startup_transport_probe')
+    dist.barrier()
     state=initial(cat_sha,inv_sha,plan_sha);model,optimizer=make(c,local)
     if a.resume:
         old=torch.load(a.resume,map_location='cpu',weights_only=True);require_resume(old,cat_sha,inv_sha,plan_sha);model.load_state_dict(old.pop('model'),strict=True);optimizer.load_state_dict(old.pop('optimizer'));rng=old.pop('rank_rng')[rank];torch.set_rng_state(rng['cpu']);torch.cuda.set_rng_state(rng['cuda'],local);random.setstate(rng['python']);state=old
@@ -142,6 +177,10 @@ def main():
     examples=[fixed_cache.sample_v2(train_visits[r['exam']],r) for r in fixed_rows(plan,inventory,c)]
     if not state['learning_gate_passed']:
         gate=learning_gate(model,optimizer,examples,c,local,rank,output,deadline)
+        if rank==0:
+            from .persistence import snapshot
+            snapshot(output,a.input,'gate1')
+        dist.barrier()
         if not gate['passed']:
             if rank==0:print(json.dumps(dict(event='v2_gate1_failed',metrics=gate)),flush=True)
             dist.destroy_process_group();raise RuntimeError('Real positive-learning failed; no formal Phase1 and no speculative GPU retry')
@@ -166,6 +205,8 @@ def main():
             tmp=output/'checkpoint.tmp';torch.save(record,tmp);tmp.replace(output/'checkpoint.pt')
             public_keys=['data_mode','science_sha256','catalogue_sha256','inventory_sha256','plan_sha256','step','cursor','mandatory_unique','replay_consumed','positive_samples','negative_samples','phase','pending_validation','scientific_stop','learning_gate_passed','early_diagnostic_complete']
             meta={k:record[k] for k in public_keys};meta['consumed_seconds']=record['consumed_seconds'];meta['framework']=record['framework'];(output/'training-state.json').write_text(json.dumps(meta));(output/'exposures.json').write_text(json.dumps(state['exposures']));(output/'difficulty.json').write_text(json.dumps(state['difficulty']))
+            from .persistence import snapshot
+            snapshot(output,a.input,'formal_checkpoint')
             print(json.dumps(dict(event='checkpoint_saved',step=state['step'],mandatory_unique=state['mandatory_unique'],replay_consumed=state['replay_consumed'],checkpoint_bytes=(output/'checkpoint.pt').stat().st_size)),flush=True)
         dist.barrier()
     try:
@@ -213,7 +254,10 @@ def main():
                     local_exposure['lesion_size_exposure:'+size]+=1
                 if state['step']%100==0 or state['step']==1:
                     last_health=health(model.module,optimizer,c,local);elapsed=time.monotonic()-telemetry_start
-                    if rank==0:print(json.dumps(dict(event='training_update',step=state['step'],unix_time=time.time(),session_started_at=started,phase=state['phase'],mandatory_unique=state['mandatory_unique'],mandatory_total=c['mandatory_positions'],replay_consumed=state['replay_consumed'],samples_per_second=samples/elapsed,loader_wait_fraction=wait/elapsed,positive_bce=float(parts['positive_bce']),negative_bce=float(parts['negative_bce']),soft_dice=float(parts['soft_dice']),loss=float(loss),health=last_health,gpu_memory_allocated_bytes=torch.cuda.memory_allocated(local))),flush=True)
+                    if rank==0:
+                        telemetry=dict(event='training_update',step=state['step'],unix_time=time.time(),session_started_at=started,phase=state['phase'],mandatory_unique=state['mandatory_unique'],mandatory_total=c['mandatory_positions'],replay_consumed=state['replay_consumed'],samples_per_second=samples/elapsed,loader_wait_fraction=wait/elapsed,positive_bce=float(parts['positive_bce']),negative_bce=float(parts['negative_bce']),soft_dice=float(parts['soft_dice']),loss=float(loss),health=last_health,gpu_memory_allocated_bytes=torch.cuda.memory_allocated(local))
+                        with (output/'training-health.jsonl').open('a') as log:log.write(json.dumps(telemetry)+'\n')
+                        print(json.dumps(telemetry),flush=True)
                     telemetry_start=time.monotonic();samples=0;wait=0.
                 stop=torch.tensor([int(time.time()>=deadline),int(time.time()-last_save>=c['checkpoint_seconds'])],device=local);dist.all_reduce(stop,op=dist.ReduceOp.MAX)
                 early_due=state['mandatory_unique']>=int(c['early_mandatory_fraction']*c['mandatory_positions']) and not state['early_diagnostic_complete']
