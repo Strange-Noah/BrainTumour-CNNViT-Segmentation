@@ -80,7 +80,7 @@ def learning_gate(model,optimizer,examples,c,local,rank,output,deadline):
     # Validation uses rank-0 running buffers, exactly as formal native validation.
     for buffer in model.module.buffers():dist.broadcast(buffer,0)
     latest=measure(model.module,examples,local,c);accepted=torch.tensor(int(latest['passed']),device=local);dist.all_reduce(accepted,op=dist.ReduceOp.MIN)
-    result=dict(initial=first,final=latest,passed=bool(accepted),diagnostic_updates=step+1,elapsed_seconds=time.time()-started,formal_updates_carried_over=0,source_sha=os.environ['NOVO_SOURCE_SHA'],science_sha256=science_hash())
+    result=dict(initial=first,final=latest,passed=bool(accepted),diagnostic_updates=step+1,elapsed_seconds=time.time()-started,formal_updates_carried_over=0,source_sha=os.environ['NOVO_SOURCE_SHA'],science_sha256=science_hash(),framework=dict(torch=str(torch.__version__),cuda=torch.version.cuda,smp=str(smp.__version__)))
     if rank==0:
         (output/'GPU_LEARNING_GATE.json').write_text(json.dumps(result));torch.save(dict(diagnostic_only=True,science_sha256=science_hash(),model=model.module.state_dict(),optimizer=optimizer.state_dict()),output/'learning-diagnostic.pt')
     if rank==0:print(json.dumps(dict(event='v2_gate1_complete',result=result)),flush=True)
@@ -90,7 +90,7 @@ def learning_gate(model,optimizer,examples,c,local,rank,output,deadline):
 def mine(logits,y,m,identity,step):
     with torch.no_grad():
         prob=logits.detach().sigmoid();neg=prob[m.bool()&~y.bool()];top=float(neg.topk(min(256,neg.numel())).values.mean()) if neg.numel() else 0.;peak=float(neg.max()) if neg.numel() else 0.
-        return dict(exam=identity['exam'],patient=identity['patient'],z=identity['z'],origin=identity['origin'],scale=identity['scale'],selected_component=identity.get('component'),actual_positive=identity['actual_positive'],hard_negative_eligible=not identity['actual_positive'],negative_category=identity['negative_category'],mask_fallback=identity['mask_fallback'],peak_false_positive=peak,topk_false_positive=top,score=.5*peak+.5*top,step=step,training_only=True)
+        return dict(exam=identity['exam'],patient=identity['patient'],z=identity['z'],origin=identity['origin'],scale=identity['scale'],selected_component=identity.get('component'),actual_positive=identity['actual_positive'],hard_negative_eligible=not identity['actual_positive'],negative_category=identity['negative_category'],source_size=identity['source_size'],zoom_scale=identity['zoom_scale'],mask_fallback=identity['mask_fallback'],peak_false_positive=peak,topk_false_positive=top,score=.5*peak+.5*top,step=step,training_only=True)
 
 def early_validation(raw,catalogue,cache,fetch,output,deadline):
     """Frozen first two validation exams; same full-FOV inference, no GT localization."""
@@ -162,10 +162,10 @@ def main():
         rng=dict(cpu=torch.get_rng_state(),cuda=torch.cuda.get_rng_state(local),python=random.getstate());all_rng=[None,None];dist.all_gather_object(all_rng,rng)
         if optimizer.state and {float(s['step']) for s in optimizer.state.values()}!={float(state['step'])}:raise ValueError('Committed optimizer/checkpoint mismatch')
         if rank==0:
-            record=dict(state,model=model.module.state_dict(),optimizer=optimizer.state_dict(),rank_rng=all_rng,runtime_precision=RUNTIME_PRECISION,source_sha=os.environ['NOVO_SOURCE_SHA'],config=c,consumed_seconds=prior+time.time()-started)
+            record=dict(state,model=model.module.state_dict(),optimizer=optimizer.state_dict(),rank_rng=all_rng,runtime_precision=RUNTIME_PRECISION,source_sha=os.environ['NOVO_SOURCE_SHA'],config=c,framework=dict(torch=str(torch.__version__),cuda=torch.version.cuda,smp=str(smp.__version__),devices=[torch.cuda.get_device_name(i) for i in range(2)]),consumed_seconds=prior+time.time()-started)
             tmp=output/'checkpoint.tmp';torch.save(record,tmp);tmp.replace(output/'checkpoint.pt')
             public_keys=['data_mode','science_sha256','catalogue_sha256','inventory_sha256','plan_sha256','step','cursor','mandatory_unique','replay_consumed','positive_samples','negative_samples','phase','pending_validation','scientific_stop','learning_gate_passed','early_diagnostic_complete']
-            meta={k:record[k] for k in public_keys};meta['consumed_seconds']=record['consumed_seconds'];(output/'training-state.json').write_text(json.dumps(meta));(output/'exposures.json').write_text(json.dumps(state['exposures']));(output/'difficulty.json').write_text(json.dumps(state['difficulty']))
+            meta={k:record[k] for k in public_keys};meta['consumed_seconds']=record['consumed_seconds'];meta['framework']=record['framework'];(output/'training-state.json').write_text(json.dumps(meta));(output/'exposures.json').write_text(json.dumps(state['exposures']));(output/'difficulty.json').write_text(json.dumps(state['difficulty']))
             print(json.dumps(dict(event='checkpoint_saved',step=state['step'],mandatory_unique=state['mandatory_unique'],replay_consumed=state['replay_consumed'],checkpoint_bytes=(output/'checkpoint.pt').stat().st_size)),flush=True)
         dist.barrier()
     try:
