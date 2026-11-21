@@ -1,0 +1,6 @@
+{
+  "status": "NOT_RUN",
+  "verified": null,
+  "actual_measurements": null,
+  "note": "Filled only from actual CPU/GPU execution evidence."
+}

@@ -1,0 +1,13 @@
+{
+  "status": "LOCAL_TESTS_PASSED_PENDING_CLOUD_DATA_AND_FULL_PLAN",
+  "verified": false,
+  "local_tests": {
+    "run": 18,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "bounded_real_audit": "PENDING",
+  "full_frozen_plan": "PENDING",
+  "gpu_allocated": false
+}

@@ -1,0 +1,94 @@
+{
+  "split_sha256": "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0",
+  "modalities": [
+    "t1n",
+    "t1c",
+    "t2",
+    "t2f"
+  ],
+  "offsets": [
+    -1,
+    0,
+    1
+  ],
+  "target_labels": [
+    3
+  ],
+  "encoder_lr": 0.0001,
+  "decoder_lr": 0.0003,
+  "weight_decay": 0.0001,
+  "seed": 42,
+  "encoder_checkpoint_revision": "7a57b34f723329ff020b3f8bc41771163c519d0c",
+  "encoder_checkpoint_sha256": "6549ccd46a2d20a0a74fca866cfc5c6f9b3672d468b0a92aa94a58545a61103e",
+  "quota_safety_rate": 1.25,
+  "quota_reserve_seconds": 900,
+  "schema": "foreground-lesion-multiscale-v2",
+  "architecture": "SMP-Unet-ResNet34",
+  "precision": "float32",
+  "devices": 2,
+  "local_batch": 1,
+  "global_batch": 2,
+  "input_shape": [
+    12,
+    512,
+    512
+  ],
+  "mandatory_positions": 220384,
+  "replay_divisor": 3,
+  "replay_scales": {
+    "512": 0.5,
+    "256": 0.3,
+    "128": 0.2
+  },
+  "supported_scales": [
+    128,
+    192,
+    256,
+    512
+  ],
+  "small_weight_reference_mm3": 100.0,
+  "small_weight_exponent": 0.25,
+  "small_weight_clip": [
+    1.0,
+    4.0
+  ],
+  "replay_patient_cap": 1536,
+  "replay_visit_cap": 768,
+  "replay_lesion_cap": 128,
+  "patient_block_size": 4,
+  "block_updates": 32,
+  "max_negative_only_update_streak": 8,
+  "rank_window_updates": 32,
+  "min_positive_fraction": 0.35,
+  "crop_jitter_fraction": 0.125,
+  "support_closing_mm": 3.0,
+  "support_margin_mm": 20.0,
+  "support_min_seed_fraction": 0.005,
+  "support_min_fraction": 0.1,
+  "bce_positive_coefficient": 0.5,
+  "loss_coefficients": {
+    "bce": 0.5,
+    "soft_dice": 0.5
+  },
+  "dice_smooth": 1.0,
+  "bn_policy": "all-BN-training-running-statistics-momentum-0.01; no legacy migration",
+  "bn_momentum": 0.01,
+  "bn_variance_limit": 100000000.0,
+  "gpu_cache_bytes": 3221225472,
+  "decoded_cache_bytes_per_worker": 1610612736,
+  "component_cache_bytes": 402653184,
+  "workers_per_rank": 1,
+  "prefetch_batches": 2,
+  "checkpoint_seconds": 600,
+  "learning_gate_max_steps": 400,
+  "learning_gate_seconds": 600,
+  "learning_gate_positive_probability": 0.6,
+  "learning_gate_dice": 0.1,
+  "learning_gate_negative_probability_max": 0.4,
+  "learning_gate_negative_predicted_fraction_max": 0.1,
+  "early_mandatory_fraction": 0.05,
+  "early_fixed_validation_exams": 2,
+  "stop_after_phase1": true,
+  "phase2_authorized": false,
+  "test_access": false
+}
