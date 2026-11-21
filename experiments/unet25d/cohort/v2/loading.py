@@ -9,6 +9,12 @@ from ..loading import ShardCache
 from .geometry import crop,effective,crop_origin
 from .sampling import lesion_weight
 
+def component_exposure(ids,target,weights,selected):
+    """Diagnostic counts only; target and component weighting remain unchanged."""
+    positive=target.bool();chosen=(ids==selected)&positive
+    count=int(chosen.sum());total=int(positive.sum())
+    return dict(selected_component_foreground_pixels=count,incidental_foreground_pixels=total-count,selected_component_BCE_share=float(weights[chosen].sum()/weights[positive].sum()) if total else None,target_scope='all enhancing components in crop')
+
 class Cache(ShardCache):
     def __init__(self,root,fetch,c,inventory=None):
         super().__init__(root,fetch,c['gpu_cache_bytes'],c['decoded_cache_bytes_per_worker'])
@@ -69,6 +75,7 @@ class Cache(ShardCache):
                 exposure[str(label)]={'volume_mm3':volume,'pixels':pixels}
             if bool(y.any()):weights[y.bool()]*=float(y.sum())/float(weights[y.bool()].sum())
         identity=dict(row,actual_positive=bool(y.any()),valid_pixels=int(mask.sum()),foreground_pixels=int(y.sum()),source_size=size,zoom_scale=512/size,mask_fallback=reason,lesions=exposure)
+        if training and row['kind']=='replay':identity.update(component_exposure(ids,y,weights,row['component']))
         if x.shape!=(12,512,512) or y.shape!=(1,512,512) or not torch.isfinite(x).all():raise ValueError('Frozen input shape/finiteness')
         return x,y,mask,weights,identity
     def sample(self,visit,tile,z):
