@@ -2,14 +2,16 @@
   "status": "WAITING_PROVIDER_QUEUE",
   "verified": null,
   "actual_measurements": null,
-  "note": "One submitted job is queued. No CUDA learning gate or formal ten-minute health observation has occurred. Submission acknowledgement and Actions SUCCESS are not evidence of successful GPU learning. No duplicate submission, criteria change, or extra GPU campaign.",
+  "note": "Exactly one owner-authorized replacement submitted after verified cancellation, using independently verified input v3. Current replacement is QUEUED; actual CUDA/Gate1/ten-minute formal health remain unobserved. No further replacement or input refresh.",
   "source_sha": "3ddc324e114d0a0cd740234b5ba26ec750238d2a",
-  "kernel": "mathewzhou/novo-unet25d-v2-44906471093-s1",
+  "kernel": "mathewzhou/novo-unet25d-v2-44906471093-s2",
   "provider_status": "QUEUED",
-  "provider_status_checked_utc": "2026-11-21T13:35:00Z",
+  "provider_status_checked_utc": "2026-11-21T17:39:12Z",
   "quota_checked_utc": "2026-11-21T13:36:21Z",
   "reported_gpu_quota": {
     "used_hours": 0.0,
     "remaining_hours": 30.0
-  }
+  },
+  "replacement_workflow": 44930863604,
+  "original_kernel_status": "CANCEL_ACKNOWLEDGED"
 }

@@ -1,4 +1,4 @@
-# Controlled queue replacement — cancellation blocked
+# Controlled queue replacement — completed, replacement queued
 
 [Original private job](https://www.kaggle.com/code/mathewzhou/novo-unet25d-v2-44906471093-s1) remained CLI `QUEUED` at this operation's initial fresh read (2026-11-21 17:17 UTC / 2026-11-22 01:17 BJT). No replacement GPU was submitted and no existing notebook/output was deleted. Gate1 and actual formal updates remain unobserved.
 
@@ -30,3 +30,21 @@ The existing active record/recovery routing was not redirected or disabled; it s
 After verified termination, use the owner's already authorized single replacement only: recheck v3 remaining validity, quota and cumulative reservation; preserve the old evidence and reconcile its unused reservation without resetting the original campaign budget; bind a distinct v2 notebook to the verified fresh input; update the existing active record before unattended operation. This routing transition is pending, not claimed complete. Never bypass campaign reservation/source authorization or start a second job while old state is nonterminal/ambiguous.
 
 GPU submissions in this operation: **0**. Input refreshes: **1**. No paid resources, v1 changes, teammate changes or permanent branch added.
+
+## Completed replacement after owner stopped the old session
+
+Owner reported stopped session. Independent CLI reads at 2026-11-21 17:29 UTC and 17:39 UTC returned **CANCEL_ACKNOWLEDGED**, and the existing CPU operations path additionally rechecked cancellation twice, no original outputs and zero GPU quota use before replacement. No session-ID guess or unsupported cancel command was used.
+
+[Operations PR #42](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/pull/42) passed [CI 44930693747](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/44930693747), then merged normally as [b78b7ff](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/commit/b78b7ff159b5db296850f9fb1197a2baed51f422). Only two shared routing/test files changed. Exact registered operations wrapper `e275ff03826a3db6d624a848ff30b2c8039ae874` adds a one-time cancelled-session replacement and no scientific-file changes; all actual GPU source stays `3ddc324e114d0a0cd740234b5ba26ec750238d2a`. Fifteen routing tests and valid-release/seven-unsafe-case accounting checks passed. Temporary review branch was deleted after verifying the merge; personal workstream retained.
+
+[Actual replacement workflow 44930863604](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/44930863604) succeeded. It independently reread the exact v3 package/lease/config/plan/inventory, checked package hashes and original accepted catalogue/inventory/plan receipts, required at least 45,000 seconds lease validity, and submitted **one** distinct private notebook through existing control.start without another input publication:
+
+[Replacement s2](https://www.kaggle.com/code/mathewzhou/novo-unet25d-v2-44906471093-s2).
+
+Provider metadata readback verified private notebook, exact original launcher text, current returned notebook version, enabled GPU and NvidiaTeslaT4. Explicit submitted input reference was dataset version 3. Provider display normalizes the input reference to its dataset name; exact mounted version is not claimed independently observed before execution. The original runtime package source/science/integrity checks remain enforced at startup.
+
+`v2_queue_replacement_complete` confirms old terminal verification, v3, unchanged scientific source/hash, and active-record update. Only the unused original 43,200-second reservation was released; replacement re-reserves 43,200 seconds. Cumulative approved budget remains **85,680 seconds**, current free quota was **30h remaining / 0h used**, weekly refresh remains 2026-11-28. No paid or future-week allowance.
+
+Fresh provider status at **2026-11-22 01:39:12 BJT**: old s1 **CANCEL_ACKNOWLEDGED**, new s2 **QUEUED**. One live queued v2 execution, no confirmed running GPU. Gate1/ten-minute formal health remain pending, not passed. This operation's GPU submissions: **1**, private input refreshes: **1** total (CPU run 44929363445).
+
+Active/recovery routing now uses s2 and the existing main half-hourly collector via the reviewed wrapper; original scientific source retained for subsequent normal recovery. No trained v2 checkpoint or durable checkpoint readback yet. If s2 remains queued, preserve it: no additional input refresh, cancellation or GPU submission is authorized by this operation. Existing v3 expiry remains **2026-11-22 19:19:54 BJT**; a full twelve-hour allocation should start before approximately **07:19 BJT**, with margin. The original input leases are not claimed repaired.
