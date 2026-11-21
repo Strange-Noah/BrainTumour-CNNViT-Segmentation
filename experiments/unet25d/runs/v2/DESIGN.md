@@ -32,6 +32,8 @@ Training-only mining records peak and top-256 negative probabilities inside vali
 
 ## Integrated run and stopping
 
+The full-scale capacity example has at least 16 actual component pixels on its center plane; the local 128 example is a true <100 mm³ lesion. These training-only criteria avoid testing full-scale capacity solely on a pathological one-voxel target, while still testing tiny-lesion learning. The same fixed examples are reused for early observation.
+
 The first GPU session performs up to 400 diagnostic updates / 600 seconds on four fixed training examples (512/128 positives and both negative types). Passing requires actual eval-mode tumor probability ≥0.60, foreground Dice ≥0.10 and nonempty predictions on each positive; negative probability ≤0.40 and predicted fraction ≤0.10 on each negative; finite model/optimizer/gradients and healthy BN. A decreasing total loss alone fails. Formal model, optimizer and RNG are then independently initialized from the pinned encoder; no diagnostic update carries over.
 
 After ~5% mandatory coverage, evaluate the same fixed training examples and the immutable first two sorted validation exams using full-FOV/native inference. This detects fatal positive-learning/numerical issues, not scientific model selection. Healthy positive learning continues automatically. Ten-minute observation uses actual formal computation timestamps.

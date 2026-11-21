@@ -90,5 +90,7 @@
   "early_fixed_validation_exams": 2,
   "stop_after_phase1": true,
   "phase2_authorized": false,
-  "test_access": false
+  "test_access": false,
+  "capacity_fullscale_min_component_plane_pixels": 16,
+  "capacity_small_lesion_max_mm3": 100.0
 }

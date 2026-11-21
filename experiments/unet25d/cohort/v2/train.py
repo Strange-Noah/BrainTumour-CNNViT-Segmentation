@@ -38,9 +38,18 @@ def health(model,optimizer,c,local):
     if bool(pressure):raise MemoryError('Actual host RAM pressure')
     return dict(BN_running_variance_max=max(variances,default=0),BN_running_mean_abs_max=max(means,default=0),host_ram_available_fraction=memory.available/memory.total)
 
-def fixed_rows(plan):
+def fixed_rows(plan,inventory,c):
     rows=[]
-    for scale in (512,128):rows.append(next(r for r in plan if r['kind']=='replay' and r['scale']==scale))
+    for scale in (512,128):
+        candidates=[r for r in plan if r['kind']=='replay' and r['scale']==scale]
+        selected=None
+        for r in candidates:
+            component=next(x for x in inventory[r['exam']]['components'] if x['id']==r['component'])
+            if scale==512 and component['planes'][str(r['z'])]['voxels']<c['capacity_fullscale_min_component_plane_pixels']:continue
+            if scale==128 and component['volume_mm3']>=c['capacity_small_lesion_max_mm3']:continue
+            selected=r;break
+        if selected is None:raise ValueError('Missing representative full-scale/tiny-lesion capacity examples')
+        rows.append(selected)
     for kind in ('negative_enhancing','negative_empty'):rows.append(next(r for r in plan if r['negative_category']==kind))
     return rows
 
@@ -130,7 +139,7 @@ def main():
     if plan_sha!=json.loads((a.input/'SAMPLING_AUDIT.json').read_text())['plan_SHA']:raise ValueError('Frozen accepted schedule identity mismatch')
     model=torch.nn.parallel.DistributedDataParallel(model,device_ids=[local],broadcast_buffers=True)
     fetch=SignedFetch(lease);fixed_cache=Cache(output/'fixed-cache'/str(rank),fetch,c,inventory);train_visits={v['metadata']['exam_id']:v for v in catalogue['visits'] if v['partition']=='train'}
-    examples=[fixed_cache.sample_v2(train_visits[r['exam']],r) for r in fixed_rows(plan)]
+    examples=[fixed_cache.sample_v2(train_visits[r['exam']],r) for r in fixed_rows(plan,inventory,c)]
     if not state['learning_gate_passed']:
         gate=learning_gate(model,optimizer,examples,c,local,rank,output,deadline)
         if not gate['passed']:
