@@ -1,22 +1,11 @@
-# Team data availability and verification
+# Shared dataset availability
 
-Verified by live S3 listing and SHA-256 readback on 2026-11-15, Asia/Shanghai.
+Canonical UCSD-BMETS v1 ingestion and integrity audit are complete, not pending: **300 patients / 1,065 examinations / 11,405 NIfTI objects / 175,705,024,365 bytes**. [Final immutable receipt](../../protocol/v1/final-ingestion.json) · [full audit](full-dataset-audit.md) · [aggregate audit](../../protocol/v1/full-audit-summary.json). No missing expected objects, missing required modalities or size conflicts were found.
 
-Private bucket `novo-nordisk-pbl` has four original official metadata TSVs (136,665 bytes combined), two immutable manifest revisions (1,619,865 bytes combined), and two synthetic verification objects (777 bytes combined). The 43-file pilot is now stored in raw and verified by an independent read-only runner. The same pilot patient is usable through the real loader. The remaining release is pending transfer.
+Private canonical bucket: `novo-nordisk-pbl`; outputs/checkpoints/reports: `novo-nordisk-pbl-outputs`, isolated by unique run prefixes. Teammate dataset access remains read-only. R2 credentials and patient-level artifacts are never stored on GitHub. The four official metadata TSVs and manifest identity `040ec6c523d5beae43a30b64fede2bee226e1a08e8c14b2cca8043b01b9c39f4` remain canonical; an older manifest is historical, not a new ingestion target.
 
-The canonical pending-availability manifest is the revision beginning `040ec6c5`. The earlier `4f3c7caa` manifest uses the unverified T2 filename convention and is superseded. Both are immutable. The canonical manifest records expected paths and pending integrity for images. Its presence does not imply those image objects are available.
+Use the frozen **210 train / 45 validation / 45 sealed test** patient split and [protocol](../../protocol/v1/README.md). Model development must not evaluate the test cohort. Preserve raw tissue labels; primary enhancing target is label 3, optional core is labels 1+3. Tissue values are not individual lesion IDs. Preserve native physical geometry and follow [spatial-unit policy](spatial-unit-policy.md).
 
-| Object under `novo-nordisk/datasets/ucsd-bmets/v1/` | SHA-256 |
-|---|---|
-| `manifests/040ec6c523d5beae43a30b64fede2bee226e1a08e8c14b2cca8043b01b9c39f4/visits.jsonl` | `040ec6c523d5beae43a30b64fede2bee226e1a08e8c14b2cca8043b01b9c39f4` |
-| `manifests/4f3c7caa8fb4a19b8706bae0a1d1b1a82a1b0c8862f84194d21cae35907cbcf7/visits.jsonl` | `4f3c7caa8fb4a19b8706bae0a1d1b1a82a1b0c8862f84194d21cae35907cbcf7` |
-| `metadata/UCSD-BMETS-Longitudinal_MRImetadata_Dictionary.tsv` | `b2647b0f8936676208bb3e7bc986eb8888f76376ea83d29412da82074ec51797` |
-| `metadata/UCSD-BMETS-Longitudinal_TCIA_Clinical_Data.tsv` | `d701179cba86124d833de30bed496337c19f054c49e48d6ebc25137542daf0a2` |
-| `metadata/UCSD-BMETS-Longitudinal_TCIA_Clinical_Data_dictionary.tsv` | `77fd461369f8b0e1f9bc762e79d6346d0a0f733cc5e4923ddbe8de17b65cb3a1` |
-| `metadata/UCSD-BMETS-Longitudinal_TCIA_MRImetadata.tsv` | `53ac850fcd31094b2fc131cad08b23497b9539bbf75cf2b3679b7e7108fa41c7` |
+[Portable CPU-only S3 reader](../../cloud/read_smoke.py) accepts a configurable HTTPS endpoint, bucket, key, digest and standard AWS credential chain. It performs no writes. Use authorized read-only references and existing receipts, not public data copies.
 
-The portable CPU smoke passed with `verified=true`, 480 bytes and shape `[4,4,4]` for the Gate B synthetic NIfTI. It uses the standard AWS credential chain and a configurable S3 endpoint. It performs no write operations. Live validation used R2; other S3 implementations still need their own endpoint and reader credential check.
-
-The TCIA pilot was manually dispatched on promoted main and is waiting at the existing credential approval gate. The account used by this agent is the required environment reviewer and the dispatch actor, so the current self-review prevention blocks this account from approving that run. A trusted collaborator can dispatch a new main run for owner approval under the existing policy. No environment policy was changed for onboarding. [Pilot run](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/43710790508)
-
-The complete per-file inventory enumeration previously ended in cancellation. Full ingestion remains gated on persistent pilot verification, inventory completeness and staging validation. [Acquisition audit](tcia.md) · [Runtime handoff](handoff.md)
+Model-specific prepared caches and scientific results live on their workstreams. They are not prerequisites for every teammate or shared accepted model results. [Onboarding](../../TEAM_ONBOARDING.md) · [model contracts](model-contracts.md) · [execution handoff](handoff.md).
