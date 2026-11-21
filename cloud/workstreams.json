@@ -1,7 +1,7 @@
 {
   "unet25d": {
     "branch": "model/unet25d-kaggle",
-    "source_sha": "2805835a0dc45b40cf63d40021b66b4b41a604fa",
+    "source_sha": "54b34d139e5161be9be26e9e433fdd70cb65b95c",
     "authorized_actor": "Strange-Noah",
     "entrypoint": "experiments.unet25d.cohort.v2.control",
     "dataset": "mathewzhou/novo-unet25d-v2-input",
