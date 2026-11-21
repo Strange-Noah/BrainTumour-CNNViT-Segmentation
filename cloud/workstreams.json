@@ -1,12 +1,12 @@
 {
   "unet25d": {
     "branch": "model/unet25d-kaggle",
-    "source_sha": "b9456ba9e668ec2419218b4b76239c6e35e2ae83",
+    "source_sha": "2805835a0dc45b40cf63d40021b66b4b41a604fa",
     "authorized_actor": "Strange-Noah",
-    "entrypoint": "cloud.kaggle_benchmark_bridge",
-    "dataset": "mathewzhou/novo-unet25d-full-cohort-input",
-    "kernel": "mathewzhou/novo-unet25d-full-cohort-training",
-    "auto_recover": false,
-    "formal_enabled": false
+    "entrypoint": "experiments.unet25d.cohort.v2.control",
+    "dataset": "mathewzhou/novo-unet25d-v2-input",
+    "kernel": "mathewzhou/novo-unet25d-v2",
+    "auto_recover": true,
+    "formal_enabled": true
   }
 }
