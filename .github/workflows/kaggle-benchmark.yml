@@ -4,6 +4,9 @@ on:
     - cron: '17,47 * * * *'
   workflow_dispatch:
     inputs:
+      workstream:
+        type: string
+        default: unet25d
       mode:
         type: choice
         options: [prepare, validate, benchmark, collect, formal, recover]
@@ -25,10 +28,10 @@ on:
         description: Owner authorizes currently available free GPU allowance only
       dataset:
         type: string
-        default: mathewzhou/novo-unet25d-benchmark-cache
+        default: ''
       kernel:
         type: string
-        default: mathewzhou/novo-unet25d-bounded-benchmark
+        default: ''
 concurrency:
   group: novo-private-kaggle-bridge
   cancel-in-progress: false
@@ -42,28 +45,52 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          ref: main
           persist-credentials: false
           fetch-depth: 0
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
-      - run: python -m pip install -q kaggle==2.2.4 -r cloud/requirements.txt
+      - name: Resolve approved workstream from trusted main
+        id: route
+        env:
+          WORKSTREAM: ${{ inputs.workstream || 'unet25d' }}
+          DISPATCH_ACTOR: ${{ github.actor }}
+          DISPATCH_REF: ${{ github.ref }}
+          DISPATCH_EVENT: ${{ github.event_name }}
+          MODE: ${{ github.event_name == 'schedule' && 'recover' || inputs.mode }}
+          DATASET: ${{ inputs.dataset }}
+          KERNEL: ${{ inputs.kernel }}
+        run: python -m cloud.workstream_route
+      - name: Check out exact approved workstream
+        if: steps.route.outputs.enabled == 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ steps.route.outputs.source_sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - if: steps.route.outputs.enabled == 'true'
+        run: python -m pip install -q kaggle==2.2.4 -r cloud/requirements.txt
       - name: CPU preparation dependencies only
-        if: inputs.mode == 'prepare'
+        if: steps.route.outputs.enabled == 'true' && inputs.mode == 'prepare'
         run: |
           python -m pip install -q torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cpu
           python -m pip install -q -r experiments/unet25d/requirements.txt
       - name: Orchestrate private inputs and artifacts
+        if: steps.route.outputs.enabled == 'true'
         env:
           GPU_SESSION_SECONDS: ${{ inputs.gpu_session_seconds || 43200 }}
           MODE: ${{ github.event_name == 'schedule' && 'recover' || inputs.mode }}
-          DATASET: ${{ github.event_name == 'schedule' && 'mathewzhou/novo-unet25d-full-cohort-input' || inputs.dataset }}
-          KERNEL: ${{ github.event_name == 'schedule' && 'mathewzhou/novo-unet25d-full-cohort-training' || inputs.kernel }}
+          DATASET: ${{ steps.route.outputs.dataset }}
+          KERNEL: ${{ steps.route.outputs.kernel }}
           FORMAL_TRAINING_AUTHORIZED: ${{ inputs.formal_training_authorized || false }}
           APPROVED_GPU_BUDGET_SECONDS: ${{ inputs.approved_gpu_budget_seconds || 0 }}
           FREE_RESOURCE_AUTHORIZED: ${{ inputs.free_resource_authorized || false }}
           KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
-          NOVO_SOURCE_SHA: ${{ github.sha }}
+          NOVO_SOURCE_SHA: ${{ steps.route.outputs.source_sha }}
+          NOVO_APPROVED_WORKSTREAM_REF: ${{ steps.route.outputs.approved_ref }}
+          NOVO_REPOSITORY: ${{ github.repository }}
+          ENTRYPOINT: ${{ steps.route.outputs.entrypoint }}
           R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}
           R2_BUCKET: novo-nordisk-pbl
           R2_OUTPUT_BUCKET: novo-nordisk-pbl-outputs
@@ -71,4 +98,4 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_OUTPUT_ACCESS_KEY_ID: ${{ secrets.R2_OUTPUT_ACCESS_KEY_ID }}
           R2_OUTPUT_SECRET_ACCESS_KEY: ${{ secrets.R2_OUTPUT_SECRET_ACCESS_KEY }}
-        run: python -m cloud.kaggle_benchmark_bridge
+        run: python -c 'import os,runpy; runpy.run_module(os.environ["ENTRYPOINT"], run_name="__main__")'

@@ -1,4 +1,0 @@
--r ../research/requirements.txt
-timm==1.0.28
-safetensors==0.7.0
-huggingface_hub==1.28.0

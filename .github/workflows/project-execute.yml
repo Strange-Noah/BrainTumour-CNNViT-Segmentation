@@ -2,6 +2,10 @@ name: Authorized project CPU execution
 on:
   workflow_dispatch:
     inputs:
+      workstream:
+        description: Registered personal source, when source is not on main
+        default: unet25d
+        type: string
       source_sha:
         description: Exact authorized project source commit (40 lowercase hex characters)
         required: true
@@ -27,26 +31,30 @@ jobs:
     timeout-minutes: 45
     environment: tcia-verification
     steps:
-      - name: Validate immutable source identifier
-        env:
-          SOURCE_SHA: ${{ inputs.source_sha }}
-        run: |
-          python - <<'PY'
-          import os,re
-          assert re.fullmatch('[0-9a-f]{40}',os.environ['SOURCE_SHA'])
-          PY
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Check out trusted main for source authorization
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ inputs.source_sha }}
+          ref: main
           persist-credentials: false
           fetch-depth: 0
-      - name: Require source already integrated into main
-        env:
-          SOURCE_SHA: ${{ inputs.source_sha }}
-        run: git merge-base --is-ancestor "$SOURCE_SHA" origin/main
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
+      - name: Authorize shared ancestor or exact registered workstream
+        id: route
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          WORKSTREAM: ${{ inputs.workstream }}
+          DISPATCH_ACTOR: ${{ github.actor }}
+          DISPATCH_REF: ${{ github.ref }}
+          DISPATCH_EVENT: ${{ github.event_name }}
+        run: python -m cloud.workstream_route --cpu
+      - name: Check out authorized immutable source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ steps.route.outputs.source_sha }}
+          persist-credentials: false
+          fetch-depth: 0
       - name: Install authorized dependencies
         env:
           REQUIREMENTS: ${{ inputs.requirements }}
@@ -59,7 +67,9 @@ jobs:
           PY
       - name: Run project entrypoint
         env:
-          NOVO_SOURCE_SHA: ${{ inputs.source_sha }}
+          NOVO_SOURCE_SHA: ${{ steps.route.outputs.source_sha }}
+          NOVO_APPROVED_WORKSTREAM_REF: ${{ steps.route.outputs.approved_ref }}
+          NOVO_REPOSITORY: ${{ github.repository }}
           ENTRYPOINT: ${{ inputs.entrypoint }}
           ARGUMENTS: ${{ inputs.arguments }}
           R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}

@@ -4,9 +4,9 @@ TCIA → approved Linux staging → private Cloudflare R2 → private Kaggle ses
 
 | System | Access and responsibility |
 |---|---|
-| GitHub | Source, review, manifests' format and hashes, environment pins and aggregate reports. Each contributor branches from the reviewed baseline. |
-| Cloudflare R2 | Set `R2_ENDPOINT_URL`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` in the runtime secret store. Keep canonical data and manifests in private `novo-nordisk-pbl`, with read-only access from Kaggle. Write all experiment outputs to private `novo-nordisk-pbl-outputs` using separate bucket-scoped credentials. The owner will provision the output bucket and credentials. |
-| Kaggle | Each contributor uses their own private notebook, Internet enabled and a free GPU when Gate D is reached. Attach the R2 secrets to that notebook via Kaggle Secrets. |
+| GitHub | Source, review, manifests' format and hashes, environment pins and aggregate reports. Each contributor continues their existing logical workstream; shared changes are selectively reviewed into main. |
+| Cloudflare R2 | Set `R2_ENDPOINT_URL`, `R2_BUCKET`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` in the runtime secret store. Keep canonical data and manifests in private `novo-nordisk-pbl`, with read-only access from Kaggle. Write all experiment outputs to private `novo-nordisk-pbl-outputs` using separate bucket-scoped credentials. Both private buckets and the authorized runtime credentials are already provisioned. |
+| Kaggle | The owner workstream uses accepted GitHub Actions → private Kaggle inputs → GPU → GitHub Actions recovery, without manual notebook operations. Teammate runtimes remain independently authorized; model-specific configuration stays on their own workstreams. |
 | Hugging Face | A dedicated Space on the project owner's login, using CPU Basic and the Gradio SDK once the owner account has the required plan. Set repository variable `HF_SPACE_ID` and the `hugging-face` GitHub environment secret `HF_TOKEN` with access scoped to that Space. |
 
 Use these prefixes under `novo-nordisk/`. The datasets prefix belongs in `novo-nordisk-pbl`. Experiments, checkpoints, predictions, reports, and new output verification artifacts belong in `novo-nordisk-pbl-outputs`.
@@ -18,6 +18,6 @@ Use these prefixes under `novo-nordisk/`. The datasets prefix belongs in `novo-n
 
 Conditional PUT protects cooperating tools. Review bucket locks, access controls and disaster recovery before declaring the raw prefix immutable against all clients. The script uses independent GET and SHA-256 because S3 ETags can vary by upload mode.
 
-At the published Standard rate, 163 GB costs roughly USD 2.45/month for raw bytes before any available free tier, or USD 2.30 if all 10 GB-month remain. Requests and derived data are additional. Direct R2 egress is free. The account's free-tier consumption and staged dataset size remain unverified. [R2 pricing](https://developers.cloudflare.com/r2/pricing/)
+Canonical raw storage is 175,705,024,365 bytes, as recorded in the [final ingestion receipt](../../protocol/v1/final-ingestion.json). Request charges, derived storage and account quota are separate; this reorganization does not provision resources or repeat a cost audit.
 
-Kaggle should stream or cache cohorts of complete patients with local disk limits, using SHA-256 as the cache key. Use R2 as the canonical store. For repeated full-cohort work, benchmark immutable patient shards or versioned private Kaggle datasets partitioned into working subsets, subject to the platform's observed limits and TCIA terms. Avoid duplicating all 163 GB into each session. Benchmark listing, first-byte latency, request count, sequential throughput, GPU memory and free disk before choosing shard size. Private Kaggle caches are replaceable and must reference a manifest digest.
+Kaggle should stream or cache cohorts of complete patients with local disk limits, using SHA-256 as the cache key. Use R2 as the canonical store. Use the accepted workstream's immutable patient shards/private inputs and bounded cache rather than duplicating the entire cohort in each session. Reorganization does not authorize additional preparation or benchmark campaigns. Private Kaggle caches are replaceable and must reference a manifest digest.

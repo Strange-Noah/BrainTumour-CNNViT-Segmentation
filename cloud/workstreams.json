@@ -1,0 +1,12 @@
+{
+  "unet25d": {
+    "branch": "model/unet25d-kaggle",
+    "source_sha": "b9456ba9e668ec2419218b4b76239c6e35e2ae83",
+    "authorized_actor": "Strange-Noah",
+    "entrypoint": "cloud.kaggle_benchmark_bridge",
+    "dataset": "mathewzhou/novo-unet25d-full-cohort-input",
+    "kernel": "mathewzhou/novo-unet25d-full-cohort-training",
+    "auto_recover": false,
+    "formal_enabled": false
+  }
+}
