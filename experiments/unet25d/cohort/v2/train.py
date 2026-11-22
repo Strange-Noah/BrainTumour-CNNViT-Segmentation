@@ -8,7 +8,7 @@ import torch.distributed as dist
 import psutil
 import segmentation_models_pytorch as smp
 from ...train import fp32_step,RUNTIME_PRECISION
-from ..stream import SignedFetch
+from .resilient_fetch import SignedFetch
 from .settings import config,science_hash,SCHEMA,validate_catalogue
 from .loading import TrainingInput,Cache,collate
 from .loss import balanced_loss

@@ -9,7 +9,7 @@ from .settings import config,science_hash,prefix,active_key,aux_key,latest_key,w
 TERMINAL=('COMPLETE','ERROR','CANCEL')
 # Exact already-reviewed CPU producer. Only exception bookkeeping/idempotence
 # changed since this source; loss/geometry/inventory/schedule/config are identical.
-ACCEPTED_CPU_PRODUCER='54b34d139e5161be9be26e9e433fdd70cb65b95c'
+ACCEPTED_CPU_PRODUCER='072b55ee1869d23c3cd4b928833e767c9aee4211'
 def read(c,b,key):
     if not key.startswith(prefix()+'/'):raise PermissionError('v2 state namespace required')
     try:return read_json_record(c,b,key)
@@ -154,10 +154,11 @@ def recover(c=None,b=None,record=None,status=None):
         return
     if record.get('live_prefix'):
         from .persistence import recover_snapshot
-        listing=c.list_objects_v2(Bucket=b,Prefix=record['live_prefix']+'/')
+        from .receipt_io import read_receipt,LatestReceiptClient
+        listing=LatestReceiptClient(c,record['live_prefix']).list_objects_v2(Bucket=b,Prefix=record['live_prefix']+'/')
         for item in sorted(listing.get('Contents',[]),key=lambda x:x['LastModified']):
             if not item['Key'].endswith('.tar.json'):continue
-            event=read_json_record(c,b,item['Key'])
+            event=read_receipt(c,b,item['Key'],record['live_prefix'])
             if event['key'] in record.get('verified_live_keys',[]):continue
             durable=recover_snapshot(c,b,event)
             record.setdefault('verified_live_keys',[]).append(event['key']);record['last_live_snapshot']=event;record['checkpoint_r2_verified']=durable or record.get('checkpoint_r2_verified',False)

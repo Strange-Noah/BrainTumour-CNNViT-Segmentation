@@ -5,7 +5,7 @@ import torch
 from .settings import config,science_hash
 from .train import fixed_rows
 from .loading import Cache
-from ..stream import SignedFetch
+from .resilient_fetch import SignedFetch
 from .loss import balanced_loss
 
 def run(folder):

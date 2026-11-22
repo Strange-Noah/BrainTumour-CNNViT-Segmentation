@@ -88,7 +88,7 @@ class Cache(ShardCache):
 
 class TrainingInput(torch.utils.data.Dataset):
     def __init__(self,catalogue,inventory,plan,lease,root,c,cursor=0,rank=0):
-        from ..stream import SignedFetch
+        from .resilient_fetch import SignedFetch
         if cursor%2:raise ValueError('DDP cursor alignment')
         self.visits={v['metadata']['exam_id']:v for v in catalogue['visits'] if v['partition']=='train'}
         self.draws=plan[cursor+rank::2];self.inventory=inventory;self.cache=Cache(Path(root)/str(rank),SignedFetch(lease),c,inventory)

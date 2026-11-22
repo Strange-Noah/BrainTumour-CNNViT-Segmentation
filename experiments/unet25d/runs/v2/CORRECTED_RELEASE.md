@@ -37,3 +37,5 @@ Original approved ceiling remains85,680 wall seconds. New campaign remaining all
 Observe ten minutes from first actual formal update; require finite progression, genuine signal, both-rank BN health, GPU utilization/memory and independently R2-verified formal checkpoint before PHASE1_UNATTENDED_ACTIVE. Existing main half-hourly collector continues exact cursor/state across allowed sessions. Native 45-patient/159-exam validation and original early diagnostic retained. Stop AWAIT_PHASE2_DESIGN.
 
 Status at implementation: CPU/unit code prepared; real cloud acceptance, immutable release pin, input version/expiry, provider allocation, Gate1 and Phase1 results must be filled only from actual runs. No GPU is claimed launched by this document.
+
+Actual execution update: corrected Gate1 passed and Phase1 reached 47,900 logged updates before a private shard read interruption. See [transport recovery evidence and continuation contract](PHASE1_TRANSPORT_RECOVERY.md). The initial planning status above is historical; current provider state and recovery must use that report and fresh checks.
