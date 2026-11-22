@@ -1,0 +1,63 @@
+{
+  "cpu_run": 44999857941,
+  "conclusion": "success",
+  "events": [
+    {
+      "event": "v2_collection_complete",
+      "files": 11,
+      "collection": {
+        "key": "novo-nordisk/experiments/unet25d/v2/61504c0ca515653bd30cfd63c956e80d525b9a46d3bc5ea4270b5d117f5a099a/collections/44999857941/collection.json",
+        "sha256": "4dfcdb4a348c5890b514c3986fbf01b254fe9ba2b25ad5c36006eed89dd854d3",
+        "bytes": 3210
+      },
+      "checkpoint_recovered": true
+    },
+    {
+      "event": "v2_failed_campaign_preserved",
+      "provider_status": "ERROR",
+      "status": "failed",
+      "auto_continue": false,
+      "gpu_submitted": false,
+      "checkpoint": {
+        "bytes": 307113167,
+        "key": "novo-nordisk/experiments/unet25d/v2/61504c0ca515653bd30cfd63c956e80d525b9a46d3bc5ea4270b5d117f5a099a/collections/44999857941/outputs/novo-unet25d-v2/checkpoint.pt",
+        "sha256": "e76428bec9e1d43e8f851fe0703b5c330125ee53c9a710c499d4d2fbf03e380a"
+      },
+      "state": {
+        "step": 46784,
+        "cursor": 93568,
+        "mandatory_unique": 70176,
+        "replay_consumed": 23392,
+        "phase": "PHASE1",
+        "learning_gate_passed": true
+      }
+    },
+    {
+      "event": "v2_transport_repair_verified",
+      "source_sha": "9c13b991de9231277270dd115b2fa05248cac18d",
+      "science_sha256": "61504c0ca515653bd30cfd63c956e80d525b9a46d3bc5ea4270b5d117f5a099a",
+      "checkpoint_sha256": "e76428bec9e1d43e8f851fe0703b5c330125ee53c9a710c499d4d2fbf03e380a",
+      "resume_step": 46784,
+      "charged_upper_seconds": 22032,
+      "approved_budget_seconds": 82692,
+      "verified_objects": 1118,
+      "bytes_verified": 1982006169,
+      "gpu_allocated": false
+    },
+    {
+      "event": "V2_JOB_SUBMITTED",
+      "source_sha": "9c13b991de9231277270dd115b2fa05248cac18d",
+      "science_sha256": "61504c0ca515653bd30cfd63c956e80d525b9a46d3bc5ea4270b5d117f5a099a",
+      "kernel": "mathewzhou/novo-unet25d-v2-44950328254-s2",
+      "url": "https://www.kaggle.com/code/mathewzhou/novo-unet25d-v2-44950328254-s2",
+      "session_seconds": 43200,
+      "cumulative_budget_seconds": 82692,
+      "quota_before": {
+        "remaining_seconds": 83052.0,
+        "used_seconds": 24948.0,
+        "refresh_at": "2026-11-28T00:00:00"
+      },
+      "campaign_key": "novo-nordisk/experiments/unet25d/v2/61504c0ca515653bd30cfd63c956e80d525b9a46d3bc5ea4270b5d117f5a099a/active.json"
+    }
+  ]
+}
