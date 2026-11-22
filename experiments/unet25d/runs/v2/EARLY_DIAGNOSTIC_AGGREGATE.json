@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "diagnostic_only": true,
+  "model_selection": false,
+  "validation_exams": 2,
+  "positive_exams": 2,
+  "positive_exam_mean_dice": 0.004882846695360891,
+  "matched_lesions": 2,
+  "truth_lesions": 13,
+  "false_positives": 4370,
+  "training_positive_learning": true,
+  "threshold": 0.5,
+  "aggregation": "positive-examination mean Dice; pooled lesion and FP counts; not patient macro"
+}
