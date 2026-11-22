@@ -3,6 +3,10 @@ import hashlib,json,os,socket,ssl,time,urllib.request,urllib.error
 from pathlib import Path
 from urllib.parse import urlsplit
 
+class DownloadChecksumMismatch(ValueError):
+    """Downloaded payload did not match the immutable object hash."""
+
+
 class SignedFetch:
     def __init__(self,lease):self.lease=lease
     def __call__(self,key,expected,destination):
@@ -23,13 +27,16 @@ class SignedFetch:
                             if not chunk:break
                             h.update(chunk);phase='write';out.write(chunk)
                 phase='verify'
-                if h.hexdigest()!=expected:raise ValueError('Private object checksum mismatch')
+                if h.hexdigest()!=expected:raise DownloadChecksumMismatch('Private object checksum mismatch')
                 phase='commit';tmp.replace(destination);return
             except Exception as error:
                 tmp.unlink(missing_ok=True)
                 cause=error.reason if isinstance(error,urllib.error.URLError) else error
                 transient=(isinstance(error,urllib.error.HTTPError) and error.code in (429,500,502,503,504)) or (not isinstance(error,urllib.error.HTTPError) and isinstance(cause,(TimeoutError,ConnectionError,socket.gaierror)))
-                retry=phase in ('open','read') and transient and attempt<3 and not isinstance(cause,ssl.SSLError)
+                retry = attempt < 3 and (
+                    isinstance(error, DownloadChecksumMismatch)
+                    or (phase in ('open', 'read') and transient and not isinstance(cause, ssl.SSLError))
+                )
                 diagnostic=dict(event='v2_fetch_error',object_sha256=expected,error_type=type(error).__name__,cause_type=type(cause).__name__,http_status=getattr(error,'code',None),phase=phase,attempt=attempt,retry=retry)
                 print(json.dumps(diagnostic),flush=True)
                 if not retry:raise RuntimeError('Private shard retrieval failed: '+json.dumps(diagnostic)) from None

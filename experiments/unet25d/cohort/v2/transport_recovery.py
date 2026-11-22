@@ -8,7 +8,7 @@ from ..unattended import require_integrated_source
 from .recover_preserve import preserve,GPU_SOURCE
 
 
-def preflight(c,b,pointer):
+def preflight(c,b,pointer,last_logged_step=47900):
     """CPU SHA-only read of a bounded resume window, never decoding or training."""
     from cloud.storage import verify
     ready=read_json_record(c,b,aux_key())
@@ -22,7 +22,7 @@ def preflight(c,b,pointer):
         visits={v['metadata']['exam_id']:v for v in catalogue['visits'] if v['partition']=='train'}
         cursor=pointer['state']['cursor'];objects={}
         # Include the durable resume prefix and the entire previous failure window.
-        for row in plan[cursor:min(len(plan),max(cursor+216,96008))]:
+        for row in plan[cursor:min(len(plan),max(cursor+216,2*last_logged_step+208))]:
             if row['exam'] not in visits:raise PermissionError('Nontraining preflight row')
             visit=visits[row['exam']];shard=next(s for s in visit['shards'] if s['start']<=row['z']<s['end'])
             for obj in (shard,inventory[row['exam']]['labels']):objects[obj['key']]=obj

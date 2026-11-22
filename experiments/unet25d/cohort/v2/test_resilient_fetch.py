@@ -17,7 +17,9 @@ class FetchTests(unittest.TestCase):
         self.assertEqual(self.run_fetch([e,io.BytesIO(b'verified prepared bytes')]),2)
     def test_timeout_then_success(self):
         self.assertEqual(self.run_fetch([TimeoutError(),io.BytesIO(b'verified prepared bytes')]),2)
+    def test_corrupt_download_is_discarded_before_retry(self):
+        self.assertEqual(self.run_fetch([io.BytesIO(b'corrupt'),io.BytesIO(b'verified prepared bytes')]),2)
     def test_integrity_auth_expiry_and_retry_cap_are_fatal(self):
-        for effects,kw in (([io.BytesIO(b'corrupt')],{}),([urllib.error.HTTPError('private',403,'auth',{},None)],{}),([] ,{'expired':True}),([TimeoutError()]*3,{})):
+        for effects,kw in (([io.BytesIO(b'corrupt') for _ in range(3)],{}),([urllib.error.HTTPError('private',403,'auth',{},None)],{}),([] ,{'expired':True}),([TimeoutError()]*3,{})):
             with self.subTest(kw=kw),self.assertRaises(RuntimeError):self.run_fetch(effects,**kw)
 if __name__=='__main__':unittest.main()
