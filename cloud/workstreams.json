@@ -1,9 +1,9 @@
 {
   "unet25d": {
     "branch": "model/unet25d-kaggle",
-    "source_sha": "ebf72f80a784e440532c80c717b880b312fe798c",
+    "source_sha": "c9369e86ab4c8aaa9189d6cb4737d5ffddf4822d",
     "authorized_actor": "Strange-Noah",
-    "entrypoint": "experiments.unet25d.cohort.v2.checksum_recovery",
+    "entrypoint": "experiments.unet25d.cohort.v2.interactive_recovery",
     "dataset": "mathewzhou/novo-unet25d-v2-input",
     "kernel": "mathewzhou/novo-unet25d-v2",
     "auto_recover": true,

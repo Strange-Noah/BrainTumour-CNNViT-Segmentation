@@ -23,7 +23,7 @@ class RoutingTests(unittest.TestCase):
         with patch('cloud.resolve_workstream.subprocess.run'):
             r=self.call(mode='formal')
             self.assertEqual(r['source_sha'],SHA)
-            self.assertEqual(r['entrypoint'],'experiments.unet25d.cohort.v2.checksum_recovery')
+            self.assertEqual(r['entrypoint'],'experiments.unet25d.cohort.v2.interactive_recovery')
             with self.assertRaises(PermissionError):self.call(mode='formal',source='f'*40)
 
     def call(self, **kw):
