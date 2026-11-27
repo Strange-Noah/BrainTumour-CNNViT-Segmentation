@@ -30,8 +30,11 @@ def main():
             with dest.open("xb") as out:
                 verify(client, bucket, receipt["key"], receipt["sha256"], out)
         code = """
-import json, torch
-c = torch.load("checkpoint_final.pth", map_location="cpu", weights_only=True)
+import json, numpy as np, torch
+from numpy._core.multiarray import scalar
+with torch.serialization.safe_globals([scalar, np.dtype, np.dtypes.Float64DType,
+                                       np.dtypes.Float32DType, np.dtypes.Int64DType]):
+    c = torch.load("checkpoint_final.pth", map_location="cpu", weights_only=True, mmap=True)
 print(json.dumps(dict(configuration=c["init_args"]["configuration"],
                       trainer=c["trainer_name"],
                       parameter_tensors=len(c["network_weights"]),
@@ -64,6 +67,11 @@ print(json.dumps(dict(configuration=c["init_args"]["configuration"],
             "patch_size", "spacing", "normalization_schemes", "resampling_fn_data",
             "resampling_fn_data_kwargs", "resampling_fn_seg", "resampling_fn_seg_kwargs",
             "resampling_fn_probabilities", "resampling_fn_probabilities_kwargs")}
+        data["dataset_sha256"] = hashlib.sha256((root/"dataset.json").read_bytes()).hexdigest()
+        data["plans_sha256"] = hashlib.sha256((root/"plans.json").read_bytes()).hexdigest()
+        data["foreground_intensity_properties_per_channel"] = plans["foreground_intensity_properties_per_channel"]
+        data["configuration_fields"]["use_mask_for_norm"] = resolved.get("use_mask_for_norm")
+        data["configuration_fields"]["architecture"] = resolved.get("architecture")
         data["dataset"] = json.loads((root/"dataset.json").read_text())
         data["transpose_forward"] = plans["transpose_forward"]
         data["transpose_backward"] = plans["transpose_backward"]
