@@ -8,5 +8,15 @@
     "kernel": "mathewzhou/novo-unet25d-v2",
     "auto_recover": true,
     "formal_enabled": true
+  },
+  "lesionlocator": {
+    "branch": "model/longitudinal-tracking",
+    "source_sha": "61411076bb677638b180f5629e8b0f6136d7b10b",
+    "authorized_actor": "Strange-Noah",
+    "entrypoint": "experiments.lesionlocator_benchmark.baseline",
+    "dataset": "mathewzhou/novo-lesionlocator-input",
+    "kernel": "mathewzhou/novo-lesionlocator",
+    "auto_recover": false,
+    "formal_enabled": false
   }
 }
