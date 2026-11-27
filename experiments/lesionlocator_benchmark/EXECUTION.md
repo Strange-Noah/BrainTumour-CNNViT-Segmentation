@@ -59,3 +59,33 @@ The sole strict spatial-reference proxy had Dice 0.16504, 0.12612, and 0 across 
 The smoke unit used about 492.4 s end-to-end including geometry, observations and output readback. MRI download used 1.89 s, tracked official preprocessing 130.0 s, registration CUDA 10.32 s, local U-Net CUDA 1.71 s, and native export 17.07 s. These are instrumented substage totals for the first pair. Peak PyTorch CUDA allocation was 4.63 GiB and sampled worker RSS reached 4.44 GiB. The results come from one smoke patient.
 
 The same collector recovered 10 independent CPU geometry archives covering 33 examinations and 23 pairs. The cumulative disappeared counts were 17/120 after G1/G2, 18/120 at G3/G4 and 21/127 after G5. Across the 33 examinations, 663,830 of 664,609 lesion voxels exceeded the CT upper bound.
+
+## Formal transition
+
+Both real smoke archives completed in the [corrected dual-T4 Kaggle execution](https://www.kaggle.com/code/mathewzhou/novo-lesionlocator-t-46057677602). The second producer-side readback was recorded at minute 19:24 of notebook execution. Formal inference then began in the same session, with two resident workers processing separate patients. GPU inputs use private Kaggle version 2, independently read at package digest `b7043022ebb85608142b369afbc539bff26c3f5337e15e6b3923fe3baa0acc1b`; the grants expire 2026-11-29 03:30:34 Asia/Shanghai. The session cap is 10,200 seconds. The original CPU geometry job runs independently.
+
+The recovery bridge verifies patient-level artifacts using the executing immutable GPU and geometry SHAs. Its protected collector-only source can advance without changing the producing namespace. The R2 producer verifies completed units as it goes. The Actions `collect` path can independently recover those completed units during or after the Kaggle run.
+
+[Independent formal recovery 46060866987](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/46060866987) verified both smoke and both formal pilot archives. The two formal pilot pairs repeat the two smoke pairs under the fixed protocol. Across those two pairs, the L0, L1-Warp and L1-Final means were 0.126354, 0.090299 and 0. Spatial matching was 4/14, 4/14 and 0/14; false-positive component counts were 7, 9 and 0. The eight observed ROIs covered the complete target unions. The three strict overlap-proxy Dice means were 0.28147, 0.10482 and 0. Per-instance local scoring and export differences are in the private result archives.
+
+The two formal units took 685.9 s total across workers. Stage totals were 246.6 s for official preprocessing, 6.26 s registration CUDA, 3.84 s local U-Net CUDA, 45.1 s native export, and 1.56 s MRI transfers. Maximum observed CUDA allocation was 4.63 GiB and sampled worker RSS was 4.57 GiB. These observations characterize the pilot inputs. Host-side preprocessing was much longer than the measured CUDA kernels.
+
+The same independent collector verified 13 geometry patients, 41 exams and 28 pairs. G1 and G2 lost 28/151 historical instances, G3/G4 lost 30/151, and G5 lost 23/144 follow-up reference instances. The mean native instance Dice was 0.5454 (G1/G2), 0.5345 (G4) and 0.5675 (G5). Across the 41 MRI visits, upper clipping fractions were 11.0127% of all 1,628,831,744 voxels, 98.6770% of 181,783,189 nonzero voxels, and 99.8542% of 748,848 enhancing-label voxels. Lower clipping was 0% for each pooled group. This shows saturation under the unchanged official CT normalization on this sample. A cause for the final prediction failures requires the per-instance local and native-stage evidence.
+
+## Unattended handoff — 2026-11-28, Asia/Shanghai
+
+At 04:08 both the dual-T4 formal run and the independent CPU geometry run were RUNNING. The initial formal observation covered approximately ten minutes of real inference. Both workers advanced after pilot and continued into subsequent patients. Each worker commits completed patients to private R2 and verifies them. The active GPU session remains unattended. Provider quota showed 24.24 h used and 5.76 h displayed remaining at handoff.
+
+[Independent handoff readback 46061515025](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/46061515025) verified **5 formal patients, 15 examinations, 10 adjacent pairs**, in addition to the two separate smoke archives. The formal patient count includes the repeat of the designated smoke cases and counts each formal case once.
+
+| Formal arm | Mean union Dice | Target lesions matched | False-positive components |
+| --- | ---: | ---: | ---: |
+| L0 | 0.202063 | 29/59 | 26 |
+| L1-Warp | 0.092062 | 16/59 | 34 |
+| L1-Final | 0 | 0/59 | 1 |
+
+The 25 conservative same-grid instance proxies produced mean Dice 0.40667, 0.03335 and 0. Among the observed ROIs with measurable target GT, all 47 covered the target union and all 24 scored proxy-specific ROIs achieved complete matched-target coverage. The formal batch included one false-positive component. The local and native masks allow the stage of foreground loss to be examined in private. The current aggregate does not attribute failure to a particular stage or provide a complete L2 performance estimate.
+
+The 10 formal pairs took 1,392.6 combined worker-seconds or 0.431 pairs per worker-minute. This denominator differs from wall-clock duration on two workers. Stage totals were 504.21 s official preprocessing, 39.84 s registration CUDA, 25.61 s local U-Net CUDA, 106.97 s native export and 7.43 s MRI data reads. Peak PyTorch CUDA allocation was 4.63 GiB and sampled worker RSS was 4.57 GiB. These are early batch measurements.
+
+The same Actions run verified **14 geometry patients, 45 examinations, 31 pairs**. Historical disappearance counts were 29/162 at G1/G2 and 31/162 at G3/G4. G5 ideal-logit restoration lost 24/151 target instances. Across these 45 exams the upper clip affected 10.7646% of full-volume voxels, 98.7921% of nonzero voxels, and 99.8546% of raw-label-3 voxels. Lower clipping was 0% in those pooled groups. The complete 45/159/114 scientific comparison remains in progress. Previously accepted G0/L0 archives remain immutable.
