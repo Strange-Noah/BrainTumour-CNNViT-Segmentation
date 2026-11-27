@@ -1,3 +1,4 @@
 -r ../../cloud/requirements.txt
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.8.0+cpu
+scipy==1.15.3
