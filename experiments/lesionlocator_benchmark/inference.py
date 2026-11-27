@@ -50,7 +50,7 @@ def load_mask(path, target):
     return np.asarray(nib.load(path).dataobj) > 0 if path else np.zeros(target.shape, dtype=bool)
 
 
-def evaluate_pass(predictor, history, target, prompt_ids, prompts, accepted, output, mode):
+def evaluate_pass(predictor, history, target, prompt_ids, prompts, accepted, output, mode, smoke=False):
     historical = history["labels"]
     truth = target["labels"]
     proxies = {r["instance_id"]: r for r in accepted["instances"]}
@@ -67,7 +67,7 @@ def evaluate_pass(predictor, history, target, prompt_ids, prompts, accepted, out
         trace = None
         warp = final = None
         if prompt is not None:
-            final = run_case(predictor, history["image"], target["image"], prompt, folder, identity)
+            final = run_case(predictor, history["image"], target["image"], prompt, folder, identity, save_field=smoke and identity==prompt_ids[0])
             trace = json.loads((folder/"trace.json").read_text())
             warp = folder/"warp.nii.gz"
             if not warp.exists():
@@ -90,7 +90,10 @@ def evaluate_pass(predictor, history, target, prompt_ids, prompts, accepted, out
             roi = load_mask(folder/"roi.nii.gz", truth)
             union_gt = truth > 0
             related = truth == reference if reference is not None else None
-            row["T6"] = {"union_gt_coverage": overlap(union_gt, roi)["recall"],
+            z_visible = load_mask(folder/"z-visible.nii.gz", truth)
+            row["T6"] = {"z_union_gt_coverage": overlap(union_gt, z_visible)["recall"],
+                         "z_reference_coverage": None if related is None else overlap(related, z_visible)["recall"],
+                         "union_gt_coverage": overlap(union_gt, roi)["recall"],
                          "reference_coverage": None if related is None else overlap(related, roi)["recall"]}
             # Only the offline observer reads target GT. The model already returned.
             if diagnostic is None:
@@ -161,7 +164,7 @@ def process_patient(model, active, files, l0, root, device, geometry_only, smoke
                 write_mask((historical == identity).astype(np.uint8), path, previous["ref"])
                 prompts[identity] = path
             entry["L1"], first_predictions = evaluate_pass(
-                predictor, previous, current, ids, prompts, accepted, pair_dir/"L1", "L1")
+                predictor, previous, current, ids, prompts, accepted, pair_dir/"L1", "L1", smoke)
             if index == 1:
                 entry["L2"] = {"shared_initial_l1_output": True, "initial_ids": initial_ids,
                                "missing_after_step": sorted(set(initial_ids)-set(first_predictions))}

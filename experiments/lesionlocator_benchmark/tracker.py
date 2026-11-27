@@ -11,9 +11,11 @@ import numpy as np
 import psutil
 import torch
 
+from lesionlocator.inference import lesionlocator_segment_and_track as upstream
 from lesionlocator.inference.lesionlocator_segment_and_track import LesionLocatorSegTracker
 from lesionlocator.modules import tracknet
 from .geometry import native_labels
+from .roi_padding import pad_spatial, spatial_padding, unpad_spatial
 
 
 def describe_tensor(t):
@@ -21,7 +23,7 @@ def describe_tensor(t):
             "finite": bool(torch.isfinite(t).all())}
 
 
-def run_case(predictor, baseline, followup, prompt, output, stable_id):
+def run_case(predictor, baseline, followup, prompt, output, stable_id, save_field=False):
     """One original model step. Only the historical prompt enters this API."""
     h, f, p = map(nib.load, (baseline, followup, prompt))
     if h.shape != p.shape or not np.allclose(h.affine, p.affine, atol=1e-4, rtol=0):
@@ -41,7 +43,21 @@ def run_case(predictor, baseline, followup, prompt, output, stable_id):
     context = {}
     original_z = network.optional_z_translation
     original_roi = network.get_patch_around_mask
+    original_pad, original_unpad = network.pad_input, network.undo_pad
     original_warp = tracknet.compute_warped_image_multiNC
+    original_export = upstream.export_prediction_from_logits
+    events = {}
+
+    def start_event(name):
+        start, end = (torch.cuda.Event(enable_timing=True) for _ in range(2))
+        events[name] = start, end
+        start.record()
+
+    def measure_export(*args, **kwargs):
+        before = time.monotonic()
+        result = original_export(*args, **kwargs)
+        log["native_export_seconds"] = time.monotonic()-before
+        return result
 
     def observe_case(self, *args, **kwargs):
         t = time.monotonic()
@@ -71,6 +87,13 @@ def run_case(predictor, baseline, followup, prompt, output, stable_id):
         log["T4"] = {"shape": list(field.shape), "finite": bool(torch.isfinite(field).all()),
                      "coordinate_abs_max": float(field.abs().max()),
                      "coordinate_convention": "official normalized deformation field"}
+        field_sample = field[..., ::4, ::4, ::4].detach().float().cpu().numpy()
+        grid_sample = network.reg_net.identity_map[..., ::4, ::4, ::4].detach().float().cpu().numpy()
+        if field_sample.shape == grid_sample.shape:
+            norm = np.linalg.norm(field_sample-grid_sample, axis=1)
+            log["T4"]["normalized_displacement_quantiles"] = np.quantile(norm, [.5,.95,1]).tolist()
+        if save_field:
+            np.save(out/"deformation.npy", field.detach().cpu().numpy(), allow_pickle=False)
         warped = original_warp(prompt_grid, field, spacing, **kwargs)
         log["T5_grid"] = describe_tensor(warped)
         return warped
@@ -83,8 +106,24 @@ def run_case(predictor, baseline, followup, prompt, output, stable_id):
                                      for x in row] for row in slicers]}
         return slicers
 
+    def apply_pad(tensor):
+        widths = spatial_padding(tensor, network.unet_patch_size)
+        fix = any(widths[2:])
+        log["T6"].update(work_roi=list(tensor.shape[-3:]), spatial_padding=list(widths),
+                         axis_compatibility_fix=fix,
+                         warp_empty=not bool(log["T5_work"]["nonzero"]))
+        context["spatial_padding_fix"] = fix
+        if fix:
+            # Upstream places the H/W pairs in the C/N slots of the F.pad list.
+            return pad_spatial(tensor, widths), True, widths
+        return original_pad(tensor)
+
+    def undo_pad(tensor, padded, widths):
+        return unpad_spatial(tensor, widths) if context["spatial_padding_fix"] else original_unpad(tensor, padded, widths)
+
     def on_roi_logits(_, args, output):
-        log["T7"] = describe_tensor(output)
+        events["unet"][1].record()
+        log["T7"] = dict(describe_tensor(output), input_shape=list(args[0].shape))
         if not log["T7"]["finite"]:
             raise FloatingPointError("Local U-Net logits are not finite")
         context["local_prediction"] = output[0].argmax(0).detach().cpu().numpy().astype(np.uint8)
@@ -96,13 +135,26 @@ def run_case(predictor, baseline, followup, prompt, output, stable_id):
         context["work_prediction"] = output[0].argmax(0).detach().cpu().numpy().astype(np.uint8)
 
     with ExitStack() as stack:
+        stack.enter_context(patch.object(upstream, "export_prediction_from_logits", measure_export))
         stack.enter_context(patch.object(preprocessor, "run_case", observe_case))
         stack.enter_context(patch.object(network, "optional_z_translation", observe_z))
         stack.enter_context(patch.object(tracknet, "compute_warped_image_multiNC", observe_warp))
         stack.enter_context(patch.object(network, "get_patch_around_mask", observe_roi))
+        stack.enter_context(patch.object(network, "pad_input", apply_pad))
+        stack.enter_context(patch.object(network, "undo_pad", undo_pad))
+        stack.callback(network.reg_net.register_forward_pre_hook(
+            lambda *_: start_event("registration")).remove)
+        def end_registration(*_):
+            events["registration"][1].record()
+        stack.callback(network.reg_net.register_forward_hook(end_registration).remove)
+        stack.callback(network.unet.register_forward_pre_hook(lambda *_: start_event("unet")).remove)
         stack.callback(network.unet.register_forward_hook(on_roi_logits).remove)
         stack.callback(network.register_forward_hook(on_full_logits).remove)
         predictor.track(str(baseline), [str(followup)], str(out), str(prompt))
+    if events:
+        torch.cuda.synchronize()
+        log["cuda_seconds"] = {name: first.elapsed_time(last)/1000
+                               for name, (first,last) in events.items()}
     paths = list(out.glob("*.nii.gz"))
     if "warp" in context:
         props = context["target_properties"]
@@ -126,6 +178,9 @@ def run_case(predictor, baseline, followup, prompt, output, stable_id):
 
         log["T5_native_voxels"] = write_native(full, "warp")
         log["T6"]["native_roi_voxels"] = write_native(roi, "roi")
+        z_visible = np.zeros_like(full)
+        z_visible[:, z0:z1] = 1
+        log["T6"]["z_visible_native_voxels"] = write_native(z_visible, "z-visible")
         log["T8_work"]["foreground_voxels"] = int(context["work_prediction"].sum())
         log["T8_work"]["nearest_native_voxels"] = write_native(context["work_prediction"][None], "work-logits-argmax")
         np.save(out/"local-prediction.npy", context["local_prediction"], allow_pickle=False)

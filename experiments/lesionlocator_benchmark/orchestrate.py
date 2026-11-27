@@ -14,11 +14,13 @@ from botocore.exceptions import ClientError
 from kaggle.api.kaggle_api_extended import KaggleApi
 from cloud.storage import DATASET, connect
 from research.dataset import Dataset
+from .aggregate import Diagnostics
 from .assets import MEMBERS, PREFIX as ASSETS
 from .baseline import CONFIG, MANIFEST_KEY, MANIFEST_SHA, PREFIX, SPLIT, save_once, sequences
 
 L0_SOURCE = "3eeb0c747927a8931ada80643fe3e83dd80245ba"
 LEASE_SECONDS = 24*3600
+GEOMETRY_SOURCE = "1574ebb51fb5ca148d1fd985821c81b95bf76548"
 
 
 def read(client, bucket, key):
@@ -180,9 +182,11 @@ def submit(root, source, dataset, kernel, digest, mode, seconds):
 def collect(client, output, prefix, source):
     aggregates = {}
     for mode in ("smoke", "geometry", "formal"):
+        diagnostics = Diagnostics()
         stats = dict(patients=0, exams=0, pairs=0, seconds=0., l1_dice_sum=0.,
                      l0_dice_sum=0., warp_dice_sum=0., normalized_visits=0, instances=0,
-                     preprocessing_secs=0., peak_vram=0, peak_ram=0)
+                     preprocessing_secs=0., peak_vram=0, peak_ram=0,
+                     registration_seconds=0., unet_seconds=0., export_seconds=0., read_seconds=0.)
         for i in range(45):
             key = archive_key(prefix, mode, i)
             if not has(client, output, key+".receipt.json"):
@@ -206,12 +210,17 @@ def collect(client, output, prefix, source):
                             stats["peak_ram"] = max(m["observed_rss_bytes"], stats["peak_ram"])
                             stats["peak_vram"] = max(m["peak_cuda_allocated_bytes"], stats["peak_vram"])
                             stats["preprocessing_secs"] += sum(p["seconds"] for p in t.get("T1", []))
+                            stats["registration_seconds"] += t.get("cuda_seconds", {}).get("registration", 0.)
+                            stats["unet_seconds"] += t.get("cuda_seconds", {}).get("unet", 0.)
+                            stats["export_seconds"] += t.get("native_export_seconds", 0.)
             if report["source_sha"] != source or report["campaign"] != prefix or report["index"] != i:
                 raise ValueError("Recovered result provenance mismatch")
+            diagnostics.add(report)
             stats["patients"] += 1
             stats["exams"] += report["exams"]
             stats["pairs"] += len(report["pairs"])
             stats["seconds"] += report["total_seconds"]
+            stats["read_seconds"] += report["io_seconds"]
             stats["normalized_visits"] += len(report["normalization"])
             for pair in report["pairs"]:
                 stats["l0_dice_sum"] += pair["L0"]["dice"]
@@ -220,7 +229,7 @@ def collect(client, output, prefix, source):
                     stats["l1_dice_sum"] += l1["union"]["dice"]
                     stats["warp_dice_sum"] += l1["warp_union"]["dice"]
                     stats["instances"] += len(l1["instances"])
-        aggregates[mode] = stats
+        aggregates[mode] = dict(stats, diagnostics=diagnostics.result())
     print(json.dumps(dict(event="independent_archive_readback", source=source, results=aggregates)), flush=True)
     if os.getenv("GITHUB_RUN_ID"):
         save_once(client, output, prefix+f"/reports/collector-{os.environ['GITHUB_RUN_ID']}.json", aggregates)
@@ -239,6 +248,9 @@ def main():
     prefix = f"{PREFIX}/tracking/{source}/{active['checkpoint_sha256']}"
     if mode in ("collect","recover"):
         collect(writer, output, prefix, source)
+        if source != GEOMETRY_SOURCE:
+            geometry_prefix = f"{PREFIX}/tracking/{GEOMETRY_SOURCE}/{active['checkpoint_sha256']}"
+            collect(writer, output, geometry_prefix, GEOMETRY_SOURCE)
         return
     if mode not in ("prepare","benchmark"):
         raise ValueError("Expected an inference-only bridge mode")
@@ -271,7 +283,7 @@ def main():
         # Same workflow run ID cannot submit twice even if an acknowledgement is lost.
         save_once(writer, output, permit,
                   dict(package_sha256=digest, expires=package["expires"], session_seconds=seconds))
-        if package["geometry"]:
+        if package["geometry"] and source == GEOMETRY_SOURCE:
             submit(root, source, dataset, base+f"-g-{run}", digest, "geometry", min(seconds, 5400))
         if package["formal"]:
             submit(root, source, dataset, base+f"-t-{run}", digest, "gpu", seconds)
