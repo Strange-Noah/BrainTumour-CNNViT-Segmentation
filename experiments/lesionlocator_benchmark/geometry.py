@@ -52,3 +52,81 @@ def geometry_pair(preprocessor, plans, config, dataset, baseline, followup,
 class _RegistrationShape:
     def __init__(self, shape):
         self.input_shape = tuple(shape)
+
+
+def main():
+    """Pilot G1–G5 on the first frozen validation pair, CPU only."""
+    import json
+    from pathlib import Path
+    import tempfile
+
+    import nibabel as nib
+    from lesionlocator.utilities.plans_handling.plans_handler import PlansManager
+    from cloud.storage import connect
+    from research.dataset import Dataset
+    from .assets import PREFIX as ASSETS
+    from .baseline import MANIFEST_KEY, SPLIT, load_visit, save_once, sequences
+
+    torch.set_num_threads(2)
+    reader, bucket = connect()
+    writer, output = connect(output=True)
+    if bucket != "novo-nordisk-pbl" or output != "novo-nordisk-pbl-outputs":
+        raise ValueError("Expected private project storage")
+
+    def read_json(key):
+        with writer.get_object(Bucket=output, Key=key)["Body"] as body:
+            return json.load(body)
+
+    def metric(a, b):
+        a, b = a > 0, b > 0
+        if a.shape != b.shape:
+            raise ValueError("Unequal grid shapes")
+        total = np.count_nonzero(a)+np.count_nonzero(b)
+        return dict(voxels_in=int(a.sum()), voxels_out=int(b.sum()),
+                    dice=float(2*(a & b).sum()/total) if total else None)
+
+    with tempfile.TemporaryDirectory(prefix="novo-ll-geometry-") as d:
+        root = Path(d)
+        accepted = read_json(ASSETS+"/receipt.json")
+        from cloud.storage import verify
+        def config_asset(name):
+            r = accepted["members"]["LesionLocatorTrack/"+name]
+            with (root/name).open("wb") as f:
+                verify(writer, output, r["key"], r["sha256"], f)
+            return json.loads((root/name).read_text())
+        plans = PlansManager(config_asset("plans.json"))
+        data = config_asset("dataset.json")
+        # The active configuration must be extracted from the checkpoint
+        # metadata by the isolated official runtime before any medical run.
+        active = read_json(ASSETS+"/runtime.json")
+        ckpt = accepted["members"]["LesionLocatorTrack/fold_0/checkpoint_final.pth"]["sha256"]
+        if active["checkpoint_sha256"] != ckpt:
+            raise ValueError("Checkpoint runtime identity mismatch")
+        config = plans.get_configuration(active["configuration"])
+        path = root/"visits.jsonl"
+        reader.download_file(bucket, MANIFEST_KEY, str(path))
+        ds = Dataset(path, SPLIT, root/"images", partition="validation")
+        first = next(iter(sequences(ds.visits).values()))[:2]
+        args, gt = [], []
+        for i,row in enumerate(first):
+            ref, labels, _, _ = load_visit(ds,row)
+            source = ds.fetch(row["modalities"]["t1c"])
+            label = root/f"instances-{i}.nii.gz"
+            nib.save(nib.Nifti1Image(labels.astype(np.int32),ref.affine,ref.header), label)
+            args.append((str(source),str(label)))
+            gt.append(labels)
+        results = geometry_pair(config.preprocessor_class(verbose=False), plans, config,
+                                data, args[0][0], args[1][0], args[0][1], args[1][1],
+                                active["registration_shape"])
+        stats = {"G1":metric(gt[0],results["G1_native"]),
+                 "G4":metric(gt[0],results["G4_native"]),
+                 "G5":metric(gt[1],results["G5_native"]),
+                 "G5_label_reference":metric(gt[1],results["G5_label_roundtrip"]),
+                 "G2_windows":[results["G2_history"],results["G2_followup"]],
+                 "G3_grid_shape":list(results["G3_fixed"].shape)}
+        save_once(writer,output,ASSETS+"/geometry-pilot-"+ckpt+".json",stats)
+        print(json.dumps(dict(status="geometry_pilot", **stats)))
+
+
+if __name__ == "__main__":
+    main()
