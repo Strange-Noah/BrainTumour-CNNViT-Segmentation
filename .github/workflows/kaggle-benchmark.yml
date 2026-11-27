@@ -33,7 +33,7 @@ on:
         type: string
         default: ''
 concurrency:
-  group: novo-private-kaggle-bridge
+  group: ${{ inputs.workstream == 'lesionlocator' && 'novo-private-kaggle-lesionlocator' || 'novo-private-kaggle-bridge' }}
   cancel-in-progress: false
 permissions:
   contents: read
@@ -71,8 +71,11 @@ jobs:
           fetch-depth: 0
       - if: steps.route.outputs.enabled == 'true'
         run: python -m pip install -q kaggle==2.2.4 -r cloud/requirements.txt
+      - name: LesionLocator CPU publisher dependencies
+        if: steps.route.outputs.enabled == 'true' && inputs.workstream == 'lesionlocator'
+        run: python -m pip install -q -r experiments/lesionlocator_benchmark/checkpoint-requirements.txt
       - name: CPU publisher and preparation dependencies
-        if: steps.route.outputs.enabled == 'true'
+        if: steps.route.outputs.enabled == 'true' && inputs.workstream != 'lesionlocator'
         run: |
           python -m pip install -q torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cpu
           python -m pip install -q -r experiments/unet25d/requirements.txt
