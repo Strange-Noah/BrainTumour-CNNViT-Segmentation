@@ -32,3 +32,16 @@ class BaselineTest(unittest.TestCase):
         self.assertEqual([r["visit_order"] for r in sequences(rows)["x"]], [1, 2])
         with self.assertRaisesRegex(ValueError, "Duplicate"):
             sequences(rows + rows[:1])
+
+    def test_disappeared_prompt_retains_id(self):
+        from .baseline import instance_scores
+        raw = np.zeros((5, 5, 5), np.int32)
+        raw[0, 0, 0] = 1
+        raw[4, 4, 4] = 2
+        moved = np.where(raw == 2, raw, 0)
+        ref = nib.Nifti1Image(raw, np.eye(4))
+        records = instance_scores(raw, moved, raw, ref, ref)
+        self.assertEqual([r["instance_id"] for r in records], [1, 2])
+        self.assertFalse(records[0]["exists"])
+        self.assertEqual(records[0]["reference_proxy"]["dice"], 0.)
+        self.assertEqual(records[1]["reference_proxy"]["dice"], 1.)

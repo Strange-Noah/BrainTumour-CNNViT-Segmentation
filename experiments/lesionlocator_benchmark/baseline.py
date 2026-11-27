@@ -3,6 +3,8 @@ import argparse
 from collections import defaultdict
 import hashlib
 import json
+import os
+import re
 from pathlib import Path
 import tempfile
 
@@ -19,7 +21,11 @@ from research.geometry import mask_geometry, require_mm
 MANIFEST_SHA = "040ec6c523d5beae43a30b64fede2bee226e1a08e8c14b2cca8043b01b9c39f4"
 MANIFEST_KEY = f"novo-nordisk/datasets/ucsd-bmets/v1/manifests/{MANIFEST_SHA}/visits.jsonl"
 SPLIT = Path(__file__).resolve().parents[2] / "protocol/v1/patients.csv"
-PREFIX = "novo-nordisk/experiments/lesionlocator/baseline-v1"
+PREFIX = "novo-nordisk/experiments/lesionlocator"
+CONFIG = {"condition": "L0", "native": "T1c", "target": 3,
+          "connectivity": 26, "interpolation_order": 0,
+          "identity_reference": "same-grid conservative unique mutual overlap of native GT only"}
+
 
 
 def sequences(visits):
@@ -71,12 +77,72 @@ def propagate(labels, historical_affine, followup):
     return moved
 
 
+def overlap_counts(a, b):
+    common = (a > 0) & (b > 0)
+    pairs, counts = np.unique(np.stack((a[common], b[common]), axis=1),
+                              axis=0, return_counts=True)
+    result = defaultdict(dict)
+    for (x, y), count in zip(pairs, counts):
+        result[int(x)][int(y)] = int(count)
+    return result
+
+
+def instance_scores(prompt, moved, truth, source, followup):
+    historical = describe(prompt, source.affine)
+    # Preserve original label values even when their label set has gaps.
+    labels_present = np.unique(moved)
+    propagated = {}
+    for ident, box in enumerate(ndimage.find_objects(moved), 1):
+        if box is None:
+            continue
+        points = np.argwhere(moved[box] == ident)
+        center = nib.affines.apply_affine(followup.affine, points.mean(axis=0) + [b.start for b in box])
+        propagated[ident] = dict(voxels=len(points), centroid_mm=center.tolist(),
+            volume_mm3=float(len(points)*abs(np.linalg.det(followup.affine[:3, :3]))))
+    assert set(propagated) == set(labels_present) - {0}
+    observed = overlap_counts(moved, truth)
+    same_grid = prompt.shape == truth.shape and np.allclose(source.affine, followup.affine, rtol=0, atol=1e-4)
+    # Nominate only unambiguous same-grid GT overlap proxies. These are
+    # independent of any model, but favor spatial alignment and are not identity GT.
+    proxy = overlap_counts(prompt, truth) if same_grid else {}
+    reverse = overlap_counts(truth, prompt) if same_grid else {}
+    target = {r["instance"]: r for r in describe(truth, followup.affine)}
+    result = []
+    for h in historical:
+        ident = h["instance"]
+        p = propagated.get(ident, dict(voxels=0, volume_mm3=0., centroid_mm=None))
+        displacement = float(np.linalg.norm(np.subtract(p["centroid_mm"], h["centroid_mm"]))) if p["voxels"] else None
+        entry = dict(instance_id=ident, historical=h, propagated=p, exists=bool(p["voxels"]),
+                     volume_change_mm3=p["volume_mm3"]-h["volume_mm3"],
+                     centroid_displacement_mm=displacement, overlap_voxels=observed.get(ident, {}))
+        candidates = proxy.get(ident, {})
+        ref = next(iter(candidates)) if len(candidates) == 1 else None
+        if ref is not None and len(reverse[ref]) == 1:
+            t = target[ref]
+            entry["reference_proxy"] = dict(target_id=ref,
+                dice=2*observed.get(ident, {}).get(ref, 0)/(p["voxels"]+t["voxels"]),
+                centroid_error_mm=float(np.linalg.norm(np.subtract(p["centroid_mm"], t["centroid_mm"]))) if p["voxels"] else None,
+                volume_error_mm3=p["volume_mm3"]-t["volume_mm3"])
+        result.append(entry)
+    return result
+
+
 def load_visit(dataset, row):
-    t1c = nib.load(dataset.fetch(row["modalities"]["t1c"]))
+    ds_image_path = dataset.fetch(row["modalities"]["t1c"])
+    t1c = nib.load(ds_image_path)
     require_mm(t1c)
-    seg = nib.load(dataset.fetch(row["segmentation"]))
+    ds_label_path = dataset.fetch(row["segmentation"])
+    seg = nib.load(ds_label_path)
     warnings = mask_geometry(seg, t1c, row["exam_id"])
-    return t1c, instances(np.asarray(seg.dataobj)), warnings
+    raw = np.asarray(seg.dataobj)
+    labels = instances(raw)
+    def digest(path):
+        with path.open("rb") as stream:
+            return hashlib.file_digest(stream, "sha256").hexdigest()
+    return t1c, labels, warnings, dict(
+        t1c_path=row["modalities"]["t1c"], labels_path=row["segmentation"],
+        t1c_sha256=digest(ds_image_path), label_sha256=digest(ds_label_path),
+        native_shape=t1c.shape, native_affine=t1c.affine.tolist())
 
 
 def save_once(client, bucket, key, record):
@@ -94,6 +160,11 @@ def save_once(client, bucket, key, record):
 
 
 def run(first, count):
+    source_sha = os.environ["NOVO_SOURCE_SHA"]
+    if not re.fullmatch(r"[0-9a-f]{40}", source_sha):
+        raise ValueError("Expected immutable trusted source")
+    config_sha = hashlib.sha256(json.dumps(CONFIG, sort_keys=True).encode()).hexdigest()
+    prefix = f"{PREFIX}/{MANIFEST_SHA}/{source_sha}/{config_sha}"
     reader, bucket = connect()
     writer, output = connect(output=True)
     if output != "novo-nordisk-pbl-outputs" or bucket != "novo-nordisk-pbl":
@@ -109,23 +180,34 @@ def run(first, count):
         selected = groups[first:first + count]
         if len(selected) != count:
             raise ValueError("Requested patient range outside validation queue")
+        all_metrics = []
+        successful = 0
         for index, group in enumerate(selected, first):
             g0, pairs = [], []
             previous = None
             for row in group:
-                t1c, labels, warnings = load_visit(ds, row)
+                t1c, labels, warnings, origin = load_visit(ds, row)
                 g0.append(dict(exam=row["exam_id"], instances=describe(labels, t1c.affine),
                                shape=t1c.shape, affine=t1c.affine.tolist(),
-                               spacing=t1c.header.get_zooms()[:3], warning=warnings))
+                               spacing=t1c.header.get_zooms()[:3], warning=warnings, source=origin))
                 if previous is not None:
                     ref, prompt, exam = previous
                     moved = propagate(prompt, ref.affine, t1c)
                     pairs.append(dict(historical=exam, followup=row["exam_id"],
-                                      metrics=evaluate(moved > 0, labels > 0, t1c.affine)))
+                                      metrics=evaluate(moved > 0, labels > 0, t1c.affine),
+                                      instances=instance_scores(prompt, moved, labels, ref, t1c)))
                 previous = t1c, labels, row["exam_id"]
-            save_once(writer, output, f"{PREFIX}/patient-{index:02}.json",
-                      dict(manifest_sha256=MANIFEST_SHA, visit_geometry=g0, direct_l0=pairs))
-        print(json.dumps(dict(patients=len(selected), completed=True, private_readback=True)))
+            save_once(writer, output, f"{prefix}/patient-{index:02}.json",
+                      dict(manifest_sha256=MANIFEST_SHA, source_sha=source_sha, config=CONFIG,
+                           config_sha256=config_sha, visit_geometry=g0, direct_l0=pairs))
+            successful += len(g0)
+            all_metrics.extend(pair["metrics"] for pair in pairs)
+        print(json.dumps(dict(patients=len(selected), visits=successful, pairs=len(all_metrics),
+                             dice_sum=sum(r["dice"] for r in all_metrics),
+                             matched=sum(r["matched_lesions"] for r in all_metrics),
+                             truth=sum(r["truth_lesions"] for r in all_metrics),
+                             fp=sum(r["false_positives"] for r in all_metrics),
+                             completed=True, private_readback=True)))
 
 
 if __name__ == "__main__":
