@@ -1,5 +1,6 @@
 """Yilong entry point for a task-specific MONAI Swin UNETR checkpoint."""
 import os
+from pathlib import Path
 
 _MODEL = None
 _MODEL_KEY = None
@@ -11,11 +12,17 @@ def predict(sample):
     import numpy as np
     import torch
     from monai.inferers import sliding_window_inference
-    from experiments.swin_unetr_common import build_model, normalize_modalities
+    from experiments.swin_unetr_common import (
+        build_model,
+        cached_acquisition_support,
+        normalize_modalities,
+    )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     feature_size = int(os.environ.get("SWIN_FEATURE_SIZE", "24"))
     roi = int(os.environ.get("SWIN_ROI_SIZE", "96"))
+    support_mode = os.environ.get("SWIN_SUPPORT_MASK", "none")
+    support_cache = os.environ.get("SWIN_SUPPORT_CACHE")
     if roi % 32:
         raise ValueError("SWIN_ROI_SIZE must be divisible by 32")
     checkpoint_path = os.environ.get("SWIN_CHECKPOINT")
@@ -31,7 +38,17 @@ def predict(sample):
         _MODEL = model
         _MODEL_KEY = model_key
     model = _MODEL
-    data = normalize_modalities(sample["images"])
+    raw_images = sample["images"]
+    support = (
+        cached_acquisition_support(
+            raw_images, Path(support_cache) if support_cache else None,
+            sample["visit"]["exam_id"],
+        )
+        if support_mode in ("input", "output") else None
+    )
+    data = normalize_modalities(raw_images)
+    if support_mode == "input" and support is not None:
+        data[:, ~support] = 0
     with torch.inference_mode():
         kwargs = {"device": torch.device("cpu")} if device.type == "cuda" else {}
         with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=device.type == "cuda"):
@@ -40,4 +57,7 @@ def predict(sample):
                 (roi, roi, roi), 1, model, overlap=0.25,
                 sw_device=device, **kwargs
             )
-    return logits.argmax(1)[0].cpu().numpy().astype(np.uint8)
+    prediction = logits.argmax(1)[0].cpu().numpy().astype(np.uint8)
+    if support is not None:
+        prediction[~support] = 0
+    return prediction

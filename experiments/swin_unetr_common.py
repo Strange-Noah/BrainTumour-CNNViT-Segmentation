@@ -2,6 +2,8 @@
 import numpy as np
 from monai.networks.nets import SwinUNETR
 
+from experiments.swin_sampling import cached_acquisition_support
+
 
 def normalize_modalities(images):
     """Per-volume z-score each modality over nonzero voxels, preserving zero background."""

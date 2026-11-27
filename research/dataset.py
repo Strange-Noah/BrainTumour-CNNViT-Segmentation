@@ -14,6 +14,15 @@ from research.evaluate import target
 from research.geometry import mask_geometry, require_mm
 
 
+def _sha256_file(path, chunk_size=8 * 1024 * 1024):
+    """Hash a file in bounded memory rather than reading the whole scan at once."""
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for chunk in iter(lambda: stream.read(chunk_size), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 class Dataset:
     def __init__(self, manifest, split, cache, partition="train"):
         split_bytes = Path(split).read_bytes()
@@ -35,27 +44,47 @@ class Dataset:
         self.cache = Path(cache)
         self.cache.mkdir(parents=True, exist_ok=True)
         self.client, self.bucket = connect()
+        # A visit is loaded repeatedly across epochs. Remember successful cache
+        # verification so we avoid an R2 HEAD request and full-file hash each time.
+        # The file's size and mtime are checked on every hit; a changed file is
+        # re-fetched and checksum-verified.
+        self._verified_objects = {}
 
     def fetch(self, relative):
         if Path(relative).is_absolute() or ".." in Path(relative).parts:
             raise ValueError("Invalid raw path")
+        verified = self._verified_objects.get(relative)
+        if verified is not None:
+            path, size, mtime_ns = verified
+            try:
+                stat = path.stat()
+                if stat.st_size == size and stat.st_mtime_ns == mtime_ns:
+                    return path
+            except FileNotFoundError:
+                pass
+            self._verified_objects.pop(relative, None)
+
         key = f"{DATASET}/raw/{relative}"
         head = self.client.head_object(Bucket=self.bucket, Key=key)
         digest = head.get("Metadata", {}).get("sha256")
         if not digest:
             raise ValueError("Missing ingestion checksum")
         path = self.cache / (digest + (".nii.gz" if key.endswith(".gz") else ".nii"))
-        if path.exists() and hashlib.sha256(path.read_bytes()).hexdigest() == digest:
+        if path.exists() and _sha256_file(path) == digest:
+            stat = path.stat()
+            self._verified_objects[relative] = (path, stat.st_size, stat.st_mtime_ns)
             return path
         fd, name = tempfile.mkstemp(dir=self.cache)
         try:
             with os.fdopen(fd, "wb") as output:
                 self.client.download_fileobj(self.bucket, key, output)
-            if hashlib.sha256(Path(name).read_bytes()).hexdigest() != digest:
+            if _sha256_file(name) != digest:
                 raise ValueError("Data checksum mismatch")
             os.replace(name, path)
         finally:
             Path(name).unlink(missing_ok=True)
+        stat = path.stat()
+        self._verified_objects[relative] = (path, stat.st_size, stat.st_mtime_ns)
         return path
 
     def load(self, index, task="enhancing"):

@@ -36,6 +36,10 @@ Latest live availability snapshot has 70 complete patient receipts, 2,601 raw ob
 
 The full 300-patient collection is still in progress. Learned architecture results are pending each owner's first checkpoint run. The reference-mask identity metrics remain data/evaluation/export verification.
 
+## Swin UNETR lesion-aware experiment implementation
+
+On 2026-11-25, branch `swinunetr-lesion-aware` added configurable patient-balanced, lesion-component sampling; fixed-ROI 3D local crops; conservative MRI acquisition-support masking; lesion-volume-weighted CE and Tversky options; one-visit-per-patient validation selection; and a supplementary size-stratified lesion report. The original Swin baseline checkpoint and aggregate validation results remain unchanged. No GPU training or validation inference was launched for these new configurations. See [the Swin UNETR experiment guide](../../experiments/SWINUNETR_BMETS.md) for run commands and the limits of the support-mask proxy. Initial sampler-only run: `lesion_balanced_v1`, 21 epochs, ROI 96, feature size 24, seed 42, 45 validation patients for checkpoint selection; full validation uses 159 visits. Promotion remains pending validation evidence and visual overlay review.
+
 ## Full ingestion reconciliation
 
 All 300 patient receipts and 1,065 canonical examinations now reconcile to 11,405 R2 raw objects totaling 175,705,024,365 bytes (about 163.64 GiB). No required modality or segmentation is missing. The stored object keys and sizes agree with the completion receipts; no unexpected objects or invalid receipts were found. Original scans and masks were preserved.

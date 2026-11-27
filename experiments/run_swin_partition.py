@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
+from experiments.swin_unetr_common import cached_acquisition_support
 from research.dataset import Dataset as BMETSDataset
 from research.evaluate import evaluate, export, patient_aggregates
 
@@ -31,9 +32,13 @@ def main():
     if not required <= provenance.keys():
         parser.error(f"Metadata must contain {sorted(required)}")
     config = provenance["model_config"]
+    manifest_sha = hashlib.sha256(args.manifest.read_bytes()).hexdigest()
+    support_cache = args.cache / "derived" / "support" / manifest_sha[:12]
     os.environ["SWIN_CHECKPOINT"] = str(args.checkpoint.resolve())
     os.environ["SWIN_FEATURE_SIZE"] = str(config["feature_size"])
     os.environ["SWIN_ROI_SIZE"] = str(config["roi"])
+    os.environ["SWIN_SUPPORT_MASK"] = str(config.get("support_mask", "none"))
+    os.environ["SWIN_SUPPORT_CACHE"] = str(support_cache.resolve())
 
     split_path = Path("protocol/v1/patients.csv")
     split_sha = hashlib.sha256(split_path.read_bytes()).hexdigest()
@@ -60,6 +65,15 @@ def main():
         prediction = np.asarray(predict(predictor_input))
         target = np.asarray(sample["target"], dtype=np.uint8)
         reference = sample["reference"]
+        if config.get("support_mask") in ("input", "output"):
+            support = cached_acquisition_support(
+                sample["images"], support_cache, row["exam_id"]
+            )
+            if np.any(target.astype(bool) & ~support):
+                raise ValueError(
+                    f"MRI support mask excludes reference enhancing voxels in "
+                    f"{row['exam_id']}; refusing a potentially truncated evaluation"
+                )
         if prediction.shape != target.shape or not np.isin(prediction, [0, 1]).all():
             raise ValueError(f"Invalid binary/original-grid prediction for {row['exam_id']}")
 
@@ -104,7 +118,7 @@ def main():
         "visit_count": len(visit_rows),
         "patient_count": len(patients),
         "split_sha256": split_sha,
-        "manifest_sha256": hashlib.sha256(args.manifest.read_bytes()).hexdigest(),
+        "manifest_sha256": manifest_sha,
         "model_version": args.model_version,
         "git_sha": args.git_sha,
         "patient_macro": macro,
