@@ -21,6 +21,7 @@ from .baseline import CONFIG, MANIFEST_KEY, MANIFEST_SHA, PREFIX, SPLIT, save_on
 L0_SOURCE = "3eeb0c747927a8931ada80643fe3e83dd80245ba"
 LEASE_SECONDS = 24*3600
 GEOMETRY_SOURCE = "1574ebb51fb5ca148d1fd985821c81b95bf76548"
+GPU_SOURCE = "9fff1e41eb6a22000c6fd04984dbced6e05ae96f"
 
 
 def read(client, bucket, key):
@@ -195,7 +196,7 @@ def collect(client, output, prefix, source):
                 receipt = json.load(body)
             with tempfile.TemporaryFile() as archive:
                 client.download_fileobj(output, key, archive)
-                if archive.tell() != receipt["bytes"]:
+                if os.fstat(archive.fileno()).st_size != receipt["bytes"]:
                     raise ValueError("Recovered archive byte count mismatch")
                 archive.seek(0)
                 if file_digest(archive, "sha256").hexdigest() != receipt["sha256"]:
@@ -236,7 +237,11 @@ def collect(client, output, prefix, source):
 
 
 def main():
-    source, mode = os.environ["NOVO_SOURCE_SHA"], os.environ["MODE"]
+    approved_source, mode = os.environ["NOVO_SOURCE_SHA"], os.environ["MODE"]
+    # Recovery takes the producer's identity from the immutable GPU execution.
+    # A collector-only revision never creates a new experiment namespace.
+    subprocess.run(["git", "merge-base", "--is-ancestor", GPU_SOURCE, approved_source], check=True)
+    source = GPU_SOURCE
     reader, canonical = connect()
     writer, output = connect(output=True)
     if (canonical, output) != ("novo-nordisk-pbl","novo-nordisk-pbl-outputs"):
