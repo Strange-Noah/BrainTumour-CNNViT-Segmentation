@@ -145,8 +145,14 @@ def load_visit(dataset, row):
         native_shape=t1c.shape, native_affine=t1c.affine.tolist())
 
 
+def json_scalar(value):
+    if isinstance(value, np.generic):
+        return value.item()
+    raise TypeError(f"Unsupported record value: {type(value).__name__}")
+
+
 def save_once(client, bucket, key, record):
-    data = (json.dumps(record, sort_keys=True, allow_nan=False) + "\n").encode()
+    data = (json.dumps(record, sort_keys=True, allow_nan=False, default=json_scalar) + "\n").encode()
     digest = hashlib.sha256(data).hexdigest()
     try:
         client.put_object(Bucket=bucket, Key=key, Body=data, IfNoneMatch="*",

@@ -45,3 +45,9 @@ class BaselineTest(unittest.TestCase):
         self.assertFalse(records[0]["exists"])
         self.assertEqual(records[0]["reference_proxy"]["dice"], 0.)
         self.assertEqual(records[1]["reference_proxy"]["dice"], 1.)
+
+    def test_numpy_spacing_serialization(self):
+        import json
+        from .baseline import json_scalar
+        self.assertEqual(json.dumps({"spacing": (np.float32(0.5),)}, default=json_scalar),
+                         '{"spacing": [0.5]}')
