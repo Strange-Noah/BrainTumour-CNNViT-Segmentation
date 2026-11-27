@@ -1,0 +1,42 @@
+{
+  "base_sha": "c9369e86ab4c8aaa9189d6cb4737d5ffddf4822d",
+  "patch_sha256": "b1ce598e5a551c561a849236c6f249b4a89cfd19b1e8aff59228bedd28cca1c4",
+  "science_sha256": "b9982b09372d6c468b08dd5b6c2142d18c5c397fa23ae97399a1e099a6024b4f",
+  "config_sha256": "819b8da7ec65fb72592e204d8e680737ac76982ce9c3a2688acc840f4541b44a",
+  "input_sha256": {
+    "catalogue.json": "04b59724c5cc6ac654f85d51ad19e8a8a0766944d8211ecfd03a3495a418de1e",
+    "inventory.json": "17664e661adb06523d0d938a7409c654df25989c50c21b3c244d5d14ffea2722",
+    "plan.json": "4029aee0a723fce9794ee2ce5ee05e61f7c357656029bb55f8d0ec02d87d8860",
+    "SAMPLING_AUDIT.json": "6660521f3b802628e7b67fd221861cab4b3c68e8f6852303eb9b161d1f17892e"
+  },
+  "plan_canonical_sha256": "359433d8d4e5c8bdfa1008b2db26dd85945ff9683e8638fc4d290e3430d9e2a3",
+  "files": {
+    "experiments/unet25d/cohort/v3/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "experiments/unet25d/cohort/v3/cpu_gate_acceptance.py": "6384b42aae4bebefe297486fc413d4376a76355cd52783cdf7630c68c9ff9814",
+    "experiments/unet25d/cohort/v3/inputs.py": "f88cdfd8486e935cc1cc41f0dbd382ee4611a423f43d27e899d7b91f42aa0179",
+    "experiments/unet25d/cohort/v3/loss.py": "949b74cca5a57e5b056910c91fc8afa4463e3bfa7bde255802682245b833f965",
+    "experiments/unet25d/cohort/v3/persistence.py": "c8312095f8d45ca3b73fe5f4a90b2cbb9362522b8df5dfe8edfe2b4ea8cca13d",
+    "experiments/unet25d/cohort/v3/settings.py": "47405d6e6c364cc278f9b2fa9277943a005a712efcadf00abb7f317aa4661039",
+    "experiments/unet25d/cohort/v3/state.py": "4d57facb6cd17e65bdc8988a0e6a9cd657cc4c14d3b0c9405d714272a5fc8a31",
+    "experiments/unet25d/cohort/v3/test_v3.py": "60bbade87a2a009bf2f1b120612871f84b35e492bab5612f167f4d37187eec5b",
+    "experiments/unet25d/cohort/v3/train.py": "49efe9e8f3d8d4f115309bb120358ccae8497a8c3651514fad39c724dd054c36",
+    "experiments/unet25d/runs/v3/README.md": "a25c928e687d6270d1d1eebcc2ff34d2758725e69e305942760921602f10a280",
+    "experiments/unet25d/runs/v3/config.json": "819b8da7ec65fb72592e204d8e680737ac76982ce9c3a2688acc840f4541b44a",
+    "experiments/unet25d/cohort/v2/loading.py": "a93f28e45600e76411de67c0d3d8df842cb0cd875c9464a82f14b9501e1baeb7",
+    "experiments/unet25d/cohort/v2/geometry.py": "4ee3ab65373931a27d33a0b77a16d92340c81c87048485fe0534a4405ada43ac",
+    "experiments/unet25d/cohort/v2/sampling.py": "7469ceaf9b13bc703077491e58f1be915178647088b48047fedbdb44358bbaea",
+    "experiments/unet25d/cohort/v2/resilient_fetch.py": "40098a9e5613eaf9022166bd9843e2d7f1494e43f18667935bb8440fdb9bbb9d",
+    "experiments/unet25d/cohort/v2/settings.py": "8439cafede361b4a5729ea089619d0aff482d27c3e9d75870c100a82d0174ecc",
+    "experiments/unet25d/cohort/v2/state.py": "2f5eba228fc7eeb2632a3d80b27ec78e204652eebb0ec08df3af64549c625223",
+    "experiments/unet25d/cohort/v2/persistence.py": "0cee1a9d8644d9c8a5a4fa0a8d9e1ae6f0bdec946b450d6914aa03797fd2806f",
+    "experiments/unet25d/cohort/loading.py": "e4e6af583bd87a2a7c4e725870717466571dc3008e6461490260d60613bf0fc5",
+    "experiments/unet25d/cohort/settings.py": "0a4a5edd4f8df5e3085ddc4d4864d1d9ab4aa145f067b5c322051a6d80344b00",
+    "experiments/unet25d/train.py": "7fd86625551ee615b14415a98113def3006b452570038d05b8f9af53d7186fa4",
+    "experiments/unet25d/data.py": "86f8b194699bf3e42327244d0f0f6af42c78037cafea1a97b57f8987e4b531e8",
+    "experiments/unet25d/requirements.txt": "2e45f8bc69dea7be67b8351572b62a1aa531cba9f52fff635f7da46c6653d4fd",
+    "experiments/unet25d/cohort/config.json": "4b25ede0cec17a9bfa026b05ac360c4b90ae88eaf25bb8b9e67a6d93719ce5b0",
+    "experiments/unet25d/runs/v2/config.json": "eb47ccba2e8ef2a46471c11092e4b9ab1eb33508f86ae3434909de4660458c7a",
+    "protocol/v1/patients.csv": "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0",
+    "research/requirements.txt": "67a2be1031635ec2b52553dffdaeacc0bcc4a0cd38d705a707d41ac165edc8b3"
+  }
+}
