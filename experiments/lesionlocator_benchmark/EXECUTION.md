@@ -27,3 +27,35 @@ The selected official resampler is `resample_data_or_seg_to_shape` for image, se
 [GPU execution](https://www.kaggle.com/code/mathewzhou/novo-lesionlocator-t-46056070058) obtained two Tesla T4s and loaded fold 0. The first real case reached the official ROI padding immediately after registration and warp, then stopped with CUDA out-of-memory. No prediction score was emitted by that GPU execution. The independently submitted [CPU geometry execution](https://www.kaggle.com/code/mathewzhou/novo-lesionlocator-g-46056070058) completed its first real pair and emitted a private readback receipt.
 
 The [official padding implementation](https://github.com/MIC-DKFZ/LesionLocator/blob/ef073baaa0dcba8dd036ec5a29f130db18c9d580/lesionlocator/modules/tracknet.py#L120) puts nonzero in-plane padding into the channel and batch axes of a five-dimensional input. The compatibility fix uses zero padding on the intended spatial dimensions and removes it at the same spatial offsets. It delegates to the original functions on existing valid depth-only inputs. The CPU regression reproduces the unexpected expansion and checks exact depth-only equivalence and in-plane round-trip. The corrected execution has a new source identity and a separate private output namespace.
+
+## First independently recovered CPU geometry batch
+
+[Collector 46057770674](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/46057770674) independently checked the bytes, SHA-256 and provenance for five patient archives. These cover 15 examinations and 10 adjacent pairs.
+
+| Diagnostic | Instance denominator | Empty after stage | Mean native-grid instance Dice |
+| --- | ---: | ---: | ---: |
+| G1 official preprocess and native-grid round trip | 55 | 8 | 0.5734 |
+| G2 after the official z-window on CPU half-precision inputs | 55 | 8 | 0.5734 |
+| G3 intermediate registration-grid mask | 55 | 8 | — |
+| G4 complete geometric round trip | 55 | 8 | 0.5648 |
+| G5 ideal-logit native export | 59 target instances | 13 | 0.5489 |
+
+The G3 grid counts use array coordinates. G4 restores the native grid before scoring. For CTNormalization on these 15 MRI visits, the upper clipping bound affected 70,372,380 of 614,858,752 full-volume voxels, 70,372,380 of 71,300,771 nonzero voxels, and 119,506 of 119,767 enhancing-label voxels. No sample in those three groups fell below the lower bound. These are pooled voxel fractions from the first five patients. The experiment uses the official normalization. The private archives contain the per-visit distributions, contrast observations, representative image panels and native diagnostic masks.
+
+[Corrected dispatch 46057677602](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/46057677602) uses source `9fff1e41eb6a22000c6fd04984dbced6e05ae96f`, registered by [PR #55](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/pull/55). It republishes only expiring grants and reuses the checkpoint in private R2. The original CPU geometry job continues on its fixed source.
+
+## First independently recovered GPU pair
+
+[Collector 46059586976](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/actions/runs/46059586976) verified the first GPU smoke archive after [the multipart readback correction](https://github.com/Strange-Noah/BrainTumour-CNNViT-Segmentation/pull/56). The producer also independently read back this archive immediately after upload. Both paths accepted the same private artifact.
+
+| Arm | Native union Dice | Matched target lesions | FP components |
+| --- | ---: | ---: | ---: |
+| L0 | 0.14708 | 2/6 | 4 |
+| L1-Warp | 0.12819 | 2/6 | 5 |
+| L1-Final | 0 | 0/6 | 0 |
+
+The sole strict spatial-reference proxy had Dice 0.16504, 0.12612, and 0 across the three arms. This is a same-grid overlap proxy. Three of six historical instances remained present after G1; the same three remained through G2–G4. All three scored native ROIs covered the full target union. The final union was empty in this pair. The evidence shows that missed ROI coverage alone cannot explain this pair's failed detection. The private per-instance artifacts preserve local U-Net predictions and work-space/native export comparisons.
+
+The smoke unit used about 492.4 s end-to-end including geometry, observations and output readback. MRI download used 1.89 s, tracked official preprocessing 130.0 s, registration CUDA 10.32 s, local U-Net CUDA 1.71 s, and native export 17.07 s. These are instrumented substage totals for the first pair. Peak PyTorch CUDA allocation was 4.63 GiB and sampled worker RSS reached 4.44 GiB. The results come from one smoke patient.
+
+The same collector recovered 10 independent CPU geometry archives covering 33 examinations and 23 pairs. The cumulative disappeared counts were 17/120 after G1/G2, 18/120 at G3/G4 and 21/127 after G5. Across the 33 examinations, 663,830 of 664,609 lesion voxels exceeded the CT upper bound.
