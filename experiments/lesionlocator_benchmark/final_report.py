@@ -209,7 +209,7 @@ def aggregate(records, mode):
                 local={k:dict(n=len(v),dice=mean(v)) for k,v in local.items()},
                 deformation=dict(n=len(deformation), median_p95=median(r[1] for r in deformation)
                                  if deformation else None,
-                                 max_sampled=max((r[2] for r in deformation),default=None))
+                                 max_sampled=max((r[2] for r in deformation),default=None)))
 
 
 def main():
