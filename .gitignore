@@ -42,3 +42,5 @@ exports/
 !outputs/**/*.csv
 !outputs/**/*.json
 !outputs/**/*.png
+
+local_cache/

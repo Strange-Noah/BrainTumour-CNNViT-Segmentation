@@ -1,0 +1,24 @@
+[
+  {
+    "epoch": 1,
+    "train_loss_mean": 1.1850579839609263,
+    "validation_patient_macro_dice": 0.08616024129548472,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "voxel",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 2,
+    "train_loss_mean": 0.9881263875050456,
+    "validation_patient_macro_dice": 0.0957559126688217,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "voxel",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  }
+]

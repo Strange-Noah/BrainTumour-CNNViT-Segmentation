@@ -1,0 +1,153 @@
+{
+  "checkpoint_ref": "C:\\Users\\chany\\Desktop\\BlendEd\\Novo Nordisk Project\\bmets\\bmets-project\\outputs\\swin_unetr_bmets\\lesion_balanced_v1\\best_checkpoint.pt",
+  "framework_version": "torch=2.15.0+cu132; monai=1.6.1",
+  "source": {
+    "git_sha": "be6d434702ca7434e98460bcf3e07f0d2e8eaa95",
+    "working_tree_dirty": true,
+    "experiment_code_sha256": "2f39269c54f1e1c2a249f3fc0895e37e0e8fd78052f284c2377903a6961cb326"
+  },
+  "model_config": {
+    "architecture": "MONAI SwinUNETR",
+    "initialization": "random initialization",
+    "in_channels": 4,
+    "out_channels": 2,
+    "feature_size": 24,
+    "roi": 96,
+    "target": "enhancing tissue, original label 3",
+    "input_order": [
+      "T1",
+      "T1c",
+      "T2",
+      "FLAIR"
+    ],
+    "normalization": "per-volume z-score over nonzero voxels per modality",
+    "sampling": "lesion_balanced",
+    "sampling_details": {
+      "patient_draws_per_epoch": "uniform patient allocation; full training set yields two or three crops per patient",
+      "visit_rotation": "round-robin through each patient's visits by epoch",
+      "lesion_connectivity": 26,
+      "lesion_weight": "clip(sqrt(median visit lesion volume / lesion volume), 0.5, 2.0)",
+      "without_replacement": "per visit within epoch until all components have been sampled",
+      "negative_crop_probability": 0.25
+    },
+    "local_crop_scale": 0.75,
+    "local_crop_probability": 0.0,
+    "support_mask": "none",
+    "support_mask_definition": "largest 26-connected component of the union of nonzero input voxels",
+    "loss": "baseline",
+    "lesion_weight_statistics": null,
+    "lesion_weight_rule": "clip(sqrt(training median lesion volume / lesion volume), 0.5, 2.0), normalized to mean 1 over training positive voxels",
+    "tversky_alpha_fp": 0.6,
+    "tversky_beta_fn": 0.4,
+    "validation_selection_visits": 45,
+    "seed": 42,
+    "optimizer": "AdamW lr=1e-4 weight_decay=1e-5",
+    "amp": "CUDA float16",
+    "split_sha256": "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0",
+    "manifest_sha256": "040ec6c523d5beae43a30b64fede2bee226e1a08e8c14b2cca8043b01b9c39f4",
+    "epoch": 16
+  },
+  "patient_id": "BMETS0030",
+  "exam_id": "BMETS0030_02",
+  "model_version": "swinunetr-lesion-balanced-v1",
+  "git_sha": "be6d434702ca7434e98460bcf3e07f0d2e8eaa95",
+  "task": "enhancing",
+  "split_sha256": "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0",
+  "raw_positive_labels": [
+    3
+  ],
+  "prediction_labels": {
+    "0": "background",
+    "1": "enhancing"
+  },
+  "candidates": [
+    {
+      "candidate_id": 1,
+      "volume_mm3": 5.7220458984375,
+      "centroid_world_mm": [
+        -30.142529954069985,
+        -60.51058892975502,
+        -55.167250566138705
+      ]
+    },
+    {
+      "candidate_id": 2,
+      "volume_mm3": 0.95367431640625,
+      "centroid_world_mm": [
+        -25.60116276705073,
+        7.845465802075211,
+        22.370140355186237
+      ]
+    },
+    {
+      "candidate_id": 3,
+      "volume_mm3": 5.7220458984375,
+      "centroid_world_mm": [
+        -29.03942766821079,
+        9.793236790604851,
+        -55.22120126767373
+      ]
+    },
+    {
+      "candidate_id": 4,
+      "volume_mm3": 4286.766052246094,
+      "centroid_world_mm": [
+        0.6942367019007065,
+        -38.653173196738436,
+        -61.83448990367978
+      ]
+    },
+    {
+      "candidate_id": 5,
+      "volume_mm3": 427.24609375,
+      "centroid_world_mm": [
+        4.620652275952892,
+        10.230410985381269,
+        26.5595275095978
+      ]
+    },
+    {
+      "candidate_id": 6,
+      "volume_mm3": 1423.8357543945312,
+      "centroid_world_mm": [
+        22.322311311446896,
+        -35.1001645257939,
+        -47.61776160237812
+      ]
+    }
+  ],
+  "candidate_identity_scope": "visit",
+  "prediction_sha256": "1231f7d711e39f10a2b3100f6dd45af0cd0e320453d424db93161599ec8327b4",
+  "reference_shape": [
+    200,
+    256,
+    176
+  ],
+  "reference_affine": [
+    [
+      0.9752762862606387,
+      0.01532086508137766,
+      0.0488497690138588,
+      -80.37735748291016
+    ],
+    [
+      -0.015339177952525321,
+      0.9764420238938873,
+      -7.646633977051454e-13,
+      -106.63841247558594
+    ],
+    [
+      -0.0476989673226529,
+      -0.0007493152990975795,
+      0.9988061373796682,
+      -101.1014633178711
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "spatial_units": "mm"
+}

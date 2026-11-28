@@ -1,0 +1,233 @@
+[
+  {
+    "epoch": 1,
+    "train_loss_mean": 1.1763636600875342,
+    "validation_patient_macro_dice": 0.09995597339364204,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 2,
+    "train_loss_mean": 1.0110205342798386,
+    "validation_patient_macro_dice": 0.1182981433201234,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 3,
+    "train_loss_mean": 0.9519410332909538,
+    "validation_patient_macro_dice": 0.0930211859025918,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 4,
+    "train_loss_mean": 0.8890544167113048,
+    "validation_patient_macro_dice": 0.16898838706004987,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 5,
+    "train_loss_mean": 0.8525156654097918,
+    "validation_patient_macro_dice": 0.22253937887084016,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 6,
+    "train_loss_mean": 0.7993811950207396,
+    "validation_patient_macro_dice": 0.19307629995023123,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 7,
+    "train_loss_mean": 0.7736222923860633,
+    "validation_patient_macro_dice": 0.24055312378511584,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 8,
+    "train_loss_mean": 0.7217627600854107,
+    "validation_patient_macro_dice": 0.2246809340553449,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 9,
+    "train_loss_mean": 0.6901857353766866,
+    "validation_patient_macro_dice": 0.21042476686175418,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 10,
+    "train_loss_mean": 0.6889981912953365,
+    "validation_patient_macro_dice": 0.2666110923979774,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 11,
+    "train_loss_mean": 0.6611902886607133,
+    "validation_patient_macro_dice": 0.1883889613020247,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 12,
+    "train_loss_mean": 0.6678786939334613,
+    "validation_patient_macro_dice": 0.23010279544452905,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 13,
+    "train_loss_mean": 0.6349056230173833,
+    "validation_patient_macro_dice": 0.2930458779105538,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 14,
+    "train_loss_mean": 0.6607075833213633,
+    "validation_patient_macro_dice": 0.3180510407566308,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 15,
+    "train_loss_mean": 0.634837344383706,
+    "validation_patient_macro_dice": 0.2703795384146697,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 16,
+    "train_loss_mean": 0.6335100889974961,
+    "validation_patient_macro_dice": 0.3312351914720075,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 17,
+    "train_loss_mean": 0.6351121448020354,
+    "validation_patient_macro_dice": 0.32039224177743436,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 18,
+    "train_loss_mean": 0.6245177929706612,
+    "validation_patient_macro_dice": 0.31280128022516557,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 19,
+    "train_loss_mean": 0.6395086019372332,
+    "validation_patient_macro_dice": 0.3026247768809221,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 20,
+    "train_loss_mean": 0.6255812018800118,
+    "validation_patient_macro_dice": 0.2416863378049998,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  },
+  {
+    "epoch": 21,
+    "train_loss_mean": 0.6301562134376241,
+    "validation_patient_macro_dice": 0.2677732184950395,
+    "validation_patients_seen": 45,
+    "training_updates": 746,
+    "sampling": "lesion_balanced",
+    "loss": "baseline",
+    "support_mask": "none",
+    "local_crop_probability": 0.0
+  }
+]

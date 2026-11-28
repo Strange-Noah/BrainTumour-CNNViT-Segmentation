@@ -1,0 +1,288 @@
+{
+  "checkpoint_ref": "C:\\Users\\chany\\Desktop\\BlendEd\\Novo Nordisk Project\\bmets\\bmets-project\\outputs\\swin_unetr_bmets\\lesion_balanced_v1\\best_checkpoint.pt",
+  "framework_version": "torch=2.15.0+cu132; monai=1.6.1",
+  "source": {
+    "git_sha": "be6d434702ca7434e98460bcf3e07f0d2e8eaa95",
+    "working_tree_dirty": true,
+    "experiment_code_sha256": "2f39269c54f1e1c2a249f3fc0895e37e0e8fd78052f284c2377903a6961cb326"
+  },
+  "model_config": {
+    "architecture": "MONAI SwinUNETR",
+    "initialization": "random initialization",
+    "in_channels": 4,
+    "out_channels": 2,
+    "feature_size": 24,
+    "roi": 96,
+    "target": "enhancing tissue, original label 3",
+    "input_order": [
+      "T1",
+      "T1c",
+      "T2",
+      "FLAIR"
+    ],
+    "normalization": "per-volume z-score over nonzero voxels per modality",
+    "sampling": "lesion_balanced",
+    "sampling_details": {
+      "patient_draws_per_epoch": "uniform patient allocation; full training set yields two or three crops per patient",
+      "visit_rotation": "round-robin through each patient's visits by epoch",
+      "lesion_connectivity": 26,
+      "lesion_weight": "clip(sqrt(median visit lesion volume / lesion volume), 0.5, 2.0)",
+      "without_replacement": "per visit within epoch until all components have been sampled",
+      "negative_crop_probability": 0.25
+    },
+    "local_crop_scale": 0.75,
+    "local_crop_probability": 0.0,
+    "support_mask": "none",
+    "support_mask_definition": "largest 26-connected component of the union of nonzero input voxels",
+    "loss": "baseline",
+    "lesion_weight_statistics": null,
+    "lesion_weight_rule": "clip(sqrt(training median lesion volume / lesion volume), 0.5, 2.0), normalized to mean 1 over training positive voxels",
+    "tversky_alpha_fp": 0.6,
+    "tversky_beta_fn": 0.4,
+    "validation_selection_visits": 45,
+    "seed": 42,
+    "optimizer": "AdamW lr=1e-4 weight_decay=1e-5",
+    "amp": "CUDA float16",
+    "split_sha256": "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0",
+    "manifest_sha256": "040ec6c523d5beae43a30b64fede2bee226e1a08e8c14b2cca8043b01b9c39f4",
+    "epoch": 16
+  },
+  "patient_id": "BMETS0034",
+  "exam_id": "BMETS0034_02",
+  "model_version": "swinunetr-lesion-balanced-v1",
+  "git_sha": "be6d434702ca7434e98460bcf3e07f0d2e8eaa95",
+  "task": "enhancing",
+  "split_sha256": "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0",
+  "raw_positive_labels": [
+    3
+  ],
+  "prediction_labels": {
+    "0": "background",
+    "1": "enhancing"
+  },
+  "candidates": [
+    {
+      "candidate_id": 1,
+      "volume_mm3": 6.000019907951355,
+      "centroid_world_mm": [
+        -76.37942199707031,
+        -53.554315185546876,
+        -56.825778889656064
+      ]
+    },
+    {
+      "candidate_id": 2,
+      "volume_mm3": 6.000019907951355,
+      "centroid_world_mm": [
+        -76.27942199707032,
+        -53.354315185546874,
+        -13.685635751485833
+      ]
+    },
+    {
+      "candidate_id": 3,
+      "volume_mm3": 4.800015926361084,
+      "centroid_world_mm": [
+        -76.32942199707031,
+        -53.579315185546875,
+        29.484507486224174
+      ]
+    },
+    {
+      "candidate_id": 4,
+      "volume_mm3": 6.6000218987464905,
+      "centroid_world_mm": [
+        -76.30669472434303,
+        18.545684814453125,
+        -56.84759714386679
+      ]
+    },
+    {
+      "candidate_id": 5,
+      "volume_mm3": 3.600011944770813,
+      "centroid_world_mm": [
+        -76.24608866373697,
+        -53.454315185546875,
+        72.7346509893735
+      ]
+    },
+    {
+      "candidate_id": 6,
+      "volume_mm3": 4.2000139355659485,
+      "centroid_world_mm": [
+        -76.15085056849888,
+        18.402827671595986,
+        -13.694207208497176
+      ]
+    },
+    {
+      "candidate_id": 7,
+      "volume_mm3": 4.2000139355659485,
+      "centroid_world_mm": [
+        -76.15085056849888,
+        18.402827671595986,
+        29.505936128752566
+      ]
+    },
+    {
+      "candidate_id": 8,
+      "volume_mm3": 3.600011944770813,
+      "centroid_world_mm": [
+        -76.24608866373697,
+        18.545684814453125,
+        72.7346509893735
+      ]
+    },
+    {
+      "candidate_id": 9,
+      "volume_mm3": 0.6000019907951355,
+      "centroid_world_mm": [
+        -76.57942199707031,
+        106.54568481445312,
+        -57.06577968597412
+      ]
+    },
+    {
+      "candidate_id": 10,
+      "volume_mm3": 22.200073659420013,
+      "centroid_world_mm": [
+        -39.01185442950275,
+        40.815955084723385,
+        -23.952156302091232
+      ]
+    },
+    {
+      "candidate_id": 11,
+      "volume_mm3": 199.20066094398499,
+      "centroid_world_mm": [
+        -27.865566575383568,
+        22.858937826501318,
+        31.786924764154918
+      ]
+    },
+    {
+      "candidate_id": 12,
+      "volume_mm3": 102.60034042596817,
+      "centroid_world_mm": [
+        -7.058954160813002,
+        -54.10928594578079,
+        -14.058619445178934
+      ]
+    },
+    {
+      "candidate_id": 13,
+      "volume_mm3": 0.6000019907951355,
+      "centroid_world_mm": [
+        -7.5794219970703125,
+        92.54568481445312,
+        30.53451097011566
+      ]
+    },
+    {
+      "candidate_id": 14,
+      "volume_mm3": 6.000019907951355,
+      "centroid_world_mm": [
+        -4.279421997070315,
+        -53.354315185546874,
+        29.514507585763937
+      ]
+    },
+    {
+      "candidate_id": 15,
+      "volume_mm3": 6.6000218987464905,
+      "centroid_world_mm": [
+        -4.306694724343046,
+        -53.454315185546875,
+        72.75283286788246
+      ]
+    },
+    {
+      "candidate_id": 16,
+      "volume_mm3": 6.000019907951355,
+      "centroid_world_mm": [
+        -4.479421997070318,
+        18.245684814453128,
+        29.514507585763937
+      ]
+    },
+    {
+      "candidate_id": 17,
+      "volume_mm3": 4.800015926361084,
+      "centroid_world_mm": [
+        -4.3294219970703125,
+        18.420684814453125,
+        -56.91577918827534
+      ]
+    },
+    {
+      "candidate_id": 18,
+      "volume_mm3": 4.800015926361084,
+      "centroid_world_mm": [
+        -4.3294219970703125,
+        18.420684814453125,
+        72.68465082347393
+      ]
+    },
+    {
+      "candidate_id": 19,
+      "volume_mm3": 4.2000139355659485,
+      "centroid_world_mm": [
+        -4.150850568498882,
+        -53.59717232840402,
+        -56.89435054574694
+      ]
+    },
+    {
+      "candidate_id": 20,
+      "volume_mm3": 6.000019907951355,
+      "centroid_world_mm": [
+        -4.0794219970703125,
+        18.545684814453125,
+        -13.865636348724365
+      ]
+    },
+    {
+      "candidate_id": 21,
+      "volume_mm3": 202.20067089796066,
+      "centroid_world_mm": [
+        15.103070584532048,
+        91.85132279664896,
+        32.865082501127034
+      ]
+    }
+  ],
+  "candidate_identity_scope": "visit",
+  "prediction_sha256": "71f34f409ad72a1a6d5d667ec62990ab36c463c1dace8c62d64098a87bdd746a",
+  "reference_shape": [
+    256,
+    256,
+    312
+  ],
+  "reference_affine": [
+    [
+      1.0,
+      0.0,
+      0.0,
+      -124.57942199707031
+    ],
+    [
+      0.0,
+      1.0,
+      0.0,
+      -101.45431518554688
+    ],
+    [
+      0.0,
+      0.0,
+      0.6000019907951355,
+      -85.86587524414062
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "spatial_units": "mm"
+}

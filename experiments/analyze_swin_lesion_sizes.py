@@ -33,7 +33,9 @@ def size_bin(volume, edges):
 def one_visit(prediction, truth, affine, edges):
     pred_components, pred_records = components(prediction, affine)
     true_components, true_records = components(truth, affine)
-    overlap = np.zeros((len(true_records), len(pred_records)), dtype=np.uint8)
+    # Use a signed or floating type: the assignment below minimizes -overlap.
+    # Negating uint8 wraps 1 to 255, which incorrectly favors unmatched pairs.
+    overlap = np.zeros((len(true_records), len(pred_records)), dtype=np.int8)
     intersection = np.asarray(prediction, bool) & np.asarray(truth, bool)
     pairs = np.stack([true_components[intersection], pred_components[intersection]], axis=1)
     pairs, counts = np.unique(pairs, axis=0, return_counts=True)

@@ -1,0 +1,886 @@
+{
+  "partition": "validation",
+  "visit_count": 159,
+  "patient_count": 45,
+  "bins_mm3": [
+    27.0
+  ],
+  "split_sha256": "57f5af55141e16ecb0b85fdda63cc355175d9b35271126784eb22766698b36f0",
+  "manifest_sha256": "040ec6c523d5beae43a30b64fede2bee226e1a08e8c14b2cca8043b01b9c39f4",
+  "matching": "26-connected components; one-to-one match on any positive voxel overlap",
+  "bins": [
+    {
+      "range_mm3": "<27",
+      "lesions": 736,
+      "matched": 0,
+      "pooled_sensitivity": 0.0,
+      "patient_macro_sensitivity": 0.0,
+      "patients_with_bin_lesions": 36
+    },
+    {
+      "range_mm3": ">=27",
+      "lesions": 502,
+      "matched": 0,
+      "pooled_sensitivity": 0.0,
+      "patient_macro_sensitivity": 0.0,
+      "patients_with_bin_lesions": 44
+    }
+  ],
+  "patients": [
+    {
+      "patient_id": "BMETS0003",
+      "visits": 2,
+      "false_positives_mean_per_visit": 345.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 6,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 7,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0008",
+      "visits": 3,
+      "false_positives_mean_per_visit": 110.33333333333333,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 8,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 7,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0021",
+      "visits": 4,
+      "false_positives_mean_per_visit": 3.75,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 14,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 22,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0030",
+      "visits": 4,
+      "false_positives_mean_per_visit": 13.25,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 0,
+          "matched": 0,
+          "sensitivity": null
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 7,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0034",
+      "visits": 4,
+      "false_positives_mean_per_visit": 21.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 5,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 6,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0035",
+      "visits": 4,
+      "false_positives_mean_per_visit": 1.75,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 12,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 4,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0043",
+      "visits": 4,
+      "false_positives_mean_per_visit": 130.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 18,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 15,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0057",
+      "visits": 2,
+      "false_positives_mean_per_visit": 31.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 1,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 2,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0059",
+      "visits": 4,
+      "false_positives_mean_per_visit": 123.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 10,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 15,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0064",
+      "visits": 2,
+      "false_positives_mean_per_visit": 291.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 0,
+          "matched": 0,
+          "sensitivity": null
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 2,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0067",
+      "visits": 4,
+      "false_positives_mean_per_visit": 116.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 3,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 7,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0070",
+      "visits": 2,
+      "false_positives_mean_per_visit": 133.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 17,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 13,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0088",
+      "visits": 4,
+      "false_positives_mean_per_visit": 284.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 6,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 5,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0103",
+      "visits": 4,
+      "false_positives_mean_per_visit": 279.75,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 19,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 20,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0112",
+      "visits": 4,
+      "false_positives_mean_per_visit": 31.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 12,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 27,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0115",
+      "visits": 4,
+      "false_positives_mean_per_visit": 109.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 4,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 0,
+          "matched": 0,
+          "sensitivity": null
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0116",
+      "visits": 4,
+      "false_positives_mean_per_visit": 14.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 9,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 9,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0121",
+      "visits": 4,
+      "false_positives_mean_per_visit": 36.25,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 2,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 5,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0124",
+      "visits": 4,
+      "false_positives_mean_per_visit": 16.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 0,
+          "matched": 0,
+          "sensitivity": null
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 5,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0126",
+      "visits": 4,
+      "false_positives_mean_per_visit": 43.75,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 18,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 49,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0130",
+      "visits": 3,
+      "false_positives_mean_per_visit": 286.3333333333333,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 0,
+          "matched": 0,
+          "sensitivity": null
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 3,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0131",
+      "visits": 4,
+      "false_positives_mean_per_visit": 289.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 6,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 3,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0140",
+      "visits": 4,
+      "false_positives_mean_per_visit": 9.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 0,
+          "matched": 0,
+          "sensitivity": null
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 4,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0142",
+      "visits": 4,
+      "false_positives_mean_per_visit": 161.25,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 14,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 12,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0144",
+      "visits": 4,
+      "false_positives_mean_per_visit": 108.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 2,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 3,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0148",
+      "visits": 4,
+      "false_positives_mean_per_visit": 109.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 20,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 12,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0166",
+      "visits": 4,
+      "false_positives_mean_per_visit": 146.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 0,
+          "matched": 0,
+          "sensitivity": null
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 2,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0177",
+      "visits": 4,
+      "false_positives_mean_per_visit": 3.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 20,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 24,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0191",
+      "visits": 4,
+      "false_positives_mean_per_visit": 129.25,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 2,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 17,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0192",
+      "visits": 2,
+      "false_positives_mean_per_visit": 158.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 0,
+          "matched": 0,
+          "sensitivity": null
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 2,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0197",
+      "visits": 4,
+      "false_positives_mean_per_visit": 280.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 14,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 9,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0215",
+      "visits": 4,
+      "false_positives_mean_per_visit": 105.25,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 0,
+          "matched": 0,
+          "sensitivity": null
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 3,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0225",
+      "visits": 2,
+      "false_positives_mean_per_visit": 164.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 2,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 5,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0230",
+      "visits": 3,
+      "false_positives_mean_per_visit": 314.6666666666667,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 299,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 46,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0232",
+      "visits": 4,
+      "false_positives_mean_per_visit": 20.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 2,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 4,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0238",
+      "visits": 2,
+      "false_positives_mean_per_visit": 309.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 6,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 6,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0243",
+      "visits": 3,
+      "false_positives_mean_per_visit": 307.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 115,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 13,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0247",
+      "visits": 4,
+      "false_positives_mean_per_visit": 2.25,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 3,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 10,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0252",
+      "visits": 4,
+      "false_positives_mean_per_visit": 297.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 43,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 57,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0267",
+      "visits": 4,
+      "false_positives_mean_per_visit": 275.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 4,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 12,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0270",
+      "visits": 4,
+      "false_positives_mean_per_visit": 109.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 2,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 4,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0277",
+      "visits": 4,
+      "false_positives_mean_per_visit": 295.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 9,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 13,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0281",
+      "visits": 2,
+      "false_positives_mean_per_visit": 309.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 3,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 4,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0284",
+      "visits": 4,
+      "false_positives_mean_per_visit": 307.5,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 6,
+          "matched": 0,
+          "sensitivity": 0.0
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 5,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    },
+    {
+      "patient_id": "BMETS0289",
+      "visits": 3,
+      "false_positives_mean_per_visit": 8.0,
+      "bins": [
+        {
+          "range_mm3": "<27",
+          "lesions": 0,
+          "matched": 0,
+          "sensitivity": null
+        },
+        {
+          "range_mm3": ">=27",
+          "lesions": 2,
+          "matched": 0,
+          "sensitivity": 0.0
+        }
+      ]
+    }
+  ]
+}
