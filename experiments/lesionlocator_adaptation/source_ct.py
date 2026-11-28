@@ -150,7 +150,23 @@ def main():
     prefix=f"{PREFIX}/source-ct"
     if args.reduce:
         items=[json.loads(read_private(client,bucket,f"{prefix}/unit-{i}.json")) for i in range(6)]
-        result=dict(event="s1_source_summary",source_counts=Counter(r["group"] for r in items),
+        pairs=[i["spatial"] for i in items]
+        def quantile(values):
+            return np.quantile(values,[.05,.5,.95],axis=0).tolist() if len(values) else None
+        metrics={}
+        for key in ("native","work","registration","history_roi"):
+            values=[r[key] for case in pairs for r in case["history"]]
+            positive=[v for v in values if v.get("voxels")]
+            metrics[key]=dict(n=len(values),empty=len(values)-len(positive),
+                voxels=quantile([r["voxels"] for r in positive]),bbox=quantile([r["bbox"] for r in positive]))
+            if key=="history_roi":
+                metrics[key].update(padding=quantile([r["pad_fraction"] for r in positive]),
+                    anatomy=quantile([r["anatomy_fraction"] for r in positive]),
+                    fov_mm=quantile([r["physical_field_of_view_mm"] for r in positive]),
+                    lesion_fraction=quantile([r["lesion_fraction"] for r in positive]))
+        metrics["registration"].update(fov_nominal_mm=quantile([r["history_175_nominal_fov_mm"] for r in pairs]),
+                                       anatomy=quantile([r["anatomy_fraction_175"] for r in pairs]))
+        result=dict(event="s1_source_summary",spatial=metrics,source_counts=Counter(r["group"] for r in items),
                     origins=6,exams=12,intensity=summarize([v for r in items for v in r["fidelity"]]))
         save_once(client,bucket,f"{prefix}/summary.json",result)
         print(json.dumps(result,allow_nan=False))

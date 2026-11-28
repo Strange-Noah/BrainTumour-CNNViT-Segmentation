@@ -12,7 +12,7 @@ import numpy as np
 from scipy import ndimage
 from scipy.spatial import cKDTree
 
-from cloud.storage import connect
+from cloud.storage import connect, put_once
 from experiments.lesionlocator_benchmark.baseline import MANIFEST_KEY, SPLIT, save_once, sequences
 from research.dataset import Dataset
 from research.geometry import mask_geometry
@@ -124,11 +124,58 @@ def summarize(visits):
     return result
 
 
+def visual(image,lesion,official,transferred,path):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    section=int(lesion.sum(axis=(0,1)).argmax())
+    raw=image[:,:,section]
+    gt=lesion[:,:,section]
+    fig,axes=plt.subplots(1,3,figsize=(11,4))
+    display=np.quantile(image[image!=0],[.01,.99])
+    arms=[("Raw MRI",raw,display)]
+    for title,p in (("Official CT",official),("BMETS transfer",transferred)):
+        clipped=np.clip(raw,p["percentile_00_5"],p["percentile_99_5"])
+        arms.append((title,(clipped-p["mean"])/p["std"],(-3,3)))
+    for ax,(title,values,(lo,hi)) in zip(axes,arms):
+        ax.imshow(values.T,origin="lower",cmap="gray",vmin=lo,vmax=hi)
+        if gt.any() and not gt.all(): ax.contour(gt.T,levels=[.5],colors="yellow",linewidths=.6)
+        ax.set_title(title)
+        ax.axis("off")
+    fig.savefig(path,dpi=110)
+    plt.close(fig)
+
+
+def reduce(writer,bucket,fit):
+    path=f"{PREFIX}/fidelity/{fit['plans_sha256']}"
+    records=[json.loads(read_private(writer,bucket,f"{path}/validation-{i:02d}.json")) for i in range(45)]
+    ct=json.loads(read_private(writer,bucket,f"{PREFIX}/source-ct/summary.json"))
+    visits=[v for patient in records for v in patient["visits"]]
+    if len(visits)!=159 or len({v["exam"] for v in visits})!=159:
+        raise ValueError("Frozen validation coverage mismatch")
+    def longitudinal(arm):
+        pairs=[d for p in records for d in p["differences"][arm]]
+        result={}
+        for region in ("anatomy","normal_proxy","lesion","perilesional"):
+            rows=[d[region] for d in pairs if region in d]
+            result[region]=dict(n=len(rows),absolute_delta={
+                k:np.quantile([abs(r[k]) for r in rows],[.05,.5,.95]).tolist()
+                for k in ("raw","normalized")}) if rows else {"n":0}
+        return result
+    result=dict(event="n2_summary",patients=45,exams=len(visits),plans_sha256=fit["plans_sha256"],
+                source=ct["intensity"],
+                arms={k:summarize([v[k] for v in visits]) for k in ("old","new")},
+                longitudinal={k:longitudinal(k) for k in ("old","new")},shell_mm=RADIUS_MM)
+    save_once(writer,bucket,f"{path}/summary.json",result)
+    print(json.dumps(result,allow_nan=False))
+
+
 def validation(ds,groups,db,bucket,fit,first,count):
     if not 0<=first<len(groups) or len(groups[first:first+count])!=count or count<=0:
         raise ValueError("Invalid validation batch")
     fields=("old","new")
     reported={key:[] for key in fields}
+    plotted=first!=0
     for i, rows in enumerate(groups[first:first+count],first):
         output=[]
         for row in rows:
@@ -139,6 +186,11 @@ def validation(ds,groups,db,bucket,fit,first,count):
             label=np.asarray(gt.dataobj)
             masks=regions(image,label,t1c.affine,"t1c")
             arms=dict(old=fidelity(image,masks,fit["official"]),new=fidelity(image,masks,fit["transferred"]))
+            if not plotted and masks["lesion"].any():
+                panel=ds.cache.parent/"intensity-comparison.png"
+                visual(image,masks["lesion"],fit["official"],fit["transferred"],panel)
+                put_once(db,bucket,f"{PREFIX}/fidelity/{fit['plans_sha256']}/comparison.png",panel)
+                plotted=True
             for k in fields: reported[k].append(arms[k])
             output.append(dict(exam=row["exam_id"],**arms))
             for cached in ds.cache.iterdir(): cached.unlink()
@@ -158,14 +210,18 @@ def validation(ds,groups,db,bucket,fit,first,count):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--first",type=int,required=True)
-    p.add_argument("--count",type=int,required=True)
+    p.add_argument("--first",type=int,default=0)
+    p.add_argument("--count",type=int,default=0)
+    p.add_argument("--reduce",action="store_true")
     args=p.parse_args()
     reader,canonical=connect()
     writer,output=connect(output=True)
     fit=json.loads(read_private(writer,output,f"{PREFIX}/intensity/{IDENTITY}/fit.json"))
     if fit["patients"]!=210 or fit["science_sha256"]!=IDENTITY:
         raise ValueError("Complete frozen N1 fit required")
+    if args.reduce:
+        reduce(writer,output,fit)
+        return
     with tempfile.TemporaryDirectory(prefix="novo-n2-") as d:
         root=Path(d)
         manifest=root/"manifest.jsonl"

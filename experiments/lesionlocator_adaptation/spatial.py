@@ -121,6 +121,11 @@ def evaluate_pair(base,name,data,spacing,history,target,root,normalization=None,
                            size=h0.shape,mode="nearest-exact")[0,0].numpy().astype(h.dtype)
     nominal=np.asarray(spacing)*h0.shape
     target_nominal=np.asarray(spacing)*t1.shape
+    def effective(props,work_shape,cropped_shape):
+        ss=np.asarray(props["spacing"])[m.transpose_forward]
+        return ss*np.asarray(props["shape_after_cropping_and_before_resampling"])*np.asarray(cropped_shape)/np.asarray(work_shape)
+    f0=effective(p0,h.shape[1:],h0.shape)
+    f1=effective(p1,t.shape[1:],t1.shape)
     # Derive crop bounds from the unnormalized source using the same reader and
     # transpose. Preserve the nonzero mask as geometry, not a CT/MRI threshold.
     rr=m.image_reader_writer_class()
@@ -135,6 +140,8 @@ def evaluate_pair(base,name,data,spacing,history,target,root,normalization=None,
     areg=register_mask(anat[0][w0[0]:w0[1]].astype(np.uint8))
     result=dict(spacing=list(spacing),history_work_shape=list(h.shape[1:]),target_work_shape=list(t.shape[1:]),
                 history_175_nominal_fov_mm=nominal.tolist(),history_175_nominal_spacing_mm=(nominal/175).tolist(),
+                history_175_effective_fov_mm=f0.tolist(),history_175_effective_spacing_mm=(f0/175).tolist(),
+                target_175_effective_fov_mm=f1.tolist(),target_175_effective_spacing_mm=(f1/175).tolist(),
                 target_175_nominal_fov_mm=target_nominal.tolist(),target_175_nominal_spacing_mm=(target_nominal/175).tolist(),
                 anatomy_fraction_175=float(areg.mean()),
                 windows=[w0,w1],fixed_voxel_windows=[old0,old1],z_threshold_vox=thresh,
