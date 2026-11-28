@@ -11,7 +11,7 @@
   },
   "lesionlocator": {
     "branch": "model/longitudinal-tracking",
-    "source_sha": "5599354b938dcab5d7e7efab0a36d69b2d67056a",
+    "source_sha": "5fb36d16d8156c7d3d11cf0674254eef5df691af",
     "authorized_actor": "Strange-Noah",
     "entrypoint": "experiments.lesionlocator_benchmark.orchestrate",
     "dataset": "mathewzhou/novo-lesionlocator-input",
