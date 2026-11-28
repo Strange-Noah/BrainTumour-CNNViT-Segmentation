@@ -93,6 +93,7 @@ def aggregate(records, mode):
     local=defaultdict(list)
     proxy=defaultdict(list)
     l2=Counter()
+    deformation=[]
     versions=set()
     device=Counter()
     for report,traces,receipt in records:
@@ -151,8 +152,9 @@ def aggregate(records, mode):
         for name,t in traces.items():
             if "/L1/" in name:
                 stages["T0_trace"]+=1
-                history=next((m["prompt_voxels"] for m in t["T1"] if m["prompt_voxels"] is not None),0)
-                stages["T1_prompt_empty"]+=int(history==0)
+                if len(t["T1"]) != 2 or t["T1"][1]["prompt_voxels"] is None:
+                    raise ValueError("Expected follow-up preprocessing followed by history with the prompt")
+                stages["T1_prompt_empty"]+=int(t["T1"][1]["prompt_voxels"]==0)
                 if "T2" in t:
                     stages["T2_measured"]+=1
                     stages["T2_cropped"]+=int(t["T2"]["before"]!=t["T2"]["after"])
@@ -160,6 +162,11 @@ def aggregate(records, mode):
                     stages["T3_measured"]+=1
                     stages["T3_prompt_empty"]+=int(t["T3"]["nonzero"]==0)
                     stages["T4_field_finite"]+=int(t["T4"]["finite"])
+                    if "normalized_displacement_quantiles" in t["T4"]:
+                        deformation.append(t["T4"]["normalized_displacement_quantiles"])
+                    work=t["T8_work"]["foreground_voxels"]
+                    stages["T8_work_positive"]+=int(work>0)
+                    stages["T8_work_positive_final_empty"]+=int(work>0 and t["T8"].get("voxels")==0)
                     stages["T5_grid_empty"]+=int(t["T5_grid"]["nonzero"]==0)
                     stages["T5_native_empty"]+=int(t["T5_native_voxels"]==0)
                     stages["T6_padding_axis_fix"]+=int(t["T6"]["axis_compatibility_fix"])
@@ -199,7 +206,10 @@ def aggregate(records, mode):
                 normalization=nstats, stages=dict(stages), initial=dict(sources), l2=dict(l2),
                 roi={k:dict(n=len(v),mean=mean(v)) for k,v in roi.items()},
                 proxy={k:dict(n=len(v),dice=mean(v)) for k,v in proxy.items()},
-                local={k:dict(n=len(v),dice=mean(v)) for k,v in local.items()})
+                local={k:dict(n=len(v),dice=mean(v)) for k,v in local.items()},
+                deformation=dict(n=len(deformation), median_p95=median(r[1] for r in deformation)
+                                 if deformation else None,
+                                 max_sampled=max((r[2] for r in deformation),default=None))
 
 
 def main():
