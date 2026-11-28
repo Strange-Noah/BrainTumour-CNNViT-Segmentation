@@ -1,0 +1,5 @@
+-r requirements.txt
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.8.0+cpu
+torchvision==0.23.0+cpu
+lesionlocator @ git+https://github.com/MIC-DKFZ/LesionLocator.git@ef073baaa0dcba8dd036ec5a29f130db18c9d580
